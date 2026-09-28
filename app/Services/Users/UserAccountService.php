@@ -14,10 +14,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-
+use DomainException;
 class UserAccountService
 {
-    public function __construct(private UsernameGenerator $usernames) {}
+    public function __construct(private UsernameGenerator $usernames,
+    private SessionRevoker $sessions,) {}
 
     /**
      * Employees the actor is allowed to see: only accounts ranked below them
@@ -34,7 +35,7 @@ class UserAccountService
             ->all();
 
         return User::query()
-            ->with(['roles', 'company', 'department'])   // eager load: avoids N+1
+            ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])   // eager load: avoids N+1
             ->when($hiddenRoles, fn (Builder $q) => $q->whereDoesntHave(
                 'roles',
                 fn (Builder $roles) => $roles->whereIn('name', $hiddenRoles),
@@ -107,6 +108,7 @@ class UserAccountService
                 ),
                 'password' => $temporaryPassword, // hashed by the model cast
                 'status' => AccountStatus::Temporary,
+                'must_change_password' => true,
                 'temporary_access_expires_at' => now()->addDays(config('portal.temporary_access_days')),
             ]);
 
@@ -191,4 +193,40 @@ class UserAccountService
 
         return $password;
     }
+
+    /**
+ * Generates a NEW temporary password. Only allowed while the employee has
+ * never set their own password and the 7 days have not ended. It does NOT
+ * extend the temporary period.
+ */
+public function resendCredentials(User $user): void
+{
+    if ($user->status !== AccountStatus::Temporary || ! $user->must_change_password) {
+        throw new DomainException(
+            'Credentials can only be re-sent to a temporary account that has not set its own password yet.'
+        );
+    }
+
+    if (! $user->temporary_access_expires_at?->isFuture()) {
+        throw new DomainException('The temporary access period has already ended.');
+    }
+
+    $temporaryPassword = $this->generateTemporaryPassword();
+
+    DB::transaction(function () use ($user, $temporaryPassword) {
+        $user->forceFill(['password' => $temporaryPassword])->save(); // hashed by the cast
+        $this->sessions->revoke($user); // the old password must stop working everywhere
+    });
+
+    Mail::to($user->email)->queue(new TemporaryAccessMail($user, $temporaryPassword));
+}
+
+/** Also used by the Profile page in Phase 5. Clears the "must change" flag. */
+public function changePassword(User $user, string $newPassword): void
+{
+    $user->forceFill([
+        'password' => $newPassword,
+        'must_change_password' => false,
+    ])->save();
+}
 }

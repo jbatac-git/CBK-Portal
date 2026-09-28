@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Enums\RemovalRequestStatus;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -27,6 +29,8 @@ class User extends Authenticatable
         'department_id',
         'status',
         'temporary_access_expires_at',
+        'must_change_password' => 'boolean',
+        'status_changed_at' => 'datetime',
     ];
 
     protected $hidden = [
@@ -50,7 +54,7 @@ class User extends Authenticatable
      */
     protected function name(): Attribute
     {
-        return Attribute::get(fn () => implode(' ', array_filter([
+        return Attribute::get(fn() => implode(' ', array_filter([
             $this->first_name,
             $this->middle_name,
             $this->last_name,
@@ -79,5 +83,30 @@ class User extends Authenticatable
             AccountStatus::Temporary => $this->temporary_access_expires_at?->isFuture() ?? false,
             default => false,
         };
+    }
+
+    public function pendingRemovalRequest(): HasOne
+    {
+        return $this->hasOne(RemovalRequest::class)
+            ->where('status', RemovalRequestStatus::Pending->value);
+    }
+
+    /** Whole days left in the temporary period, or null when not applicable. */
+    public function temporaryDaysLeft(): ?int
+    {
+        if ($this->status !== AccountStatus::Temporary || ! $this->temporary_access_expires_at) {
+            return null;
+        }
+
+        return max(0, (int) ceil(now()->diffInDays($this->temporary_access_expires_at, false)));
+    }
+
+    /**
+     * Temporary accounts on the Diser side may only reach the initial learning
+     * materials. Admin-side accounts (HR/Admin) keep their admin tools.
+     */
+    public function isRestrictedToInitialMaterials(): bool
+    {
+        return $this->status === AccountStatus::Temporary && ! $this->can('admin.access');
     }
 }
