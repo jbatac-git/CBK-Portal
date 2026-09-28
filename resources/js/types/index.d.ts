@@ -13,6 +13,9 @@ export interface AuthUser {
     email: string;
     roles: string[];
     permissions: string[];
+    status: string;
+    is_temporary: boolean;
+    temporary_days_left: number | null;
 }
 
 export type PageProps<

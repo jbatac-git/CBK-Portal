@@ -29,11 +29,14 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'roles' => $user->getRoleNames()->values(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->values(),
+                    'status' => $user->status->value,
+                    'is_temporary' => $user->isRestrictedToInitialMaterials(),
+                    'temporary_days_left' => $user->temporaryDaysLeft(),
                 ] : null,
             ],
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
+                'success' => fn() => $request->session()->get('success'),
+                'error' => fn() => $request->session()->get('error'),
             ],
         ];
     }
