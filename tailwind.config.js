@@ -10,13 +10,18 @@ export default {
         './resources/js/**/*.tsx',
     ],
 
-    theme: {
-        extend: {
-            fontFamily: {
+ 
+theme: {
+    extend: {
+        colors: {
+            maroon: { DEFAULT: '#7A1421', dark: '#5C0F19' },
+            gold: '#C9973F',
+            cream: '#FBF6F0',
+        },
+        fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
-        },
     },
-
+},
     plugins: [forms],
 };

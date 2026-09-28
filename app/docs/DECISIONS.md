@@ -8,3 +8,5 @@
 - Learning materials: private storage, view-only, watermark
 - Careers: disabled in Phase 1
 - Temporary access: 7 days, then Approve / Not approve
+- Diser module access = DIRECT per-user permissions (portal.learning, portal.price-lists, portal.contact-us). Spatie cannot subtract role permissions, so the Diser role only has portal.access.
+- Access checks use permissions, never role names.
