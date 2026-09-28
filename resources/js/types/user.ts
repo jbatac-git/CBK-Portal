@@ -27,6 +27,12 @@ export interface Employee {
     temporary_days_left: number | null;
     modules?: string[];
     can_update: boolean;
+    has_pending_removal: boolean;
+    can_approve: boolean;
+    can_decline: boolean;
+    can_deactivate: boolean;
+    can_request_removal: boolean;
+    can_resend_credentials: boolean;
 }
 
 export interface UserFormOptions {

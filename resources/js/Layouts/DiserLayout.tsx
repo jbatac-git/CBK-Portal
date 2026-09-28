@@ -3,11 +3,11 @@ import Logo from '@/Components/Shared/Logo';
 import { diserNav } from '@/config/navigation';
 import { usePermission } from '@/Hooks/usePermission';
 import { Link } from '@inertiajs/react';
-import { LogOut } from 'lucide-react';
+import { Clock, Lock, LogOut } from 'lucide-react';
 import { PropsWithChildren } from 'react';
 
 export default function DiserLayout({ children }: PropsWithChildren) {
-    const { can } = usePermission();
+    const { user, can } = usePermission();
 
     const items = diserNav.filter((item) => can(item.permission));
 
@@ -27,6 +27,14 @@ export default function DiserLayout({ children }: PropsWithChildren) {
             </header>
 
             <main className="mx-auto w-full max-w-3xl flex-1 space-y-4 px-4 pb-28 pt-4">
+                {user.is_temporary && (
+                    <div className="rounded-lg border border-gold bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                        <Clock className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                        Temporary access: {user.temporary_days_left} day(s) left. Only the initial learning
+                        materials are available until your account is approved.
+                    </div>
+                )}
+
                 <FlashMessage />
                 {children}
                 <p className="pt-6 text-center text-xs text-stone-500">
@@ -40,12 +48,18 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                 style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
             >
                 {items.map((item) => {
-                    const Icon = item.icon;
                     const base = 'flex flex-col items-center gap-0.5 border-t-2 py-2 text-[11px]';
+                    const locked = user.is_temporary && !item.temporary;
+                    const Icon = locked ? Lock : item.icon;
 
-                    if (!item.ready) {
+                    if (!item.ready || locked) {
                         return (
-                            <span key={item.label} aria-disabled="true" className={`${base} border-transparent text-stone-300`}>
+                            <span
+                                key={item.label}
+                                aria-disabled="true"
+                                title={locked ? 'Available after your account is approved' : 'Coming soon'}
+                                className={`${base} border-transparent text-stone-300`}
+                            >
                                 <Icon className="h-5 w-5" />
                                 {item.label}
                             </span>

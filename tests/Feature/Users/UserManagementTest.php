@@ -65,6 +65,7 @@ class UserManagementTest extends TestCase
         $user = User::where('username', 'jbatac01')->firstOrFail();
 
         $this->assertSame(AccountStatus::Temporary, $user->status);
+        $this->assertTrue($user->must_change_password);
         $this->assertTrue($user->hasRole(RoleName::Diser->value));
         $this->assertTrue($user->hasDirectPermission('portal.learning'));
         $this->assertFalse($user->hasDirectPermission('portal.price-lists'));

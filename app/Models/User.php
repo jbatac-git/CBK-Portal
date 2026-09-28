@@ -18,36 +18,37 @@ class User extends Authenticatable
     use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
-        'first_name',
-        'middle_name',
-        'last_name',
-        'username',
-        'employee_id',
-        'email',
-        'password',
-        'company_id',
-        'department_id',
-        'status',
-        'temporary_access_expires_at',
+    'first_name',
+    'middle_name',
+    'last_name',
+    'username',
+    'employee_id',
+    'email',
+    'password',
+    'company_id',
+    'department_id',
+    'status',
+    'temporary_access_expires_at',
+    'must_change_password',
+    'status_changed_at',
+];
+
+protected $hidden = [
+    'password',
+    'remember_token',
+];
+
+protected function casts(): array
+{
+    return [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'status' => AccountStatus::class,
+        'temporary_access_expires_at' => 'datetime',
         'must_change_password' => 'boolean',
         'status_changed_at' => 'datetime',
     ];
-
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'status' => AccountStatus::class,
-            'temporary_access_expires_at' => 'datetime',
-        ];
-    }
-
+}
     /**
      * Full display name, e.g. "Jhonel Ganal Batac".
      * Computed, so there is no duplicated data to keep in sync.

@@ -14,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Enums\RemovalReason;
 
 class UserController extends Controller
 {
@@ -29,12 +28,11 @@ class UserController extends Controller
         );
 
         return Inertia::render('Admin/Users/Index', [
-            'users' => $users->through(fn(User $user) => UserResource::make($user)->resolve()),
+            'users' => $users->through(fn (User $user) => UserResource::make($user)->resolve()),
             'filters' => $request->only('search', 'status'),
             'statuses' => collect(AccountStatus::cases())
-                ->map(fn(AccountStatus $s) => ['value' => $s->value, 'label' => $s->label()])
+                ->map(fn (AccountStatus $s) => ['value' => $s->value, 'label' => $s->label()])
                 ->values(),
-            'removalReasons' => RemovalReason::options(),
         ]);
     }
 

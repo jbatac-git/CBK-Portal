@@ -1,7 +1,9 @@
 import Can from '@/Components/Shared/Can';
 import StatusBadge from '@/Components/Shared/StatusBadge';
+import Badge from '@/Components/UI/Badge';
 import { buttonClass } from '@/Components/UI/Button';
 import Pagination from '@/Components/UI/Pagination';
+import RowActions from '@/Components/Users/RowActions';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Employee, Option } from '@/types/user';
@@ -12,9 +14,10 @@ interface IndexProps {
     users: Paginated<Employee>;
     filters: { search?: string; status?: string };
     statuses: Option[];
+    removalReasons: Option[];
 }
 
-export default function Index({ users, filters, statuses }: IndexProps) {
+export default function Index({ users, filters, statuses, removalReasons }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
 
@@ -96,13 +99,14 @@ export default function Index({ users, filters, statuses }: IndexProps) {
                                             {user.temporary_days_left} day(s) left
                                         </div>
                                     )}
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    {user.can_update && (
-                                        <Link href={route('admin.users.edit', user.id)} className="text-maroon underline">
-                                            Edit
-                                        </Link>
+                                    {user.has_pending_removal && (
+                                        <div className="mt-1">
+                                            <Badge tone="warning">Removal pending</Badge>
+                                        </div>
                                     )}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <RowActions user={user} removalReasons={removalReasons} />
                                 </td>
                             </tr>
                         ))}
