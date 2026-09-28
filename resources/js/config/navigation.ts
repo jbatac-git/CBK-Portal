@@ -13,7 +13,7 @@ export interface NavItem {
 
 export const adminNav: NavItem[] = [
     { label: 'Dashboard', icon: LayoutDashboard, permission: 'admin.access', routeName: 'admin.dashboard', active: 'admin.dashboard', ready: true },
-    { label: 'User Management', icon: Users, permission: 'users.view', routeName: 'admin.users.index', active: 'admin.users.*', ready: false },
+    { label: 'User Management', icon: Users, permission: 'users.view', routeName: 'admin.users.index', active: 'admin.users.*', ready: true },
     { label: 'Learning Materials', icon: BookOpen, permission: 'learning-materials.view', routeName: 'admin.learning-materials.index', active: 'admin.learning-materials.*', ready: false },
     { label: 'Price Lists', icon: FileText, permission: 'price-lists.view', routeName: 'admin.price-lists.index', active: 'admin.price-lists.*', ready: false },
     { label: 'Contact Us', icon: Phone, permission: 'contact-us.manage', routeName: 'admin.contact-us.edit', active: 'admin.contact-us.*', ready: false },

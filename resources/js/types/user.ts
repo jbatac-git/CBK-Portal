@@ -1,0 +1,40 @@
+export interface Option {
+    value: string;
+    label: string;
+}
+
+export interface LookupOption {
+    id: number;
+    name: string;
+}
+
+export interface Employee {
+    id: number;
+    name: string;
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
+    username: string;
+    employee_id: string;
+    email: string;
+    company_id: number;
+    department_id: number | null;
+    company: string | null;
+    department: string | null;
+    role: string | null;
+    status: string;
+    status_label: string;
+    temporary_days_left: number | null;
+    modules?: string[];
+    can_update: boolean;
+}
+
+export interface UserFormOptions {
+    companies: LookupOption[];
+    departments: LookupOption[];
+    roles: Option[];
+    modules: Option[];
+    default_modules: string[];
+    can_manage_access: boolean;
+    temporary_access_days: number;
+}
