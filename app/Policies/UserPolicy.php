@@ -17,14 +17,29 @@ class UserPolicy
         return $actor->can('users.create');
     }
 
-    /**
-     * Two checks, and BOTH must pass:
-     * 1) the general capability (permission), and
-     * 2) this specific target is ranked below the actor (hierarchy).
-     */
     public function update(User $actor, User $target): bool
     {
         return $actor->can('users.update') && $this->outranks($actor, $target);
+    }
+
+    public function resendCredentials(User $actor, User $target): bool
+    {
+        return $actor->can('users.update') && $this->outranks($actor, $target);
+    }
+
+    public function approve(User $actor, User $target): bool
+    {
+        return $actor->can('users.approve') && $this->canManageLifecycle($actor, $target);
+    }
+
+    public function deactivate(User $actor, User $target): bool
+    {
+        return $actor->can('users.deactivate') && $this->canManageLifecycle($actor, $target);
+    }
+
+    public function requestRemoval(User $actor, User $target): bool
+    {
+        return $actor->can('users.request-removal') && $this->canManageLifecycle($actor, $target);
     }
 
     private function outranks(User $actor, User $target): bool
@@ -34,5 +49,15 @@ class UserPolicy
         }
 
         return RoleName::rankOf($actor) > RoleName::rankOf($target);
+    }
+
+    /**
+     * Lifecycle actions are stricter than editing: nobody may approve,
+     * restrict or deactivate THEIR OWN account. This stops a Super Admin
+     * from locking themselves (and possibly everyone) out by accident.
+     */
+    private function canManageLifecycle(User $actor, User $target): bool
+    {
+        return $actor->isNot($target) && $this->outranks($actor, $target);
     }
 }
