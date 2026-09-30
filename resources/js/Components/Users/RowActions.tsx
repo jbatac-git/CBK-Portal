@@ -1,3 +1,4 @@
+
 import { ButtonVariant } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import Select from '@/Components/UI/Select';
@@ -17,10 +18,13 @@ interface DialogConfig {
 
 interface RowActionsProps {
     user: Employee;
-    removalReasons: Option[];
+    removalReasons?: Option[];
 }
 
-export default function RowActions({ user, removalReasons }: RowActionsProps) {
+export default function RowActions({
+    user,
+    removalReasons = [],
+}: RowActionsProps) {
     const [action, setAction] = useState<ActionKey | null>(null);
     const [reason, setReason] = useState(removalReasons[0]?.value ?? '');
     const [details, setDetails] = useState('');
@@ -30,35 +34,40 @@ export default function RowActions({ user, removalReasons }: RowActionsProps) {
     const configs: Record<ActionKey, DialogConfig> = {
         approve: {
             title: `Approve ${user.name}?`,
-            description: 'The account becomes fully active, with access based on the assigned role.',
+            description:
+                'The account becomes fully active, with access based on the assigned role.',
             confirmLabel: 'Approve',
             variant: 'primary',
             routeName: 'admin.users.approve',
         },
         decline: {
             title: `Not approve ${user.name}?`,
-            description: 'The account becomes restricted and can no longer access the portal.',
+            description:
+                'The account becomes restricted and can no longer access the portal.',
             confirmLabel: 'Not approve',
             variant: 'danger',
             routeName: 'admin.users.decline',
         },
         deactivate: {
             title: `Deactivate ${user.name}?`,
-            description: 'Access is removed immediately and the user is signed out of every device.',
+            description:
+                'Access is removed immediately and the user is signed out of every device.',
             confirmLabel: 'Deactivate',
             variant: 'danger',
             routeName: 'admin.users.deactivate',
         },
         resend: {
             title: `Re-send credentials to ${user.name}?`,
-            description: 'A new temporary password is generated and emailed. The old one stops working.',
+            description:
+                'A new temporary password is generated and emailed. The old one stops working.',
             confirmLabel: 'Re-send',
             variant: 'primary',
             routeName: 'admin.users.resend-credentials',
         },
         removal: {
             title: `Request removal of ${user.name}?`,
-            description: 'The administrators will be notified and will disable the account.',
+            description:
+                'The administrators will be notified and will disable the account.',
             confirmLabel: 'Send request',
             variant: 'danger',
             routeName: 'admin.users.removal-request',
@@ -71,9 +80,14 @@ export default function RowActions({ user, removalReasons }: RowActionsProps) {
     };
 
     const confirm = () => {
-        if (!action) return;
+        if (!action) {
+            return;
+        }
 
-        const payload = action === 'removal' ? { reason, details } : {};
+        const payload =
+            action === 'removal'
+                ? { reason, details }
+                : {};
 
         router.post(route(configs[action].routeName, user.id), payload, {
             preserveScroll: true,
@@ -90,32 +104,60 @@ export default function RowActions({ user, removalReasons }: RowActionsProps) {
         <>
             <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-sm">
                 {user.can_update && (
-                    <Link href={route('admin.users.edit', user.id)} className="text-maroon underline">
+                    <Link
+                        href={route('admin.users.edit', user.id)}
+                        className="text-maroon underline"
+                    >
                         Edit
                     </Link>
                 )}
+
                 {user.can_approve && (
-                    <button type="button" onClick={() => open('approve')} className="text-green-700 underline">
+                    <button
+                        type="button"
+                        onClick={() => open('approve')}
+                        className="text-green-700 underline"
+                    >
                         Approve
                     </button>
                 )}
+
                 {user.can_decline && (
-                    <button type="button" onClick={() => open('decline')} className="text-red-700 underline">
+                    <button
+                        type="button"
+                        onClick={() => open('decline')}
+                        className="text-red-700 underline"
+                    >
                         Not approve
                     </button>
                 )}
+
                 {user.can_resend_credentials && (
-                    <button type="button" onClick={() => open('resend')} className="text-stone-600 underline">
+                    <button
+                        type="button"
+                        onClick={() => open('resend')}
+                        className="text-stone-600 underline"
+                    >
                         Re-send credentials
                     </button>
                 )}
+
                 {user.can_request_removal && (
-                    <button type="button" onClick={() => open('removal')} className="text-red-700 underline">
+                    <button
+                        type="button"
+                        onClick={() => open('removal')}
+                        className="text-red-700 underline"
+                    >
                         Request removal
                     </button>
                 )}
+
                 {user.can_deactivate && (
-                    <button type="button" onClick={() => open('deactivate')} className="text-red-700 underline">
+                    <button
+                        type="button"
+                        onClick={() => open('deactivate')}
+                        className="text-red-700 underline"
+                    >
                         Deactivate
                     </button>
                 )}
@@ -149,9 +191,13 @@ export default function RowActions({ user, removalReasons }: RowActionsProps) {
                             </Select>
 
                             <div>
-                                <label htmlFor={`details-${user.id}`} className="block text-sm font-medium text-stone-700">
+                                <label
+                                    htmlFor={`details-${user.id}`}
+                                    className="block text-sm font-medium text-stone-700"
+                                >
                                     Details (optional)
                                 </label>
+
                                 <textarea
                                     id={`details-${user.id}`}
                                     rows={3}
@@ -159,7 +205,12 @@ export default function RowActions({ user, removalReasons }: RowActionsProps) {
                                     onChange={(e) => setDetails(e.target.value)}
                                     className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-maroon focus:ring-maroon"
                                 />
-                                {errors.details && <p className="mt-1 text-sm text-red-600">{errors.details}</p>}
+
+                                {errors.details && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.details}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}

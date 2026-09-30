@@ -16,3 +16,11 @@
 - Only users with users.manage-access (Admin, Super Admin) choose Diser modules. HR gets defaults on create and cannot change them.
 - Role changes after creation are NOT part of Phase 2.
 - Known gap (closed in Phase 3): a temporary Diser still sees all assigned modules; the "learning only" restriction is enforced in Phase 3.
+- Account state machine lives in AccountStatus::canTransitionTo(). Temporary -> Active|Restricted|Deactivated; Restricted -> Active|Deactivated; Active -> Deactivated; Deactivated is final (rehire = future phase).
+- Every status change goes through AccountLifecycleService::transition() and records status_changed_at / status_changed_by (NULL = system).
+- Immediate access removal = per-request middleware + delete DB sessions + rotate remember_token (SessionRevoker). Requires SESSION_DRIVER=database.
+- accounts:expire-temporary runs hourly; it only cleans up state. The middleware already blocks expired accounts at once. Production needs a cron for schedule:run.
+- Temporary Diser (no admin.access) may only open routes in config('portal.temporary_allowed_routes'); other temporary roles keep their admin tools.
+- Nobody may approve/restrict/deactivate their own account. Deactivate = Admin, Super Admin. HR sends removal requests; Admin/Super Admin process them. One pending request per employee (partial unique index).
+- Resend credentials: only while temporary, before the first password change, before expiry; never extends the 7 days.
+- Force password change on first login (must_change_password). Completing a Breeze password reset also clears the flag.
