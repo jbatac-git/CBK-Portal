@@ -9,6 +9,11 @@ use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Portal\HomeController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Admin\LearningMaterialCategoryController;
+use App\Http\Controllers\Admin\LearningMaterialController;
+use App\Http\Controllers\Portal\LearningController;
+use App\Http\Controllers\Portal\LearningMaterialStreamController;
+
 Route::redirect('/', '/dashboard');
 
 Route::middleware(['auth', 'active'])->group(function () {
@@ -48,13 +53,23 @@ Route::middleware(['auth', 'active'])->group(function () {
                     Route::post('{removalRequest}/approve', 'approve')->name('approve');
                     Route::post('{removalRequest}/decline', 'decline')->name('decline');
                 });
+
+            // Ito ang dalawang linya para sa Phase 4 — i-verify na nandito talaga
+            Route::resource('learning-material-categories', LearningMaterialCategoryController::class)->except(['show']);
+            Route::resource('learning-materials', LearningMaterialController::class)->except(['show']);
+            Route::post('learning-materials/{learning_material}/archive', [LearningMaterialController::class, 'archive'])
+                ->name('learning-materials.archive');
         });
 
         Route::prefix('portal')->name('portal.')->middleware('permission:portal.access')->group(function () {
             Route::get('/', HomeController::class)->name('home');
-            // Phase 4+: learning, price lists, contact, profile
+            Route::prefix('learning')->name('learning.')->group(function () {
+                Route::get('/', [LearningController::class, 'index'])->name('index');
+                Route::get('{learningMaterial}', [LearningController::class, 'show'])->name('show');
+                Route::get('{learningMaterial}/stream', LearningMaterialStreamController::class)->name('stream');
+            });
         });
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
