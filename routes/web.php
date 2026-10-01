@@ -14,9 +14,17 @@ use App\Http\Controllers\Admin\LearningMaterialController;
 use App\Http\Controllers\Portal\LearningController;
 use App\Http\Controllers\Portal\LearningMaterialStreamController;
 
+use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Admin\PriceListController;
+use App\Http\Controllers\Admin\RolePermissionsController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Portal\ContactController;
+use App\Http\Controllers\Portal\PriceListController as PortalPriceListController;
+use App\Http\Controllers\ProfileController;
+
 Route::redirect('/', '/dashboard');
 
-Route::middleware(['auth', 'active'])->group(function () {
+Route::middleware(['auth', 'active', 'password.changed', 'temporary.scope'])->group(function () {
     // Reachable WHILE the "must change password" flag is set,
     // so they are deliberately outside the group below.
     Route::get('/password/change', [ForcedPasswordController::class, 'create'])->name('password.change');
@@ -25,7 +33,15 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware(['password.changed', 'temporary.scope'])->group(function () {
         Route::get('/dashboard', DashboardRedirectController::class)->name('dashboard');
 
+        Route::prefix('profile')->name('profile.')->group(function () {
+            Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+            Route::put('/contact', [ProfileController::class, 'updateContact'])->name('contact.update');
+            Route::post('/photo', [ProfileController::class, 'updatePhoto'])->name('photo.update');
+            Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+        });
+
         Route::prefix('admin')->name('admin.')->middleware('permission:admin.access')->group(function () {
+
             Route::get('/', DashboardController::class)->name('dashboard');
 
             Route::resource('users', UserController::class)->except(['show', 'destroy']);
@@ -59,6 +75,24 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::resource('learning-materials', LearningMaterialController::class)->except(['show']);
             Route::post('learning-materials/{learning_material}/archive', [LearningMaterialController::class, 'archive'])
                 ->name('learning-materials.archive');
+
+            Route::resource('price-lists', PriceListController::class)->except(['show', 'destroy']);
+            Route::post('price-lists/{price_list}/archive', [PriceListController::class, 'archive'])->name('price-lists.archive');
+
+            Route::prefix('contact-us')->name('contact-us.')->middleware('permission:contact-us.manage')->group(function () {
+                Route::get('/', [ContactUsController::class, 'edit'])->name('edit');
+                Route::put('/', [ContactUsController::class, 'update'])->name('update');
+            });
+
+            Route::prefix('settings')->name('settings.')->middleware('permission:settings.manage')->group(function () {
+                Route::get('/', [SettingsController::class, 'edit'])->name('index');
+                Route::put('/', [SettingsController::class, 'update'])->name('update');
+            });
+
+            Route::prefix('roles-permissions')->name('roles-permissions.')->middleware('permission:roles.manage')->group(function () {
+                Route::get('/', [RolePermissionsController::class, 'index'])->name('index');
+                Route::put('/', [RolePermissionsController::class, 'update'])->name('update');
+            });
         });
 
         Route::prefix('portal')->name('portal.')->middleware('permission:portal.access')->group(function () {
@@ -68,6 +102,9 @@ Route::middleware(['auth', 'active'])->group(function () {
                 Route::get('{learningMaterial}', [LearningController::class, 'show'])->name('show');
                 Route::get('{learningMaterial}/stream', LearningMaterialStreamController::class)->name('stream');
             });
+
+            Route::get('price-lists', PortalPriceListController::class)->name('price-lists.index');
+            Route::get('contact', ContactController::class)->name('contact.index');
         });
     });
 });
