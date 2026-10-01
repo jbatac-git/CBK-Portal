@@ -18,37 +18,39 @@ class User extends Authenticatable
     use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
-    'first_name',
-    'middle_name',
-    'last_name',
-    'username',
-    'employee_id',
-    'email',
-    'password',
-    'company_id',
-    'department_id',
-    'status',
-    'temporary_access_expires_at',
-    'must_change_password',
-    'status_changed_at',
-];
-
-protected $hidden = [
-    'password',
-    'remember_token',
-];
-
-protected function casts(): array
-{
-    return [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'status' => AccountStatus::class,
-        'temporary_access_expires_at' => 'datetime',
-        'must_change_password' => 'boolean',
-        'status_changed_at' => 'datetime',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'username',
+        'employee_id',
+        'email',
+        'contact_number',
+        'password',
+        'company_id',
+        'department_id',
+        'status',
+        'profile_photo_path',
+        'temporary_access_expires_at',
+        'must_change_password',
+        'status_changed_at',
     ];
-}
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'status' => AccountStatus::class,
+            'temporary_access_expires_at' => 'datetime',
+            'must_change_password' => 'boolean',
+            'status_changed_at' => 'datetime',
+        ];
+    }
     /**
      * Full display name, e.g. "Jhonel Ganal Batac".
      * Computed, so there is no duplicated data to keep in sync.
@@ -109,5 +111,12 @@ protected function casts(): array
     public function isRestrictedToInitialMaterials(): bool
     {
         return $this->status === AccountStatus::Temporary && ! $this->can('admin.access');
+    }
+    /** Null when no custom photo was uploaded; the frontend falls back to initials. */
+    public function profilePhotoUrl(): ?string
+    {
+        return $this->profile_photo_path
+            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path)
+            : null;
     }
 }
