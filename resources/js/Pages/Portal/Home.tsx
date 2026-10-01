@@ -1,8 +1,9 @@
 import { usePermission } from '@/Hooks/usePermission';
 import DiserLayout from '@/Layouts/DiserLayout';
 import { Head } from '@inertiajs/react';
-
-export default function Home() {
+import MaterialsGrid from '@/Components/Materials/MaterialsGrid';
+import { PortalMaterial } from '@/types/material';
+export default function Home({ materials }: { materials: PortalMaterial[] }) {
     const { user } = usePermission();
 
     return (
@@ -31,7 +32,7 @@ export default function Home() {
                 <h2 className="text-center text-lg font-medium text-maroon">Learn and grow with CBK</h2>
                 <div className="mx-auto mt-1 h-1 w-10 bg-gold" />
                 <div className="mt-4 rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500">
-                    Learning materials will appear here soon.
+                   <MaterialsGrid materials={materials.slice(0, 8)} />
                 </div>
             </section>
         </DiserLayout>
