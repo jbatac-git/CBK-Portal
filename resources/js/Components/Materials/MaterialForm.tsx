@@ -54,7 +54,12 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                     </Select>
 
                     <Select label="Status" name="status" value={data.status}
-                        onChange={(e) => setData('status', e.target.value)} error={errors.status}>
+                        onChange={(e) =>
+                            setData(
+                                'status',
+                                e.target.value as 'draft' | 'published' | 'archived'
+                            )
+                        } error={errors.status}>
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
                         <option value="archived">Archived</option>
@@ -63,7 +68,12 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
 
                 {!material && (
                     <Select label="Material type" name="type" value={data.type}
-                        onChange={(e) => setData('type', e.target.value)} error={errors.type}>
+                        onChange={(e) =>
+                            setData(
+                                'type',
+                                e.target.value as 'pdf' | 'video'
+                            )
+                        } error={errors.type}>
                         <option value="pdf">PDF document</option>
                         <option value="video">Training video</option>
                     </Select>

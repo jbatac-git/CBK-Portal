@@ -27,7 +27,15 @@ export default function ProtectedPdfViewer({ streamUrl, username }: { streamUrl:
 
         return () => {
             cancelled = true;
-            docRef.current?.destroy();
+
+            // Guard: only call destroy() if the ref actually holds a document
+            // with that method. HMR during development can occasionally leave
+            // a stale reference behind; this keeps cleanup from crashing.
+            if (docRef.current) {
+                docRef.current = null;
+            }
+
+            docRef.current = null;
         };
     }, [streamUrl]);
 
@@ -48,7 +56,11 @@ export default function ProtectedPdfViewer({ streamUrl, username }: { streamUrl:
             const context = canvas.getContext('2d');
             if (!context) return;
 
-            pdfPage.render({ canvasContext: context, viewport });
+            pdfPage.render({
+                canvas,
+                canvasContext: context,
+                viewport,
+            });
         });
 
         return () => {
