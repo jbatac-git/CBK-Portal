@@ -1,32 +1,32 @@
 <?php
 
 return [
-    // Spec: temporary access is valid for 7 days.
     'temporary_access_days' => 7,
-
     'temporary_password_length' => 12,
-    // Route names a temporary Diser may open. Everything else returns 403.
+
     'temporary_allowed_routes' => ['dashboard', 'portal.home', 'portal.learning.*'],
+
     'learning_materials' => [
-        'max_pdf_kb' => 20480,     // 20 MB
-        'max_video_kb' => 512000,  // 500 MB
+        'max_pdf_kb' => 20480,
+        'max_video_kb' => 512000,
         'allowed_pdf_mimes' => ['application/pdf'],
         'allowed_video_mimes' => ['video/mp4', 'video/quicktime', 'video/webm'],
-        'price_lists' => [
-            'max_kb' => 20480, // 20 MB
-            'allowed_mimes' => ['application/pdf'],
-        ],
+    ],
 
-        'logo' => [
-            'max_kb' => 2048,
-            'width' => 512,
-            'height' => 512,
-        ],
+    'price_lists' => [
+        'max_kb' => 20480,
+        'allowed_mimes' => ['application/pdf'],
+    ],
 
-        'avatar' => [
-            'max_kb' => 4096,
-            'width' => 400,
-            'height' => 400,
-        ],
+    'logo' => [
+        'max_kb' => 2048,
+        'width' => 512,
+        'height' => 512,
+    ],
+
+    'avatar' => [
+        'max_kb' => 4096,
+        'width' => 400,
+        'height' => 400,
     ],
 ];

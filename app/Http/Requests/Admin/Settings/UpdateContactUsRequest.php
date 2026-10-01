@@ -14,11 +14,11 @@ class UpdateContactUsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'contact.headline' => ['required', 'string', 'max:255'],
-            'contact.phone' => ['required', 'string', 'max:50'],
-            'contact.email' => ['required', 'email', 'max:255'],
-            'contact.website' => ['nullable', 'string', 'max:255'],
-            'contact.location' => ['nullable', 'string', 'max:500'],
+            'headline' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+            'website' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

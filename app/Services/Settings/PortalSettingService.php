@@ -10,11 +10,19 @@ use Illuminate\Support\Str;
 class PortalSettingService
 {
     public const CONTACT_KEYS = [
-        'contact.headline', 'contact.phone', 'contact.email', 'contact.website', 'contact.location',
+        'contact.headline',
+        'contact.phone',
+        'contact.email',
+        'contact.website',
+        'contact.location',
     ];
 
     public const FOOTER_KEYS = [
-        'footer.company_name', 'footer.copyright', 'footer.contact', 'footer.website', 'footer.address',
+        'footer.company_name',
+        'footer.copyright',
+        'footer.contact',
+        'footer.website',
+        'footer.address',
     ];
 
     public const LOGO_KEY = 'branding.logo_path';
@@ -24,7 +32,7 @@ class PortalSettingService
     {
         $rows = PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
 
-        return collect($keys)->mapWithKeys(fn (string $key) => [$key => $rows[$key] ?? ''])->all();
+        return collect($keys)->mapWithKeys(fn(string $key) => [$key => $rows[$key] ?? ''])->all();
     }
 
     public function setMany(array $data): void
@@ -44,5 +52,11 @@ class PortalSettingService
         $path = PortalSetting::where('key', self::LOGO_KEY)->value('value');
 
         return $path ? Storage::disk('public')->url($path) : null;
+    }
+
+    /** The single row holding the branding logo's stored path, read without going through getMany(). */
+    public function currentLogoPath(): ?string
+    {
+        return PortalSetting::where('key', self::LOGO_KEY)->value('value');
     }
 }

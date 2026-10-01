@@ -6,11 +6,11 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { ChangeEvent, FormEventHandler, useState } from 'react';
 
 interface FooterData {
-    'footer.company_name': string;
-    'footer.copyright': string;
-    'footer.contact': string;
-    'footer.website': string;
-    'footer.address': string;
+    company_name: string;
+    copyright: string;
+    contact: string;
+    website: string;
+    address: string;
 }
 
 export default function Edit({ footer, logo_url }: { footer: FooterData; logo_url: string | null }) {
@@ -32,8 +32,7 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
     const saveLogo = (blob: Blob) => {
         const form = new FormData();
         form.append('logo', blob, 'logo.png');
-        // Footer fields are required by the backend's single validation rule
-        // set, so they ride along even when only the logo changed.
+        // Field names here are flat (no dots), so PHP will not mangle them.
         Object.entries(data).forEach(([key, value]) => form.append(key, value as string));
 
         router.post(route('admin.settings.update'), form, {
@@ -66,16 +65,16 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
 
                 <form onSubmit={submitFooter} className="space-y-4 rounded-xl border border-stone-200 bg-white p-5">
                     <h2 className="text-base font-medium text-maroon">Footer information</h2>
-                    <Input label="Company name" name="footer.company_name" value={data['footer.company_name']}
-                        onChange={(e) => setData('footer.company_name', e.target.value)} error={errors['footer.company_name']} />
-                    <Input label="Copyright text" name="footer.copyright" value={data['footer.copyright']}
-                        onChange={(e) => setData('footer.copyright', e.target.value)} error={errors['footer.copyright']} />
-                    <Input label="Contact details" name="footer.contact" value={data['footer.contact']}
-                        onChange={(e) => setData('footer.contact', e.target.value)} error={errors['footer.contact']} />
-                    <Input label="Website" name="footer.website" value={data['footer.website']}
-                        onChange={(e) => setData('footer.website', e.target.value)} error={errors['footer.website']} />
-                    <Input label="Address" name="footer.address" value={data['footer.address']}
-                        onChange={(e) => setData('footer.address', e.target.value)} error={errors['footer.address']} />
+                    <Input label="Company name" name="company_name" value={data.company_name}
+                        onChange={(e) => setData('company_name', e.target.value)} error={errors.company_name} />
+                    <Input label="Copyright text" name="copyright" value={data.copyright}
+                        onChange={(e) => setData('copyright', e.target.value)} error={errors.copyright} />
+                    <Input label="Contact details" name="contact" value={data.contact}
+                        onChange={(e) => setData('contact', e.target.value)} error={errors.contact} />
+                    <Input label="Website" name="website" value={data.website}
+                        onChange={(e) => setData('website', e.target.value)} error={errors.website} />
+                    <Input label="Address" name="address" value={data.address}
+                        onChange={(e) => setData('address', e.target.value)} error={errors.address} />
 
                     <div className="flex justify-end">
                         <Button type="submit" disabled={processing}>Save footer</Button>

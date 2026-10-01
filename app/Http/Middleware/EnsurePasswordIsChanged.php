@@ -8,12 +8,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsurePasswordIsChanged
 {
-    public function handle(Request $request, Closure $next): Response
-    {
-        if ($request->user()?->must_change_password) {
-            return redirect()->route('password.change');
-        }
-
-        return $next($request);
+  public function handle(Request $request, Closure $next): Response
+{
+    if ($request->user()?->must_change_password) {
+        return redirect()->route('password.change');
     }
+
+    return $next($request);
+}
 }
