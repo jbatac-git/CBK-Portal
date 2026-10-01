@@ -32,11 +32,11 @@ class LearningMaterialController extends Controller
         );
 
         return Inertia::render('Admin/LearningMaterials/Index', [
-            'materials' => $materials->through(fn (LearningMaterial $m) => LearningMaterialResource::make($m)->resolve()),
+            'materials' => $materials->through(fn(LearningMaterial $m) => LearningMaterialResource::make($m)->resolve()),
             'filters' => $request->only('search', 'status', 'category'),
             'categories' => $this->service->formOptions()['categories'],
             'statuses' => collect(MaterialStatus::cases())
-                ->map(fn (MaterialStatus $s) => ['value' => $s->value, 'label' => $s->label()])->values(),
+                ->map(fn(MaterialStatus $s) => ['value' => $s->value, 'label' => $s->label()])->values(),
         ]);
     }
 
@@ -53,11 +53,14 @@ class LearningMaterialController extends Controller
         $file = $request->file('file');
         unset($data['file']);
 
-        $this->service->create($data, $file, $request->user());
+        try {
+            $this->service->create($data, $file, $request->user());
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('admin.learning-materials.index')->with('success', 'Learning material uploaded.');
     }
-
     public function edit(LearningMaterial $learningMaterial): Response
     {
         $this->authorize('update', $learningMaterial);
@@ -68,24 +71,29 @@ class LearningMaterialController extends Controller
         ]);
     }
 
-    public function update(UpdateMaterialRequest $request, LearningMaterial $learningMaterial): RedirectResponse
-    {
-        $data = $request->validated();
-        $file = $request->file('file');
-        unset($data['file']);
+  public function update(UpdateMaterialRequest $request, LearningMaterial $learningMaterial): RedirectResponse
+{
+    $data = $request->validated();
+    $file = $request->file('file');
+    unset($data['file']);
 
-        return $this->attempt(
-            fn () => $this->service->update($learningMaterial, $data, $file),
-            "'{$learningMaterial->title}' updated.",
-        );
+    try {
+        $this->service->update($learningMaterial, $data, $file);
+    } catch (\DomainException $e) {
+        return back()->with('error', $e->getMessage());
     }
+
+    return redirect()
+        ->route('admin.learning-materials.index')
+        ->with('success', "'{$learningMaterial->title}' updated.");
+}
 
     public function archive(LearningMaterial $learningMaterial): RedirectResponse
     {
         $this->authorize('archive', $learningMaterial);
 
         return $this->attempt(
-            fn () => $this->service->archive($learningMaterial),
+            fn() => $this->service->archive($learningMaterial),
             "'{$learningMaterial->title}' archived.",
         );
     }

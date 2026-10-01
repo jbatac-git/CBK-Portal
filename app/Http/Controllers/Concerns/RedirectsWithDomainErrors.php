@@ -16,7 +16,7 @@ trait RedirectsWithDomainErrors
     {
         try {
             $action();
-        } catch (\DomainException $e) {
+        } catch (DomainException $e) {
             return back()->with('error', $e->getMessage());
         }
 
