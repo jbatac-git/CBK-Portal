@@ -27,9 +27,8 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
             )}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-maroon-dark text-white transition-transform lg:static lg:translate-x-0 ${
-                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
+                className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-maroon-dark text-white transition-transform lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
             >
                 <div className="flex items-center justify-between border-b-2 border-gold px-4 py-4">
                     <Logo />
@@ -63,11 +62,10 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
                                 key={item.label}
                                 href={route(item.routeName)}
                                 onClick={() => setSidebarOpen(false)}
-                                className={`flex items-center gap-3 rounded-md border-l-4 px-3 py-2 text-sm ${
-                                    active
+                                className={`flex items-center gap-3 rounded-md border-l-4 px-3 py-2 text-sm ${active
                                         ? 'border-gold bg-white/15 text-white'
                                         : 'border-transparent text-white/85 hover:bg-white/10'
-                                }`}
+                                    }`}
                             >
                                 <Icon className="h-5 w-5" />
                                 {item.label}
@@ -87,10 +85,10 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
                     </div>
 
                     <div className="flex items-center gap-3 text-sm">
-                        <div className="hidden text-right sm:block">
-                            <div className="font-medium text-stone-800">{user.name}</div>
+                        <Link href={route('profile.edit')} className="hidden text-right sm:block">
+                            <div className="font-medium text-stone-800 hover:underline">{user.name}</div>
                             <div className="text-xs text-stone-500">{user.roles.join(', ')}</div>
-                        </div>
+                        </Link>
                         <Link
                             href={route('logout')}
                             method="post"

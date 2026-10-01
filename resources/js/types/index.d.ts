@@ -28,4 +28,5 @@ export type PageProps<
         success?: string | null;
         error?: string | null;
     };
+    branding: { logo_url: string | null };
 };
