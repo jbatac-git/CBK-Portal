@@ -50,6 +50,8 @@ class HandleInertiaRequests extends Middleware
             'features' => [
                 'careers_enabled' => $this->settings->careersEnabled(),
             ],
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
         ];
     }
 }

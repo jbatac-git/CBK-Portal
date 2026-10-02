@@ -7,6 +7,8 @@ import { FormEventHandler } from 'react';
 interface ProfileData {
     name: string;
     username: string;
+    first_name: string;
+    last_name: string;
     email: string;
     employee_id: string;
     contact_number: string | null;
@@ -36,7 +38,12 @@ export default function ProfileForm({ profile }: { profile: ProfileData }) {
         <div className="space-y-6">
             <section className={`${card} space-y-4`}>
                 <h2 className="text-base font-medium text-maroon">Profile picture</h2>
-                <AvatarUploader currentUrl={profile.photo_url} name={profile.name} />
+               <AvatarUploader
+    currentUrl={profile.photo_url}
+    name={profile.name}
+    firstName={profile.first_name}
+    lastName={profile.last_name}
+/>
             </section>
 
             <section className={`${card} space-y-1 text-sm`}>

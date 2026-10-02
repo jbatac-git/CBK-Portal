@@ -2,7 +2,17 @@ import ImageCropper from '@/Components/Shared/ImageCropper';
 import { router } from '@inertiajs/react';
 import { ChangeEvent, useState } from 'react';
 import Avatar from '@/Components/Shared/Avatar';
-export default function AvatarUploader({ currentUrl, name }: { currentUrl: string | null; name: string }) {
+export default function AvatarUploader({
+    currentUrl,
+    name,
+    firstName,
+    lastName,
+}: {
+    currentUrl: string | null;
+    name: string;
+    firstName?: string;
+    lastName?: string;
+}) {
     const [rawImage, setRawImage] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
     const initials = name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
@@ -33,7 +43,7 @@ export default function AvatarUploader({ currentUrl, name }: { currentUrl: strin
                 <img src={currentUrl} alt={name} className="h-20 w-20 rounded-full object-cover" />
             ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-maroon text-xl text-white">
-                    {initials}
+                    <Avatar name={name} photoUrl={currentUrl} firstName={firstName} lastName={lastName} size="lg" />
                 </div>
             )}
 

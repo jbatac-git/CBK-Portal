@@ -92,7 +92,7 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
                                 <div className="font-medium text-stone-800 hover:underline">{user.name}</div>
                                 <div className="text-xs text-stone-500">{user.roles.join(', ')}</div>
                             </div>
-                            <Avatar name={user.name} photoUrl={user.profile_photo_url} size="sm" />
+                            <Avatar name={user.name} photoUrl={user.profile_photo_url} firstName={user.first_name} lastName={user.last_name} size="sm" />
                         </Link>
                         <Link
                             href={route('logout')}

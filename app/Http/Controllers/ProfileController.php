@@ -28,6 +28,8 @@ class ProfileController extends Controller
         return Inertia::render($page, [
             'profile' => [
                 'name' => $user->name,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
                 'username' => $user->username,
                 'email' => $user->email,
                 'employee_id' => $user->employee_id,
