@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Home, LayoutDashboard, LucideIcon, Phone, ShieldCheck, Settings, User, UserMinus, Users } from 'lucide-react';
+import { BookOpen, FileText, Home, LayoutDashboard, LucideIcon, Phone, ShieldCheck, Settings, User, UserMinus, Users, Building2, Network, ListChecks } from 'lucide-react';
 
 export interface NavItem {
     label: string;
@@ -19,6 +19,9 @@ export const adminNav: NavItem[] = [
     { label: 'Contact Us', icon: Phone, permission: 'contact-us.manage', routeName: 'admin.contact-us.edit', active: 'admin.contact-us.*', ready: true },
     { label: 'Settings', icon: Settings, permission: 'settings.manage', routeName: 'admin.settings.index', active: 'admin.settings.index', ready: true },
     { label: 'Roles & Permissions', icon: ShieldCheck, permission: 'roles.manage', routeName: 'admin.roles-permissions.index', active: 'admin.roles-permissions.*', ready: true },
+    { label: 'Companies', icon: Building2, permission: 'settings.manage', routeName: 'admin.companies.index', active: 'admin.companies.*', ready: true },
+    { label: 'Departments', icon: Network, permission: 'settings.manage', routeName: 'admin.departments.index', active: 'admin.departments.*', ready: true },
+    { label: 'Removal Reasons', icon: ListChecks, permission: 'settings.manage', routeName: 'admin.removal-reasons.index', active: 'admin.removal-reasons.*', ready: true },
 ];
 
 export const diserNav: NavItem[] = [
