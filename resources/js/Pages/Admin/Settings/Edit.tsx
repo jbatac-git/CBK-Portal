@@ -13,11 +13,27 @@ interface FooterData {
     address: string;
 }
 
-export default function Edit({ footer, logo_url }: { footer: FooterData; logo_url: string | null }) {
+export default function Edit({ footer, logo_url, careers_enabled }: {
+    footer: FooterData;
+    logo_url: string | null;
+    careers_enabled: boolean;
+}) {
     const { data, setData, put, processing, errors } = useForm({ footer });
     const [rawLogo, setRawLogo] = useState<string | null>(null);
     const [logoProcessing, setLogoProcessing] = useState(false);
+    const [careersEnabled, setCareersEnabled] = useState(careers_enabled);
+    const [careersSaving, setCareersSaving] = useState(false);
 
+    const toggleCareers = () => {
+        const next = !careersEnabled;
+
+        router.put(route('admin.settings.careers.update'), { careers_enabled: next }, {
+            preserveScroll: true,
+            onStart: () => setCareersSaving(true),
+            onSuccess: () => setCareersEnabled(next),
+            onFinish: () => setCareersSaving(false),
+        });
+    };
     const update = (field: keyof FooterData, value: string) =>
         setData('footer', { ...data.footer, [field]: value });
 
@@ -32,21 +48,21 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
         e.target.value = '';
     };
 
-  const saveLogo = (blob: Blob) => {
-    const form = new FormData();
-    form.append('_method', 'PUT'); // <-- idinagdag: method spoofing, kasing-paraan ng ibang forms
-    form.append('logo', blob, 'logo.png');
-    Object.entries(data.footer).forEach(([key, value]) => {
-        form.append(`footer[${key}]`, value as string);
-    });
+    const saveLogo = (blob: Blob) => {
+        const form = new FormData();
+        form.append('_method', 'PUT'); // <-- idinagdag: method spoofing, kasing-paraan ng ibang forms
+        form.append('logo', blob, 'logo.png');
+        Object.entries(data.footer).forEach(([key, value]) => {
+            form.append(`footer[${key}]`, value as string);
+        });
 
-    router.post(route('admin.settings.update'), form, {
-        preserveScroll: true,
-        onStart: () => setLogoProcessing(true),
-        onSuccess: () => setRawLogo(null),
-        onFinish: () => setLogoProcessing(false),
-    });
-};
+        router.post(route('admin.settings.update'), form, {
+            preserveScroll: true,
+            onStart: () => setLogoProcessing(true),
+            onSuccess: () => setRawLogo(null),
+            onFinish: () => setLogoProcessing(false),
+        });
+    };
 
     return (
         <AdminLayout title="Portal Settings">
@@ -85,6 +101,27 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
                         <Button type="submit" disabled={processing}>Save footer</Button>
                     </div>
                 </form>
+                <section className="space-y-3 rounded-xl border border-stone-200 bg-white p-5">
+                    <h2 className="text-base font-medium text-maroon">Future Modules</h2>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-stone-800">Careers</p>
+                            <p className="text-xs text-stone-500">
+                                Job postings and recruitment information. Not yet built — this only reserves the toggle for a future phase.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={toggleCareers}
+                            disabled={careersSaving}
+                            className={`relative h-6 w-11 shrink-0 rounded-full transition ${careersEnabled ? 'bg-maroon' : 'bg-stone-300'}`}
+                        >
+                            <span
+                                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${careersEnabled ? 'left-5' : 'left-0.5'}`}
+                            />
+                        </button>
+                    </div>
+                </section>
             </div>
 
             {rawLogo && (

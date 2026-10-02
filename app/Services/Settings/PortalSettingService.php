@@ -26,7 +26,7 @@ class PortalSettingService
     ];
 
     public const LOGO_KEY = 'branding.logo_path';
-
+    public const CAREERS_KEY = 'features.careers_enabled';
     /** Returns every requested key, defaulting missing ones to an empty string. */
     public function getMany(array $keys): array
     {
@@ -76,5 +76,9 @@ class PortalSettingService
         return collect($nested)->mapWithKeys(
             fn($value, string $key) => [$prefix . $key => $value]
         )->all();
+    }
+    public function careersEnabled(): bool
+    {
+        return PortalSetting::where('key', self::CAREERS_KEY)->value('value') === '1';
     }
 }

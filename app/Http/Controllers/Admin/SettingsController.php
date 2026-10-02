@@ -9,6 +9,7 @@ use App\Services\Settings\PortalSettingService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
@@ -46,5 +47,17 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Portal settings updated.');
+    }
+    public function updateCareersFlag(Request $request): RedirectResponse
+    {
+        $this->authorize('settings.manage'); // defense in depth; the route is already gated
+
+        $validated = $request->validate(['careers_enabled' => ['required', 'boolean']]);
+
+        $this->settings->setMany([
+            PortalSettingService::CAREERS_KEY => $validated['careers_enabled'] ? '1' : '0',
+        ]);
+
+        return back()->with('success', 'Careers module setting updated.');
     }
 }

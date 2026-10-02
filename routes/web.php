@@ -85,10 +85,10 @@ Route::middleware(['auth', 'active'])->group(function () {
                 Route::get('/', [ContactUsController::class, 'edit'])->name('edit');
                 Route::put('/', [ContactUsController::class, 'update'])->name('update');
             });
-
             Route::prefix('settings')->name('settings.')->middleware('permission:settings.manage')->group(function () {
                 Route::get('/', [SettingsController::class, 'edit'])->name('index');
                 Route::put('/', [SettingsController::class, 'update'])->name('update');
+                Route::put('careers', [SettingsController::class, 'updateCareersFlag'])->name('careers.update');
             });
 
             Route::prefix('roles-permissions')->name('roles-permissions.')->middleware('permission:roles.manage')->group(function () {

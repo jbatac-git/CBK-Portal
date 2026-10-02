@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Home, LayoutDashboard, LucideIcon, Phone, ShieldCheck, Settings, User, UserMinus, Users, Building2, Network, ListChecks } from 'lucide-react';
+import { BookOpen, FileText, Home, LayoutDashboard, LucideIcon, Phone, ShieldCheck, Settings, User, UserMinus, Users, Building2, Network, ListChecks, Briefcase } from 'lucide-react';
 
 export interface NavItem {
     label: string;
@@ -30,4 +30,5 @@ export const diserNav: NavItem[] = [
     { label: 'Price Lists', icon: FileText, permission: 'portal.price-lists', routeName: 'portal.price-lists.index', active: 'portal.price-lists.index', ready: true },
     { label: 'Contact', icon: Phone, permission: 'portal.contact-us', routeName: 'portal.contact.index', active: 'portal.contact.index', ready: true },
     { label: 'Profile', icon: User, permission: 'portal.access', routeName: 'profile.edit', active: 'profile.*', ready: true },
+    { label: 'Careers', icon: Briefcase, permission: 'portal.access', routeName: 'portal.home', active: '__careers__', ready: false },
 ];

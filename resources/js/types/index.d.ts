@@ -32,6 +32,7 @@ export type PageProps<
             contact: string;
             website: string;
             address: string;
+            features: { careers_enabled: boolean };
         };
     };
 };
