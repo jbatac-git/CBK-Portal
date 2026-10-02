@@ -11,7 +11,8 @@ import Avatar from '@/Components/Shared/Avatar';
 
 export default function DiserLayout({ children }: PropsWithChildren) {
     const { user, can } = usePermission();
-    const { branding } = usePage<PageProps>().props;
+    const { branding, features } = usePage<PageProps>().props;
+
     const items = diserNav.filter(
         (item) => can(item.permission) && (!item.featureFlag || features[item.featureFlag]),
     );
@@ -21,7 +22,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                 <Logo />
                 <div className="flex items-center gap-3">
                     <Link href={route('profile.edit')}>
-                       <Avatar name={user.name} photoUrl={user.profile_photo_url} firstName={user.first_name} lastName={user.last_name} size="sm" />
+                        <Avatar name={user.name} photoUrl={user.profile_photo_url} firstName={user.first_name} lastName={user.last_name} size="sm" />
                     </Link>
                     <Link
                         href={route('logout')}

@@ -25,6 +25,11 @@ export type PageProps<
 > = T & {
     auth: { user: AuthUser };
     flash: { success?: string | null; error?: string | null };
+
+    features: {
+        [key: string]: boolean;
+    };
+
     branding: {
         logo_url: string | null;
         footer: {
@@ -33,7 +38,9 @@ export type PageProps<
             contact: string;
             website: string;
             address: string;
-            features: { careers_enabled: boolean };
+            features: {
+                careers_enabled: boolean;
+            };
         };
     };
 };
