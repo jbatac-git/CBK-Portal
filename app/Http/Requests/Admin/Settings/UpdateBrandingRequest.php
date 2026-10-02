@@ -15,11 +15,12 @@ class UpdateBrandingRequest extends FormRequest
     {
         return [
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:'.config('portal.logo.max_kb')],
-            'company_name' => ['required', 'string', 'max:255'],
-            'copyright' => ['nullable', 'string', 'max:255'],
-            'contact' => ['nullable', 'string', 'max:255'],
-            'website' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:500'],
+            'footer' => ['required', 'array'],
+            'footer.company_name' => ['required', 'string', 'max:255'],
+            'footer.copyright' => ['nullable', 'string', 'max:255'],
+            'footer.contact' => ['nullable', 'string', 'max:255'],
+            'footer.website' => ['nullable', 'string', 'max:255'],
+            'footer.address' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

@@ -15,31 +15,19 @@ class ContactUsController extends Controller
 
     public function edit(): Response
     {
-        // Stored internally as dot-prefixed keys; the form only ever sees flat field names.
-        $stored = $this->settings->getMany(PortalSettingService::CONTACT_KEYS);
-
         return Inertia::render('Admin/Settings/ContactUs', [
-            'contact' => [
-                'headline' => $stored['contact.headline'],
-                'phone' => $stored['contact.phone'],
-                'email' => $stored['contact.email'],
-                'website' => $stored['contact.website'],
-                'location' => $stored['contact.location'],
-            ],
+            'contact' => $this->settings->stripPrefix(
+                $this->settings->getMany(PortalSettingService::CONTACT_KEYS),
+                'contact.',
+            ),
         ]);
     }
 
     public function update(UpdateContactUsRequest $request): RedirectResponse
     {
-        $data = $request->validated();
-
-        $this->settings->setMany([
-            'contact.headline' => $data['headline'],
-            'contact.phone' => $data['phone'],
-            'contact.email' => $data['email'],
-            'contact.website' => $data['website'] ?? null,
-            'contact.location' => $data['location'] ?? null,
-        ]);
+        $this->settings->setMany(
+            $this->settings->addPrefix($request->validated('contact'), 'contact.')
+        );
 
         return back()->with('success', 'Contact information updated.');
     }

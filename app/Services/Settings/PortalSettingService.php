@@ -54,9 +54,27 @@ class PortalSettingService
         return $path ? Storage::disk('public')->url($path) : null;
     }
 
-    /** The single row holding the branding logo's stored path, read without going through getMany(). */
-    public function currentLogoPath(): ?string
+    /**
+     * ['contact.headline' => 'x', 'contact.phone' => 'y'] + 'contact.'
+     * -> ['headline' => 'x', 'phone' => 'y']
+     * Converts our flat DB-key shape into the nested shape the frontend
+     * form (and the nested validation rules) expect.
+     */
+    public function stripPrefix(array $flat, string $prefix): array
     {
-        return PortalSetting::where('key', self::LOGO_KEY)->value('value');
+        return collect($flat)->mapWithKeys(
+            fn($value, string $key) => [Str::after($key, $prefix) => $value]
+        )->all();
+    }
+
+    /**
+     * The reverse of stripPrefix(): nested validated input back into the
+     * flat dot-keyed shape setMany() expects.
+     */
+    public function addPrefix(array $nested, string $prefix): array
+    {
+        return collect($nested)->mapWithKeys(
+            fn($value, string $key) => [$prefix . $key => $value]
+        )->all();
     }
 }

@@ -45,14 +45,13 @@ class LearningMaterialTest extends TestCase
         return $user;
     }
 
-    private function fakePdf(string $name = 'overview.pdf'): UploadedFile
-    {
-        // A minimal but structurally valid PDF, so finfo genuinely detects
-        // application/pdf — not just a correctly-named empty file.
-        $content = "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>";
-
-        return UploadedFile::fake()->createWithContent($name, $content);
-    }
+   private function fakePdf(string $name = 'overview.pdf'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent(
+        $name,
+        "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>",
+    );
+}
 
     public function test_admin_can_upload_a_published_pdf(): void
     {

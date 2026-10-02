@@ -14,9 +14,12 @@ interface FooterData {
 }
 
 export default function Edit({ footer, logo_url }: { footer: FooterData; logo_url: string | null }) {
-    const { data, setData, put, processing, errors } = useForm({ ...footer });
+    const { data, setData, put, processing, errors } = useForm({ footer });
     const [rawLogo, setRawLogo] = useState<string | null>(null);
     const [logoProcessing, setLogoProcessing] = useState(false);
+
+    const update = (field: keyof FooterData, value: string) =>
+        setData('footer', { ...data.footer, [field]: value });
 
     const submitFooter: FormEventHandler = (e) => {
         e.preventDefault();
@@ -32,8 +35,12 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
     const saveLogo = (blob: Blob) => {
         const form = new FormData();
         form.append('logo', blob, 'logo.png');
-        // Field names here are flat (no dots), so PHP will not mangle them.
-        Object.entries(data).forEach(([key, value]) => form.append(key, value as string));
+        // Multipart POST: PHP only parses nested arrays from field names
+        // using bracket syntax ("footer[company_name]"), so build those
+        // explicitly here instead of a plain object key.
+        Object.entries(data.footer).forEach(([key, value]) => {
+            form.append(`footer[${key}]`, value as string);
+        });
 
         router.post(route('admin.settings.update'), form, {
             preserveScroll: true,
@@ -65,16 +72,16 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
 
                 <form onSubmit={submitFooter} className="space-y-4 rounded-xl border border-stone-200 bg-white p-5">
                     <h2 className="text-base font-medium text-maroon">Footer information</h2>
-                    <Input label="Company name" name="company_name" value={data.company_name}
-                        onChange={(e) => setData('company_name', e.target.value)} error={errors.company_name} />
-                    <Input label="Copyright text" name="copyright" value={data.copyright}
-                        onChange={(e) => setData('copyright', e.target.value)} error={errors.copyright} />
-                    <Input label="Contact details" name="contact" value={data.contact}
-                        onChange={(e) => setData('contact', e.target.value)} error={errors.contact} />
-                    <Input label="Website" name="website" value={data.website}
-                        onChange={(e) => setData('website', e.target.value)} error={errors.website} />
-                    <Input label="Address" name="address" value={data.address}
-                        onChange={(e) => setData('address', e.target.value)} error={errors.address} />
+                    <Input label="Company name" name="company_name" value={data.footer.company_name}
+                        onChange={(e) => update('company_name', e.target.value)} error={errors['footer.company_name']} />
+                    <Input label="Copyright text" name="copyright" value={data.footer.copyright}
+                        onChange={(e) => update('copyright', e.target.value)} error={errors['footer.copyright']} />
+                    <Input label="Contact details" name="contact" value={data.footer.contact}
+                        onChange={(e) => update('contact', e.target.value)} error={errors['footer.contact']} />
+                    <Input label="Website" name="website" value={data.footer.website}
+                        onChange={(e) => update('website', e.target.value)} error={errors['footer.website']} />
+                    <Input label="Address" name="address" value={data.footer.address}
+                        onChange={(e) => update('address', e.target.value)} error={errors['footer.address']} />
 
                     <div className="flex justify-end">
                         <Button type="submit" disabled={processing}>Save footer</Button>

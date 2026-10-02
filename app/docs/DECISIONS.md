@@ -24,3 +24,13 @@
 - Nobody may approve/restrict/deactivate their own account. Deactivate = Admin, Super Admin. HR sends removal requests; Admin/Super Admin process them. One pending request per employee (partial unique index).
 - Resend credentials: only while temporary, before the first password change, before expiry; never extends the 7 days.
 - Force password change on first login (must_change_password). Completing a Breeze password reset also clears the flag.
+- Price lists are NOT protected like learning materials (direct download via public disk) — business decision, confirm with CBK.
+- Profile photos and the portal logo use the `public` disk (not sensitive); learning materials stay on `local`.
+- Image uploads are cropped client-side (react-easy-crop) AND resized server-side (Intervention Image) to a fixed size, so the final size is never trusted from the client alone.
+- Roles & Permissions UI only edits Admin and HR. Super Admin always keeps every permission (re-synced on every save as a safety net). Diser has no toggleable role permissions here — Diser module access is per-employee, managed in User Management.
+- Editable permission set for the matrix excludes admin.access/portal.access (base entry) and settings.manage/roles.manage (Super-Admin-only by design).
+- Profile lets a user change: contact number, photo, password. Name, email, username, and employee ID remain HR/Admin-managed.
+- Profile is locked during the 7-day temporary access period (matches the spec's "Approved" employees only).
+- Gotcha: a dot in a Form Request rule key ALWAYS means "nested array path" in Laravel, never a literal flat key. Settings forms (Contact Us, Footer) must send true nested arrays (`contact: {...}`, `footer: {...}`), not flat keys like `contact.headline`. PortalSettingService::stripPrefix()/addPrefix() convert between that nested HTTP shape and our flat dot-keyed DB storage shape.
+- Gotcha: UploadedFile::fake()->create() does NOT write real file bytes — only a faked reported size. Any test that relies on real content-sniffing (our finfo-based MIME check) must use UploadedFile::fake()->createWithContent() with genuine signature bytes (e.g. "%PDF-1.4...") instead.
+- `RedirectsWithDomainErrors` must be used via `use RedirectsWithDomainErrors;` directly in the controller class — never through an anonymous class, since its `attempt()` method is `protected` and not accessible from outside that scope.

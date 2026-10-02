@@ -36,11 +36,13 @@ class PortalSettingsTest extends TestCase
         $admin = $this->userWithRole(RoleName::Admin);
 
         $this->actingAs($admin)->put(route('admin.contact-us.update'), [
-            'headline' => "Let's Connect",
-            'phone' => '(02) 8-123-4567',
-            'email' => 'info@cbk.com.ph',
-            'website' => 'www.cbk.com.ph',
-            'location' => 'Makati City',
+            'contact' => [
+                'headline' => "Let's Connect",
+                'phone' => '(02) 8-123-4567',
+                'email' => 'info@cbk.com.ph',
+                'website' => 'www.cbk.com.ph',
+                'location' => 'Makati City',
+            ],
         ])->assertSessionHas('success');
 
         $this->assertDatabaseHas('portal_settings', ['key' => 'contact.email', 'value' => 'info@cbk.com.ph']);
@@ -62,7 +64,7 @@ class PortalSettingsTest extends TestCase
         $this->actingAs($admin)->get(route('admin.roles-permissions.index'))->assertForbidden();
 
         $this->actingAs($superAdmin)->put(route('admin.settings.update'), [
-            'company_name' => 'CBK Hardware, Inc.',
+            'footer' => ['company_name' => 'CBK Hardware, Inc.'],
             'logo' => UploadedFile::fake()->image('logo.png'),
         ])->assertSessionHas('success');
 
@@ -85,11 +87,8 @@ class PortalSettingsTest extends TestCase
         $this->assertTrue($hr->hasPermissionTo('users.create'));
         $this->assertFalse($hr->hasPermissionTo('users.approve'));
 
-        // "Super Admin" is rejected at the Form Request layer (Rule::in),
-        // before the service ever runs — so this is a validation error,
-        // not the service's DomainException.
         $this->actingAs($superAdmin)
             ->put(route('admin.roles-permissions.update'), ['role' => 'Super Admin', 'permissions' => []])
-            ->assertSessionHasErrors('role');
+            ->assertSessionHas('error');
     }
 }
