@@ -84,10 +84,7 @@ export default function RowActions({
             return;
         }
 
-        const payload =
-            action === 'removal'
-                ? { reason, details }
-                : {};
+      const payload = action === 'removal' ? { removal_reason_id: reason, details } : {};
 
         router.post(route(configs[action].routeName, user.id), payload, {
             preserveScroll: true,

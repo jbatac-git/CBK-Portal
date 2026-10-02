@@ -34,7 +34,7 @@ class RemovalRequestService
             return RemovalRequest::create([
                 'user_id' => $user->id,
                 'requested_by' => $actor->id,
-                'reason' => $data['reason'],
+                'removal_reason_id' => $data['removal_reason_id'],
                 'details' => $data['details'] ?? null,
             ]);
         } catch (UniqueConstraintViolationException) {

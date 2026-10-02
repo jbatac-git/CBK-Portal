@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Admin\RemovalRequests;
 
-use App\Enums\RemovalReason;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
 
 class SubmitRequest extends FormRequest
 {
@@ -16,7 +15,7 @@ class SubmitRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => ['required', new Enum(RemovalReason::class)],
+            'removal_reason_id' => ['required', Rule::exists('removal_reasons', 'id')->where('is_active', true)],
             'details' => ['nullable', 'string', 'max:1000'],
         ];
     }

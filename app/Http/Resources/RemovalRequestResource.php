@@ -14,7 +14,7 @@ class RemovalRequestResource extends JsonResource
             'id' => $this->id,
             'employee' => $this->user->name,
             'username' => $this->user->username,
-            'reason' => $this->reason->label(),
+            'reason' => $this->reason->name,
             'details' => $this->details,
             'requested_by' => $this->requester->name,
             'requested_at' => $this->created_at->toIso8601String(),
