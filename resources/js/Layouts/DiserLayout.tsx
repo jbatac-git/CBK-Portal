@@ -11,8 +11,9 @@ import Avatar from '@/Components/Shared/Avatar';
 export default function DiserLayout({ children }: PropsWithChildren) {
     const { user, can } = usePermission();
     const { branding } = usePage<PageProps>().props;
-    const items = diserNav.filter((item) => can(item.permission));
-
+    const items = diserNav.filter(
+        (item) => can(item.permission) && (!item.featureFlag || features[item.featureFlag]),
+    );
     return (
         <div className="flex min-h-screen flex-col bg-cream">
             <header className="sticky top-0 z-30 flex items-center justify-between border-b-4 border-gold bg-maroon px-4 py-3">

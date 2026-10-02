@@ -26,6 +26,8 @@ use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\RemovalReasonController;
 
+use App\Http\Controllers\Portal\CareersController;
+
 Route::redirect('/', '/dashboard');
 
 Route::middleware(['auth', 'active'])->group(function () {
@@ -112,6 +114,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::get('price-lists', PortalPriceListController::class)->name('price-lists.index');
             Route::get('contact', ContactController::class)->name('contact.index');
+            Route::get('careers', CareersController::class)->name('careers.index');
         });
     });
 });

@@ -8,8 +8,9 @@ export interface NavItem {
     active: string;
     ready: boolean;
     temporary?: boolean;
+    /** Kapag nilagay, naka-filter ang item base sa `page.props.features[key]`. */
+    featureFlag?: 'careers_enabled';
 }
-
 export const adminNav: NavItem[] = [
     { label: 'Dashboard', icon: LayoutDashboard, permission: 'admin.access', routeName: 'admin.dashboard', active: 'admin.dashboard', ready: true },
     { label: 'User Management', icon: Users, permission: 'users.view', routeName: 'admin.users.index', active: 'admin.users.*', ready: true },
@@ -30,5 +31,5 @@ export const diserNav: NavItem[] = [
     { label: 'Price Lists', icon: FileText, permission: 'portal.price-lists', routeName: 'portal.price-lists.index', active: 'portal.price-lists.index', ready: true },
     { label: 'Contact', icon: Phone, permission: 'portal.contact-us', routeName: 'portal.contact.index', active: 'portal.contact.index', ready: true },
     { label: 'Profile', icon: User, permission: 'portal.access', routeName: 'profile.edit', active: 'profile.*', ready: true },
-    { label: 'Careers', icon: Briefcase, permission: 'portal.access', routeName: 'portal.home', active: '__careers__', ready: false },
+    { label: 'Careers', icon: Briefcase, permission: 'portal.access', routeName: 'portal.careers.index', active: 'portal.careers.*', ready: true, featureFlag: 'careers_enabled' },
 ];
