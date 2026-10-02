@@ -27,40 +27,27 @@ class UserAccountService
      * Employees the actor is allowed to see: only accounts ranked below them
      * (Super Admin sees everyone).
      */
-    public function list(User $actor, ?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
-    {
-        $assignable = RoleName::assignableBy($actor);
+   public function list(User $actor, ?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
+{
+    return User::query()
+        ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])
+        ->visibleTo($actor)
+        ->when($status, fn (Builder $q) => $q->where('status', $status))
+        ->when($search, function (Builder $q) use ($search) {
+            $term = '%'.$search.'%';
 
-        $hiddenRoles = collect(RoleName::cases())
-            ->reject(fn(RoleName $role) => in_array($role, $assignable, true))
-            ->map(fn(RoleName $role) => $role->value)
-            ->values()
-            ->all();
-
-        return User::query()
-            ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])   // eager load: avoids N+1
-            ->when($hiddenRoles, fn(Builder $q) => $q->whereDoesntHave(
-                'roles',
-                fn(Builder $roles) => $roles->whereIn('name', $hiddenRoles),
-            ))
-            ->when($status, fn(Builder $q) => $q->where('status', $status))
-            ->when($search, function (Builder $q) use ($search) {
-                $term = '%' . $search . '%';
-
-                // The extra closure GROUPS the OR conditions. Without it, the
-                // "or" would escape and ignore the status / role filters above.
-                $q->where(function (Builder $q) use ($term) {
-                    $q->whereRaw("concat_ws(' ', first_name, middle_name, last_name) ilike ?", [$term])
-                        ->orWhere('username', 'ilike', $term)
-                        ->orWhere('employee_id', 'ilike', $term)
-                        ->orWhere('email', 'ilike', $term);
-                });
-            })
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->paginate($perPage)
-            ->withQueryString();
-    }
+            $q->where(function (Builder $q) use ($term) {
+                $q->whereRaw("concat_ws(' ', first_name, middle_name, last_name) ilike ?", [$term])
+                    ->orWhere('username', 'ilike', $term)
+                    ->orWhere('employee_id', 'ilike', $term)
+                    ->orWhere('email', 'ilike', $term);
+            });
+        })
+        ->orderBy('last_name')
+        ->orderBy('first_name')
+        ->paginate($perPage)
+        ->withQueryString();
+}
 
     /** Dropdown data for the create/edit form. */
     public function formOptions(User $actor): array

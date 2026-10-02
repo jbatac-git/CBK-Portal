@@ -12,6 +12,8 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use App\Enums\RemovalRequestStatus;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Enums\RoleName;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -118,5 +120,30 @@ class User extends Authenticatable
         return $this->profile_photo_path
             ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path)
             : null;
+    }
+    /**
+     * The ONE place that defines "which accounts can this actor see at all" —
+     * used by both the User Management table (UserAccountService::list) and
+     * the Dashboard (DashboardService::statsFor), so the two can never drift
+     * apart again like they just did.
+     */
+    public function scopeVisibleTo(Builder $query, self $actor): Builder
+    {
+        if ($actor->hasRole(RoleName::SuperAdmin->value)) {
+            return $query;
+        }
+
+        $assignable = RoleName::assignableBy($actor);
+
+        $hiddenRoles = collect(RoleName::cases())
+            ->reject(fn(RoleName $role) => in_array($role, $assignable, true))
+            ->map(fn(RoleName $role) => $role->value)
+            ->values()
+            ->all();
+
+        return $query->when($hiddenRoles, fn(Builder $q) => $q->whereDoesntHave(
+            'roles',
+            fn(Builder $roles) => $roles->whereIn('name', $hiddenRoles),
+        ));
     }
 }

@@ -37,7 +37,7 @@ class DashboardTest extends TestCase
 
         $this->actingAs($hr)
             ->get(route('admin.dashboard'))
-            ->assertInertia(fn ($page) => $page
+            ->assertInertia(fn($page) => $page
                 ->component('Admin/Dashboard')
                 ->has('stats.active_users')
                 ->has('stats.pending_approval')
@@ -54,11 +54,28 @@ class DashboardTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
-            ->assertInertia(fn ($page) => $page
+            ->assertInertia(fn($page) => $page
                 ->component('Admin/Dashboard')
                 ->has('stats.active_users')
                 ->has('stats.pending_removals')
                 ->where('stats.published_materials', 1)
                 ->where('stats.active_price_lists', 1));
+    }
+
+    public function test_admin_dashboard_counts_match_the_hierarchy_visible_table(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        $this->userWithRole(RoleName::SuperAdmin); // dapat hindi mabilang
+        $this->userWithRole(RoleName::Hr);         // dapat mabilang
+        $this->userWithRole(RoleName::Diser);      // dapat mabilang
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn($page) => $page
+                ->component('Admin/Dashboard')
+                // HR + Diser lang = 2. Hindi kasama ang Super Admin AT ang
+                // Admin role mismo (kasama ang sarili niyang account) — iyan
+                // na rin ang existing hierarchy rule mula Phase 2.
+                ->where('stats.active_users', 2));
     }
 }

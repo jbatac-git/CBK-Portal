@@ -16,34 +16,34 @@ class DashboardService
      * without a single `if ($user->hasRole(...))` branch anywhere here.
      */
     public function statsFor(User $actor): array
-    {
-        $stats = [];
+{
+    $stats = [];
 
-        if ($actor->can('users.view')) {
-            $stats['active_users'] = User::where('status', AccountStatus::Active->value)->count();
-            $stats['pending_approval'] = User::where('status', AccountStatus::Temporary->value)->count();
+    if ($actor->can('users.view')) {
+        $visible = User::visibleTo($actor);
 
-            // "Expiring soon" = temporary accounts whose 7-day window ends
-            // within the next 2 days — an early warning so HR/Admin don't
-            // get surprised by a sudden wave of auto-restrictions.
-            $stats['expiring_soon'] = User::where('status', AccountStatus::Temporary->value)
-                ->whereNotNull('temporary_access_expires_at')
-                ->whereBetween('temporary_access_expires_at', [now(), now()->addDays(2)])
-                ->count();
-        }
+        $stats['active_users'] = (clone $visible)->where('status', AccountStatus::Active->value)->count();
+        $stats['pending_approval'] = (clone $visible)->where('status', AccountStatus::Temporary->value)->count();
 
-        if ($actor->can('users.deactivate')) {
-            $stats['pending_removals'] = RemovalRequest::pending()->count();
-        }
-
-        if ($actor->can('learning-materials.view')) {
-            $stats['published_materials'] = LearningMaterial::published()->count();
-        }
-
-        if ($actor->can('price-lists.view')) {
-            $stats['active_price_lists'] = PriceList::active()->count();
-        }
-
-        return $stats;
+        $stats['expiring_soon'] = (clone $visible)
+            ->where('status', AccountStatus::Temporary->value)
+            ->whereNotNull('temporary_access_expires_at')
+            ->whereBetween('temporary_access_expires_at', [now(), now()->addDays(2)])
+            ->count();
     }
+
+    if ($actor->can('users.deactivate')) {
+        $stats['pending_removals'] = RemovalRequest::pending()->count();
+    }
+
+    if ($actor->can('learning-materials.view')) {
+        $stats['published_materials'] = LearningMaterial::published()->count();
+    }
+
+    if ($actor->can('price-lists.view')) {
+        $stats['active_price_lists'] = PriceList::active()->count();
+    }
+
+    return $stats;
+}
 }
