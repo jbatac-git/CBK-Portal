@@ -22,6 +22,10 @@ use App\Http\Controllers\Portal\ContactController;
 use App\Http\Controllers\Portal\PriceListController as PortalPriceListController;
 use App\Http\Controllers\ProfileController;
 
+use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\RemovalReasonController;
+
 Route::redirect('/', '/dashboard');
 
 Route::middleware(['auth', 'active'])->group(function () {
@@ -90,6 +94,11 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::prefix('roles-permissions')->name('roles-permissions.')->middleware('permission:roles.manage')->group(function () {
                 Route::get('/', [RolePermissionsController::class, 'index'])->name('index');
                 Route::put('/', [RolePermissionsController::class, 'update'])->name('update');
+            });
+            Route::middleware('permission:settings.manage')->group(function () {
+                Route::resource('companies', CompanyController::class)->except(['show']);
+                Route::resource('departments', DepartmentController::class)->except(['show']);
+                Route::resource('removal-reasons', RemovalReasonController::class)->except(['show']);
             });
         });
 
