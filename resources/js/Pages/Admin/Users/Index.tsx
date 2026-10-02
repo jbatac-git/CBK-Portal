@@ -1,16 +1,16 @@
 import Can from '@/Components/Shared/Can';
 import StatusBadge from '@/Components/Shared/StatusBadge';
+import Avatar from '@/Components/Shared/Avatar';
 import Badge from '@/Components/UI/Badge';
 import { buttonClass } from '@/Components/UI/Button';
 import Pagination from '@/Components/UI/Pagination';
 import RowActions from '@/Components/Users/RowActions';
+import ViewProfileModal from '@/Components/Users/ViewProfileModal';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Employee, Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import Avatar from '@/Components/Shared/Avatar';
-import ViewProfileModal from '@/Components/Users/ViewProfileModal';
 
 interface IndexProps {
     users: Paginated<Employee>;
@@ -23,6 +23,7 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [viewing, setViewing] = useState<Employee | null>(null);
+
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
 
@@ -76,9 +77,6 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
                 <table className="min-w-full divide-y divide-stone-200 text-sm">
                     <thead className="bg-stone-50 text-left text-xs uppercase text-stone-500">
                         <tr>
-                            <th scope="col" className="px-4 py-3 font-medium">
-                                <span className="sr-only">Photo</span>
-                            </th>
                             <th scope="col" className="px-4 py-3 font-medium">Employee</th>
                             <th scope="col" className="px-4 py-3 font-medium">Username</th>
                             <th scope="col" className="px-4 py-3 font-medium">Employee ID</th>
@@ -91,11 +89,25 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
                         {users.data.map((user) => (
                             <tr key={user.id}>
                                 <td className="px-4 py-3">
-                                    <Avatar name={user.name} photoUrl={user.photo_url} size="sm" />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="font-medium text-stone-900">{user.name}</div>
-                                    <div className="text-xs text-stone-500">{user.email}</div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewing(user)}
+                                        className="group flex items-center gap-3 text-left"
+                                    >
+                                        <Avatar
+                                            name={user.name}
+                                            photoUrl={user.photo_url}
+                                            firstName={user.first_name}
+                                            lastName={user.last_name}
+                                            size="sm"
+                                        />
+                                        <div>
+                                            <div className="font-medium text-stone-900 group-hover:underline">
+                                                {user.name}
+                                            </div>
+                                            <div className="text-xs text-stone-500">{user.email}</div>
+                                        </div>
+                                    </button>
                                 </td>
                                 <td className="px-4 py-3 text-stone-700">{user.username}</td>
                                 <td className="px-4 py-3 text-stone-700">{user.employee_id}</td>
@@ -113,21 +125,9 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center justify-end gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setViewing(user)}
-                                            className="text-stone-600 underline"
-                                        >
-                                            View
-                                        </button>
-                                        <RowActions user={user} removalReasons={removalReasons} />
-                                    </div>
-                                </td>
-                                {/* <td className="px-4 py-3">
+                                <td className="px-4 py-3 text-right">
                                     <RowActions user={user} removalReasons={removalReasons} />
-                                </td> */}
+                                </td>
                             </tr>
                         ))}
 
@@ -143,6 +143,7 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
             </div>
 
             <Pagination paginator={users} />
+
             <ViewProfileModal employee={viewing} onClose={() => setViewing(null)} />
         </AdminLayout>
     );
