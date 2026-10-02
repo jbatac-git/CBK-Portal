@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Department extends Model
 {
     use SoftDeletes;
+    protected $fillable = ['name', 'is_active'];
 
-    protected $fillable = ['name'];
+    protected $casts = ['is_active' => 'boolean'];
 
     public function users(): HasMany
     {

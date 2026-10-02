@@ -14,8 +14,7 @@ class RemovalRequest extends Model
     use SoftDeletes;
 
     // status / processed_* / decision_note are NOT fillable: only services change them.
-    protected $fillable = ['user_id', 'requested_by', 'reason', 'details'];
-
+    protected $fillable = ['user_id', 'requested_by', 'removal_reason_id', 'details'];
     protected function casts(): array
     {
         return [
@@ -24,7 +23,10 @@ class RemovalRequest extends Model
             'processed_at' => 'datetime',
         ];
     }
-
+    public function reason(): BelongsTo
+    {
+        return $this->belongsTo(RemovalReason::class);
+    }
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
