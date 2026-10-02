@@ -15,10 +15,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use DomainException;
+
 class UserAccountService
 {
-    public function __construct(private UsernameGenerator $usernames,
-    private SessionRevoker $sessions,) {}
+    public function __construct(
+        private UsernameGenerator $usernames,
+        private SessionRevoker $sessions,
+    ) {}
 
     /**
      * Employees the actor is allowed to see: only accounts ranked below them
@@ -29,20 +32,20 @@ class UserAccountService
         $assignable = RoleName::assignableBy($actor);
 
         $hiddenRoles = collect(RoleName::cases())
-            ->reject(fn (RoleName $role) => in_array($role, $assignable, true))
-            ->map(fn (RoleName $role) => $role->value)
+            ->reject(fn(RoleName $role) => in_array($role, $assignable, true))
+            ->map(fn(RoleName $role) => $role->value)
             ->values()
             ->all();
 
         return User::query()
             ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])   // eager load: avoids N+1
-            ->when($hiddenRoles, fn (Builder $q) => $q->whereDoesntHave(
+            ->when($hiddenRoles, fn(Builder $q) => $q->whereDoesntHave(
                 'roles',
-                fn (Builder $roles) => $roles->whereIn('name', $hiddenRoles),
+                fn(Builder $roles) => $roles->whereIn('name', $hiddenRoles),
             ))
-            ->when($status, fn (Builder $q) => $q->where('status', $status))
+            ->when($status, fn(Builder $q) => $q->where('status', $status))
             ->when($search, function (Builder $q) use ($search) {
-                $term = '%'.$search.'%';
+                $term = '%' . $search . '%';
 
                 // The extra closure GROUPS the OR conditions. Without it, the
                 // "or" would escape and ignore the status / role filters above.
@@ -63,13 +66,13 @@ class UserAccountService
     public function formOptions(User $actor): array
     {
         return [
-            'companies' => Company::orderBy('name')->get(['id', 'name']),
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
+            'companies' => Company::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'roles' => collect(RoleName::assignableBy($actor))
-                ->map(fn (RoleName $role) => ['value' => $role->value, 'label' => $role->value])
+                ->map(fn(RoleName $role) => ['value' => $role->value, 'label' => $role->value])
                 ->values(),
             'modules' => collect(PortalModule::cases())
-                ->map(fn (PortalModule $m) => ['value' => $m->value, 'label' => $m->label()])
+                ->map(fn(PortalModule $m) => ['value' => $m->value, 'label' => $m->label()])
                 ->values(),
             'default_modules' => PortalModule::defaults(),
             'can_manage_access' => $actor->can('users.manage-access'),
@@ -195,38 +198,38 @@ class UserAccountService
     }
 
     /**
- * Generates a NEW temporary password. Only allowed while the employee has
- * never set their own password and the 7 days have not ended. It does NOT
- * extend the temporary period.
- */
-public function resendCredentials(User $user): void
-{
-    if ($user->status !== AccountStatus::Temporary || ! $user->must_change_password) {
-        throw new DomainException(
-            'Credentials can only be re-sent to a temporary account that has not set its own password yet.'
-        );
+     * Generates a NEW temporary password. Only allowed while the employee has
+     * never set their own password and the 7 days have not ended. It does NOT
+     * extend the temporary period.
+     */
+    public function resendCredentials(User $user): void
+    {
+        if ($user->status !== AccountStatus::Temporary || ! $user->must_change_password) {
+            throw new DomainException(
+                'Credentials can only be re-sent to a temporary account that has not set its own password yet.'
+            );
+        }
+
+        if (! $user->temporary_access_expires_at?->isFuture()) {
+            throw new DomainException('The temporary access period has already ended.');
+        }
+
+        $temporaryPassword = $this->generateTemporaryPassword();
+
+        DB::transaction(function () use ($user, $temporaryPassword) {
+            $user->forceFill(['password' => $temporaryPassword])->save(); // hashed by the cast
+            $this->sessions->revoke($user); // the old password must stop working everywhere
+        });
+
+        Mail::to($user->email)->queue(new TemporaryAccessMail($user, $temporaryPassword));
     }
 
-    if (! $user->temporary_access_expires_at?->isFuture()) {
-        throw new DomainException('The temporary access period has already ended.');
+    /** Also used by the Profile page in Phase 5. Clears the "must change" flag. */
+    public function changePassword(User $user, string $newPassword): void
+    {
+        $user->forceFill([
+            'password' => $newPassword,
+            'must_change_password' => false,
+        ])->save();
     }
-
-    $temporaryPassword = $this->generateTemporaryPassword();
-
-    DB::transaction(function () use ($user, $temporaryPassword) {
-        $user->forceFill(['password' => $temporaryPassword])->save(); // hashed by the cast
-        $this->sessions->revoke($user); // the old password must stop working everywhere
-    });
-
-    Mail::to($user->email)->queue(new TemporaryAccessMail($user, $temporaryPassword));
-}
-
-/** Also used by the Profile page in Phase 5. Clears the "must change" flag. */
-public function changePassword(User $user, string $newPassword): void
-{
-    $user->forceFill([
-        'password' => $newPassword,
-        'must_change_password' => false,
-    ])->save();
-}
 }
