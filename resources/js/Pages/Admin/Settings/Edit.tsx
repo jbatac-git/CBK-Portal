@@ -32,23 +32,21 @@ export default function Edit({ footer, logo_url }: { footer: FooterData; logo_ur
         e.target.value = '';
     };
 
-    const saveLogo = (blob: Blob) => {
-        const form = new FormData();
-        form.append('logo', blob, 'logo.png');
-        // Multipart POST: PHP only parses nested arrays from field names
-        // using bracket syntax ("footer[company_name]"), so build those
-        // explicitly here instead of a plain object key.
-        Object.entries(data.footer).forEach(([key, value]) => {
-            form.append(`footer[${key}]`, value as string);
-        });
+  const saveLogo = (blob: Blob) => {
+    const form = new FormData();
+    form.append('_method', 'PUT'); // <-- idinagdag: method spoofing, kasing-paraan ng ibang forms
+    form.append('logo', blob, 'logo.png');
+    Object.entries(data.footer).forEach(([key, value]) => {
+        form.append(`footer[${key}]`, value as string);
+    });
 
-        router.post(route('admin.settings.update'), form, {
-            preserveScroll: true,
-            onStart: () => setLogoProcessing(true),
-            onSuccess: () => setRawLogo(null),
-            onFinish: () => setLogoProcessing(false),
-        });
-    };
+    router.post(route('admin.settings.update'), form, {
+        preserveScroll: true,
+        onStart: () => setLogoProcessing(true),
+        onSuccess: () => setRawLogo(null),
+        onFinish: () => setLogoProcessing(false),
+    });
+};
 
     return (
         <AdminLayout title="Portal Settings">

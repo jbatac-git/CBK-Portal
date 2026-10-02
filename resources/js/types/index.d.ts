@@ -16,17 +16,22 @@ export interface AuthUser {
     status: string;
     is_temporary: boolean;
     temporary_days_left: number | null;
+    profile_photo_url: string | null;
 }
 
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
-    auth: {
-        user: AuthUser;
+    auth: { user: AuthUser };
+    flash: { success?: string | null; error?: string | null };
+    branding: {
+        logo_url: string | null;
+        footer: {
+            company_name: string;
+            copyright: string;
+            contact: string;
+            website: string;
+            address: string;
+        };
     };
-    flash: {
-        success?: string | null;
-        error?: string | null;
-    };
-    branding: { logo_url: string | null };
 };

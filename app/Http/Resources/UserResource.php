@@ -15,7 +15,7 @@ class UserResource extends JsonResource
         $status = $this->status;
         $pendingRemoval = $this->pendingRemovalRequest !== null;
 
-        $can = fn (string $ability): bool => $actor?->can($ability, $this->resource) ?? false;
+        $can = fn(string $ability): bool => $actor?->can($ability, $this->resource) ?? false;
 
         return [
             'id' => $this->id,
@@ -26,6 +26,8 @@ class UserResource extends JsonResource
             'username' => $this->username,
             'employee_id' => $this->employee_id,
             'email' => $this->email,
+            'contact_number' => $this->contact_number,
+            'photo_url' => $this->profilePhotoUrl(),
             'company_id' => $this->company_id,
             'department_id' => $this->department_id,
             'company' => $this->company?->name,
@@ -37,7 +39,7 @@ class UserResource extends JsonResource
             'has_pending_removal' => $pendingRemoval,
             'modules' => $this->whenLoaded(
                 'permissions',
-                fn () => $this->permissions->pluck('name')->values(),
+                fn() => $this->permissions->pluck('name')->values(),
             ),
 
             // Abilities: permission + hierarchy (Policy) AND a legal state change.

@@ -14,27 +14,28 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-
+use App\Enums\RemovalReason;
 class UserController extends Controller
 {
     public function __construct(private UserAccountService $service) {}
 
-    public function index(IndexUserRequest $request): Response
-    {
-        $users = $this->service->list(
-            $request->user(),
-            $request->validated('search'),
-            $request->validated('status'),
-        );
+public function index(IndexUserRequest $request): Response
+{
+    $users = $this->service->list(
+        $request->user(),
+        $request->validated('search'),
+        $request->validated('status'),
+    );
 
-        return Inertia::render('Admin/Users/Index', [
-            'users' => $users->through(fn (User $user) => UserResource::make($user)->resolve()),
-            'filters' => $request->only('search', 'status'),
-            'statuses' => collect(AccountStatus::cases())
-                ->map(fn (AccountStatus $s) => ['value' => $s->value, 'label' => $s->label()])
-                ->values(),
-        ]);
-    }
+    return Inertia::render('Admin/Users/Index', [
+        'users' => $users->through(fn (User $user) => UserResource::make($user)->resolve()),
+        'filters' => $request->only('search', 'status'),
+        'statuses' => collect(AccountStatus::cases())
+            ->map(fn (AccountStatus $s) => ['value' => $s->value, 'label' => $s->label()])
+            ->values(),
+        'removalReasons' => RemovalReason::options(),
+    ]);
+}
 
     public function create(Request $request): Response
     {

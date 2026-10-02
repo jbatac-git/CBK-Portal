@@ -5,7 +5,9 @@ import { usePermission } from '@/Hooks/usePermission';
 import { Link } from '@inertiajs/react';
 import { LogOut, Menu, X } from 'lucide-react';
 import { PropsWithChildren, useState } from 'react';
-
+import { PageProps } from '@/types';
+import { usePage } from '@inertiajs/react';
+import Avatar from '@/Components/Shared/Avatar';
 interface AdminLayoutProps {
     title: string;
 }
@@ -13,7 +15,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ title, children }: PropsWithChildren<AdminLayoutProps>) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { user, can } = usePermission();
-
+    const { branding } = usePage<PageProps>().props;
     const items = adminNav.filter((item) => can(item.permission));
 
     return (
@@ -63,8 +65,8 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
                                 href={route(item.routeName)}
                                 onClick={() => setSidebarOpen(false)}
                                 className={`flex items-center gap-3 rounded-md border-l-4 px-3 py-2 text-sm ${active
-                                        ? 'border-gold bg-white/15 text-white'
-                                        : 'border-transparent text-white/85 hover:bg-white/10'
+                                    ? 'border-gold bg-white/15 text-white'
+                                    : 'border-transparent text-white/85 hover:bg-white/10'
                                     }`}
                             >
                                 <Icon className="h-5 w-5" />
@@ -85,9 +87,12 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
                     </div>
 
                     <div className="flex items-center gap-3 text-sm">
-                        <Link href={route('profile.edit')} className="hidden text-right sm:block">
-                            <div className="font-medium text-stone-800 hover:underline">{user.name}</div>
-                            <div className="text-xs text-stone-500">{user.roles.join(', ')}</div>
+                        <Link href={route('profile.edit')} className="flex items-center gap-2">
+                            <div className="hidden text-right sm:block">
+                                <div className="font-medium text-stone-800 hover:underline">{user.name}</div>
+                                <div className="text-xs text-stone-500">{user.roles.join(', ')}</div>
+                            </div>
+                            <Avatar name={user.name} photoUrl={user.profile_photo_url} size="sm" />
                         </Link>
                         <Link
                             href={route('logout')}
@@ -107,7 +112,7 @@ export default function AdminLayout({ title, children }: PropsWithChildren<Admin
                 </main>
 
                 <footer className="border-t border-stone-200 bg-white px-6 py-3 text-xs text-stone-500">
-                    © {new Date().getFullYear()} CBK Hardware, Inc.
+                    {branding.footer.copyright || `© ${new Date().getFullYear()} ${branding.footer.company_name || 'CBK Hardware, Inc.'}`}
                 </footer>
             </div>
         </div>

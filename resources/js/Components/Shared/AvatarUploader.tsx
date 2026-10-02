@@ -1,7 +1,7 @@
 import ImageCropper from '@/Components/Shared/ImageCropper';
 import { router } from '@inertiajs/react';
 import { ChangeEvent, useState } from 'react';
-
+import Avatar from '@/Components/Shared/Avatar';
 export default function AvatarUploader({ currentUrl, name }: { currentUrl: string | null; name: string }) {
     const [rawImage, setRawImage] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);

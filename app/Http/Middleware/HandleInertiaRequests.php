@@ -30,14 +30,18 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'roles' => $user->getRoleNames()->values(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->values(),
-                    'profile_photo_url' => $user->profilePhotoUrl(),
                     'status' => $user->status->value,
                     'is_temporary' => $user->isRestrictedToInitialMaterials(),
                     'temporary_days_left' => $user->temporaryDaysLeft(),
+                    'profile_photo_url' => $user->profilePhotoUrl(),
                 ] : null,
             ],
             'branding' => [
                 'logo_url' => $this->settings->logoUrl(),
+                'footer' => $this->settings->stripPrefix(
+                    $this->settings->getMany(\App\Services\Settings\PortalSettingService::FOOTER_KEYS),
+                    'footer.',
+                ),
             ],
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),

@@ -5,25 +5,32 @@ import { usePermission } from '@/Hooks/usePermission';
 import { Link } from '@inertiajs/react';
 import { Clock, Lock, LogOut } from 'lucide-react';
 import { PropsWithChildren } from 'react';
-
+import { PageProps } from '@/types';
+import { usePage } from '@inertiajs/react';
+import Avatar from '@/Components/Shared/Avatar';
 export default function DiserLayout({ children }: PropsWithChildren) {
     const { user, can } = usePermission();
-
+    const { branding } = usePage<PageProps>().props;
     const items = diserNav.filter((item) => can(item.permission));
 
     return (
         <div className="flex min-h-screen flex-col bg-cream">
             <header className="sticky top-0 z-30 flex items-center justify-between border-b-4 border-gold bg-maroon px-4 py-3">
                 <Logo />
-                <Link
-                    href={route('logout')}
-                    method="post"
-                    as="button"
-                    className="flex items-center gap-1 text-sm text-white/90"
-                >
-                    <LogOut className="h-4 w-4" />
-                    Log out
-                </Link>
+                <div className="flex items-center gap-3">
+                    <Link href={route('profile.edit')}>
+                        <Avatar name={user.name} photoUrl={user.profile_photo_url} size="sm" />
+                    </Link>
+                    <Link
+                        href={route('logout')}
+                        method="post"
+                        as="button"
+                        className="flex items-center gap-1 text-sm text-white/90"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Log out
+                    </Link>
+                </div>
             </header>
 
             <main className="mx-auto w-full max-w-3xl flex-1 space-y-4 px-4 pb-28 pt-4">
@@ -38,7 +45,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                 <FlashMessage />
                 {children}
                 <p className="pt-6 text-center text-xs text-stone-500">
-                    © {new Date().getFullYear()} CBK Hardware, Inc.
+                    {branding.footer.copyright || `© ${new Date().getFullYear()} ${branding.footer.company_name || 'CBK Hardware, Inc.'}`}
                 </p>
             </main>
 

@@ -17,6 +17,8 @@ export interface Employee {
     username: string;
     employee_id: string;
     email: string;
+    contact_number: string | null;
+    photo_url: string | null;
     company_id: number;
     department_id: number | null;
     company: string | null;
