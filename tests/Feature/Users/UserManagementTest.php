@@ -73,20 +73,22 @@ class UserManagementTest extends TestCase
 
         Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) => $mail->hasTo('jhonel@example.com'));
     }
+public function test_the_emailed_password_is_the_one_stored_hashed(): void
+{
+    Mail::fake();
+    $admin = $this->userWithRole(RoleName::Admin);
 
-    public function test_the_emailed_password_is_the_one_stored_hashed(): void
-    {
-        Mail::fake();
-        $admin = $this->userWithRole(RoleName::Admin);
+    $this->actingAs($admin)
+        ->post(route('admin.users.store'), $this->payload())
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('admin.users.index'));
 
-        $this->actingAs($admin)->post(route('admin.users.store'), $this->payload());
+    $user = User::where('username', 'jbatac01')->firstOrFail();
 
-        $user = User::where('username', 'jbatac01')->firstOrFail();
-
-        Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) =>
-            $mail->temporaryPassword !== $user->password
-            && Hash::check($mail->temporaryPassword, $user->password));
-    }
+    Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) =>
+        $mail->temporaryPassword !== $user->password
+        && Hash::check($mail->temporaryPassword, $user->password));
+}
 
     public function test_hr_gets_default_modules_even_if_they_send_others(): void
     {
