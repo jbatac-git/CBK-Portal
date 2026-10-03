@@ -17,17 +17,17 @@ class CompanyController extends Controller
     protected function pagePrefix(): string { return 'Admin/Companies'; }
     protected function routePrefix(): string { return 'admin.companies'; }
 
-    public function store(CompanyRequest $request): RedirectResponse
-    {
-        $this->lookupService()->create($request->validated());
+  public function store(CompanyRequest $request): RedirectResponse
+{
+    $this->lookupService()->create($request->validated());
 
-        return redirect()->route('admin.companies.index')->with('success', 'Company added.');
-    }
+    return redirect()->route('admin.maintenance.index', ['tab' => 'companies'])->with('success', 'Company added.');
+}
 
-    public function update(CompanyRequest $request, int $company): RedirectResponse
-    {
-        $this->lookupService()->update(Company::findOrFail($company), $request->validated());
+public function update(CompanyRequest $request, int $company): RedirectResponse
+{
+    $this->lookupService()->update(Company::findOrFail($company), $request->validated());
 
-        return redirect()->route('admin.companies.index')->with('success', 'Company updated.');
-    }
+    return redirect()->route('admin.maintenance.index', ['tab' => 'companies'])->with('success', 'Company updated.');
+}
 }

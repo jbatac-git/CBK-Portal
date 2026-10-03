@@ -28,6 +28,8 @@ use App\Http\Controllers\Admin\RemovalReasonController;
 
 use App\Http\Controllers\Portal\CareersController;
 
+use App\Http\Controllers\Admin\MaintenanceController;
+
 Route::redirect('/', '/dashboard');
 
 Route::middleware(['auth', 'active'])->group(function () {
@@ -97,11 +99,13 @@ Route::middleware(['auth', 'active'])->group(function () {
                 Route::get('/', [RolePermissionsController::class, 'index'])->name('index');
                 Route::put('/', [RolePermissionsController::class, 'update'])->name('update');
             });
-            Route::middleware('permission:settings.manage')->group(function () {
-                Route::resource('companies', CompanyController::class)->except(['show']);
-                Route::resource('departments', DepartmentController::class)->except(['show']);
-                Route::resource('removal-reasons', RemovalReasonController::class)->except(['show']);
-            });
+        Route::middleware('permission:settings.manage')->group(function () {
+    Route::get('maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
+
+    // Route::resource('companies', CompanyController::class)->except(['show', 'index']);
+    // Route::resource('departments', DepartmentController::class)->except(['show', 'index']);
+    // Route::resource('removal-reasons', RemovalReasonController::class)->except(['show', 'index']);
+});
         });
 
         Route::prefix('portal')->name('portal.')->middleware('permission:portal.access')->group(function () {

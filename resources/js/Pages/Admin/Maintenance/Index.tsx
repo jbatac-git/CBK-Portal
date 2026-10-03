@@ -32,23 +32,22 @@ export default function Index({ tab, tabs, items, filters, routePrefix, usageLab
                     <button
                         key={t.value}
                         onClick={() => switchTab(t.value)}
-                        className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition ${
-                            t.value === tab
+                        className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition ${t.value === tab
                                 ? 'border-maroon text-maroon'
                                 : 'border-transparent text-stone-500 hover:text-stone-700'
-                        }`}
+                            }`}
                     >
                         {t.label}
                     </button>
                 ))}
             </div>
-
             <LookupIndexView
                 title={tabs.find((t) => t.value === tab)?.label ?? ''}
                 usageLabel={usageLabel}
                 items={items}
                 filters={filters}
                 routePrefix={routePrefix}
+                tab={tab}
             />
         </AdminLayout>
     );

@@ -6,7 +6,7 @@ export default function Create() {
     return (
         <AdminLayout title="New Removal Reason">
             <Head title="New Removal Reason" />
-            <LookupFormView routePrefix="admin.removal-reasons" />
+            <LookupFormView routePrefix="admin.removal-reasons" backHref={route('admin.maintenance.index', { tab: 'removal-reasons' })} />
         </AdminLayout>
     );
 }

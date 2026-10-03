@@ -13,17 +13,12 @@ use Inertia\Response;
 
 class MaintenanceController extends Controller
 {
-    /**
-     * Single source of truth para sa tatlong "simple lookup" table na
-     * pinamamahalaan ng page na ito. Kapag magdadagdag ng ika-apat sa
-     * hinaharap, isang entry lang dito ang idadagdag — hindi na kailangan
-     * ng bagong Controller o bagong sidebar item.
-     */
     private const TABS = [
         'companies' => [
             'label' => 'Companies',
             'model' => Company::class,
             'relation' => 'users',
+            'count_attribute' => 'users_count',
             'usage_label' => 'employee(s)',
             'route_prefix' => 'admin.companies',
         ],
@@ -31,6 +26,7 @@ class MaintenanceController extends Controller
             'label' => 'Departments',
             'model' => Department::class,
             'relation' => 'users',
+            'count_attribute' => 'users_count',
             'usage_label' => 'employee(s)',
             'route_prefix' => 'admin.departments',
         ],
@@ -38,6 +34,7 @@ class MaintenanceController extends Controller
             'label' => 'Removal Reasons',
             'model' => RemovalReason::class,
             'relation' => 'removalRequests',
+            'count_attribute' => 'removal_requests_count',
             'usage_label' => 'request(s)',
             'route_prefix' => 'admin.removal-reasons',
         ],
@@ -62,7 +59,13 @@ class MaintenanceController extends Controller
                 'value' => $key,
                 'label' => $c['label'],
             ])->values(),
-            'items' => $service->list($request->string('search')->toString() ?: null),
+            'items' => $service->list($request->string('search')->toString() ?: null)
+                ->through(fn ($item) => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'is_active' => $item->is_active,
+                    'usage_count' => $item->{$config['count_attribute']} ?? 0,
+                ]),
             'filters' => $request->only('search'),
             'routePrefix' => $config['route_prefix'],
             'usageLabel' => $config['usage_label'],

@@ -6,10 +6,11 @@ import { FormEventHandler } from 'react';
 
 interface LookupFormViewProps {
     routePrefix: string;
+    backHref: string;
     item?: Pick<LookupItem, 'id' | 'name' | 'is_active'>;
 }
 
-export default function LookupFormView({ routePrefix, item }: LookupFormViewProps) {
+export default function LookupFormView({ routePrefix, backHref, item }: LookupFormViewProps) {
     const { data, setData, post, put, processing, errors } = useForm({
         name: item?.name ?? '',
         is_active: item?.is_active ?? true,
@@ -38,7 +39,7 @@ export default function LookupFormView({ routePrefix, item }: LookupFormViewProp
             </div>
 
             <div className="flex justify-end gap-3">
-                <Link href={route(`${routePrefix}.index`)} className={buttonClass('secondary')}>Cancel</Link>
+                <Link href={backHref} className={buttonClass('secondary')}>Cancel</Link>
                 <Button type="submit" disabled={processing}>{item ? 'Save changes' : 'Add'}</Button>
             </div>
         </form>

@@ -41,9 +41,9 @@ class SecurityBoundaryTest extends TestCase
     private function parameterlessGetRoutes(string $prefix): \Illuminate\Support\Collection
     {
         return collect(Route::getRoutes())
-            ->filter(fn ($route) => str_starts_with((string) $route->getName(), $prefix))
-            ->filter(fn ($route) => in_array('GET', $route->methods(), true))
-            ->filter(fn ($route) => count($route->parameterNames()) === 0);
+            ->filter(fn($route) => str_starts_with((string) $route->getName(), $prefix))
+            ->filter(fn($route) => in_array('GET', $route->methods(), true))
+            ->filter(fn($route) => count($route->parameterNames()) === 0);
     }
 
     public function test_a_diser_is_forbidden_from_every_parameterless_admin_route(): void
@@ -58,7 +58,7 @@ class SecurityBoundaryTest extends TestCase
 
         foreach ($routes as $route) {
             $this->actingAs($diser)
-                ->get('/'.ltrim($route->uri(), '/'))
+                ->get('/' . ltrim($route->uri(), '/'))
                 ->assertForbidden("Route [{$route->getName()}] should be forbidden to a Diser.");
         }
     }
@@ -72,7 +72,7 @@ class SecurityBoundaryTest extends TestCase
 
         foreach ($routes as $route) {
             $this->actingAs($admin)
-                ->get('/'.ltrim($route->uri(), '/'))
+                ->get('/' . ltrim($route->uri(), '/'))
                 ->assertForbidden("Route [{$route->getName()}] should be forbidden to an Admin without portal.access.");
         }
     }
@@ -90,14 +90,14 @@ class SecurityBoundaryTest extends TestCase
 
         $this->actingAs($hr)->get(route('admin.settings.index'))->assertForbidden();
         $this->actingAs($hr)->get(route('admin.roles-permissions.index'))->assertForbidden();
-        $this->actingAs($hr)->get(route('admin.companies.index'))->assertForbidden();
+        $this->actingAs($hr)->get(route('admin.maintenance.index'))->assertForbidden();
     }
 
     public function test_branded_404_page_renders_for_an_unknown_url(): void
     {
         $this->get('/this-route-does-not-exist')
             ->assertNotFound()
-            ->assertInertia(fn ($page) => $page->component('Error')->where('status', 404));
+            ->assertInertia(fn($page) => $page->component('Error')->where('status', 404));
     }
 
     public function test_branded_403_page_renders_when_debug_is_disabled(): void
@@ -109,7 +109,7 @@ class SecurityBoundaryTest extends TestCase
         $this->actingAs($diser)
             ->get(route('admin.dashboard'))
             ->assertForbidden()
-            ->assertInertia(fn ($page) => $page->component('Error')->where('status', 403));
+            ->assertInertia(fn($page) => $page->component('Error')->where('status', 403));
     }
 
     public function test_debug_mode_shows_the_real_error_page_for_server_errors(): void

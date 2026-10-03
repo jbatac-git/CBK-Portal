@@ -7,7 +7,7 @@ export default function Edit({ item }: { item: LookupItem }) {
     return (
         <AdminLayout title="Edit Department">
             <Head title="Edit Department" />
-            <LookupFormView routePrefix="admin.departments" item={item} />
+            <LookupFormView routePrefix="admin.department" item={item} backHref={route('admin.maintenance.index', { tab: 'departments' })} />
         </AdminLayout>
     );
 }

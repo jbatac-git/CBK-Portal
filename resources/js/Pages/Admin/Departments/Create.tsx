@@ -6,7 +6,7 @@ export default function Create() {
     return (
         <AdminLayout title="New Company">
             <Head title="New Company" />
-            <LookupFormView routePrefix="admin.companies" />
+            <LookupFormView routePrefix="admin.companies" backHref={route('admin.maintenance.index', { tab: 'companies' })} />
         </AdminLayout>
     );
 }

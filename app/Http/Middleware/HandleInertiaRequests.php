@@ -9,7 +9,9 @@ use App\Services\Settings\PortalSettingService;
 class HandleInertiaRequests extends Middleware
 {
     protected $rootView = 'app';
+
     public function __construct(private PortalSettingService $settings) {}
+
     public function version(Request $request): ?string
     {
         return parent::version($request);
@@ -21,6 +23,7 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,
@@ -36,22 +39,28 @@ class HandleInertiaRequests extends Middleware
                     'profile_photo_url' => $user->profilePhotoUrl(),
                 ] : null,
             ],
+
             'branding' => [
                 'logo_url' => $this->settings->logoUrl(),
                 'footer' => $this->settings->stripPrefix(
-                    $this->settings->getMany(\App\Services\Settings\PortalSettingService::FOOTER_KEYS),
+                    $this->settings->getMany(
+                        \App\Services\Settings\PortalSettingService::FOOTER_KEYS
+                    ),
                     'footer.',
                 ),
             ],
+
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
             ],
+
             'features' => [
                 'careers_enabled' => $this->settings->careersEnabled(),
             ],
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
+
+            'first_name' => $user?->first_name,
+            'last_name' => $user?->last_name,
         ];
     }
 }

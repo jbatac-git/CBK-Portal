@@ -1,4 +1,3 @@
-import Badge from '@/Components/UI/Badge';
 import { buttonClass } from '@/Components/UI/Button';
 import Pagination from '@/Components/UI/Pagination';
 import { Paginated } from '@/types/pagination';
@@ -8,24 +7,40 @@ import { FormEventHandler, useState } from 'react';
 
 interface LookupIndexViewProps {
     title: string;
-    usageLabel: string; // e.g. "employee(s)" or "request(s)"
+    usageLabel: string;
     items: Paginated<LookupItem>;
     filters: { search?: string };
     routePrefix: string;
+    /** Kasalukuyang Maintenance tab — kailangan para tama ang target ng search form. */
+    tab: string;
 }
 
-export default function LookupIndexView({ title, usageLabel, items, filters, routePrefix }: LookupIndexViewProps) {
+export default function LookupIndexView({ title, usageLabel, items, filters, routePrefix, tab }: LookupIndexViewProps) {
     const [search, setSearch] = useState(filters.search ?? '');
+    const [togglingId, setTogglingId] = useState<number | null>(null);
 
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(route(`${routePrefix}.index`), search ? { search } : {}, { preserveState: true, replace: true });
+        router.get(
+            route('admin.maintenance.index'),
+            search ? { tab, search } : { tab },
+            { preserveState: true, replace: true },
+        );
     };
 
     const remove = (item: LookupItem) => {
         if (confirm(`Delete "${item.name}"?`)) {
             router.delete(route(`${routePrefix}.destroy`, item.id), { preserveScroll: true });
         }
+    };
+
+    const toggleActive = (item: LookupItem) => {
+        setTogglingId(item.id);
+        router.put(
+            route(`${routePrefix}.update`, item.id),
+            { name: item.name, is_active: !item.is_active },
+            { preserveScroll: true, onFinish: () => setTogglingId(null) },
+        );
     };
 
     return (
@@ -53,7 +68,7 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
                         <tr>
                             <th className="px-4 py-3 font-medium">Name</th>
                             <th className="px-4 py-3 font-medium">In use</th>
-                            <th className="px-4 py-3 font-medium">Status</th>
+                            <th className="px-4 py-3 font-medium">Active</th>
                             <th className="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -63,9 +78,21 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
                                 <td className="px-4 py-3 font-medium text-stone-900">{item.name}</td>
                                 <td className="px-4 py-3 text-stone-600">{item.usage_count} {usageLabel}</td>
                                 <td className="px-4 py-3">
-                                    <Badge tone={item.is_active ? 'success' : 'neutral'}>
-                                        {item.is_active ? 'Active' : 'Inactive'}
-                                    </Badge>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleActive(item)}
+                                        disabled={togglingId === item.id}
+                                        title={item.is_active ? 'Active — i-click para i-deactivate' : 'Inactive — i-click para i-activate'}
+                                        className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
+                                            item.is_active ? 'bg-maroon' : 'bg-stone-300'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
+                                                item.is_active ? 'left-5' : 'left-0.5'
+                                            }`}
+                                        />
+                                    </button>
                                 </td>
                                 <td className="px-4 py-3 text-right space-x-3">
                                     <Link href={route(`${routePrefix}.edit`, item.id)} className="text-maroon underline">

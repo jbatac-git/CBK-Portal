@@ -5,9 +5,9 @@ import { Head } from '@inertiajs/react';
 
 export default function Edit({ item }: { item: LookupItem }) {
     return (
-        <AdminLayout title="Edit Company">
-            <Head title="Edit Company" />
-            <LookupFormView routePrefix="admin.companies" item={item} />
+        <AdminLayout title="Edit Removal Reason">
+            <Head title="Edit Removal Reason" />
+            <LookupFormView routePrefix="admin.removal-reasons" item={item} backHref={route('admin.maintenance.index', { tab: 'removal-reasons' })} />
         </AdminLayout>
     );
 }

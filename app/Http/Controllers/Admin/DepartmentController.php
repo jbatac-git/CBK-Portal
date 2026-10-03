@@ -17,17 +17,17 @@ class DepartmentController extends Controller
     protected function pagePrefix(): string { return 'Admin/Departments'; }
     protected function routePrefix(): string { return 'admin.departments'; }
 
-    public function store(DepartmentRequest $request): RedirectResponse
-    {
-        $this->lookupService()->create($request->validated());
+public function store(DepartmentRequest $request): RedirectResponse
+{
+    $this->lookupService()->create($request->validated());
 
-        return redirect()->route('admin.departments.index')->with('success', 'Department added.');
-    }
+    return redirect()->route('admin.maintenance.index', ['tab' => 'departments'])->with('success', 'Department added.');
+}
 
-    public function update(DepartmentRequest $request, int $department): RedirectResponse
-    {
-        $this->lookupService()->update(Department::findOrFail($department), $request->validated());
+public function update(DepartmentRequest $request, int $department): RedirectResponse
+{
+    $this->lookupService()->update(Department::findOrFail($department), $request->validated());
 
-        return redirect()->route('admin.departments.index')->with('success', 'Department updated.');
-    }
+    return redirect()->route('admin.maintenance.index', ['tab' => 'departments'])->with('success', 'Department updated.');
+}
 }

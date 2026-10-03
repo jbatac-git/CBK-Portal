@@ -17,17 +17,17 @@ class RemovalReasonController extends Controller
     protected function pagePrefix(): string { return 'Admin/RemovalReasons'; }
     protected function routePrefix(): string { return 'admin.removal-reasons'; }
 
-    public function store(RemovalReasonRequest $request): RedirectResponse
-    {
-        $this->lookupService()->create($request->validated());
+   public function store(RemovalReasonRequest $request): RedirectResponse
+{
+    $this->lookupService()->create($request->validated());
 
-        return redirect()->route('admin.removal-reasons.index')->with('success', 'Reason added.');
-    }
+    return redirect()->route('admin.maintenance.index', ['tab' => 'removal-reasons'])->with('success', 'Reason added.');
+}
 
-    public function update(RemovalReasonRequest $request, int $removal_reason): RedirectResponse
-    {
-        $this->lookupService()->update(RemovalReason::findOrFail($removal_reason), $request->validated());
+public function update(RemovalReasonRequest $request, int $removal_reason): RedirectResponse
+{
+    $this->lookupService()->update(RemovalReason::findOrFail($removal_reason), $request->validated());
 
-        return redirect()->route('admin.removal-reasons.index')->with('success', 'Reason updated.');
-    }
+    return redirect()->route('admin.maintenance.index', ['tab' => 'removal-reasons'])->with('success', 'Reason updated.');
+}
 }
