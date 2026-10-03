@@ -99,28 +99,29 @@ Route::middleware(['auth', 'active'])->group(function () {
                 Route::get('/', [RolePermissionsController::class, 'index'])->name('index');
                 Route::put('/', [RolePermissionsController::class, 'update'])->name('update');
             });
-        Route::middleware('permission:settings.manage')->group(function () {
-    Route::get('maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
+            Route::middleware('permission:settings.manage')->group(function () {
+                Route::get('maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
 
-    // Route::resource('companies', CompanyController::class)->except(['show', 'index']);
-    // Route::resource('departments', DepartmentController::class)->except(['show', 'index']);
-    // Route::resource('removal-reasons', RemovalReasonController::class)->except(['show', 'index']);
-});
-        });
-
-        Route::prefix('portal')->name('portal.')->middleware('permission:portal.access')->group(function () {
-            Route::get('/', HomeController::class)->name('home');
-            Route::prefix('learning')->name('learning.')->group(function () {
-                Route::get('/', [LearningController::class, 'index'])->name('index');
-                Route::get('{learningMaterial}', [LearningController::class, 'show'])->name('show');
-                Route::get('{learningMaterial}/stream', LearningMaterialStreamController::class)->name('stream');
+                Route::resource('companies', CompanyController::class)->except(['show', 'index']);
+                Route::resource('departments', DepartmentController::class)->except(['show', 'index']);
+                Route::resource('removal-reasons', RemovalReasonController::class)->except(['show', 'index']);
             });
-
-            Route::get('price-lists', PortalPriceListController::class)->name('price-lists.index');
-            Route::get('contact', ContactController::class)->name('contact.index');
-            Route::get('careers', CareersController::class)->name('careers.index');
         });
     });
+
+    Route::prefix('portal')->name('portal.')->middleware('permission:portal.access')->group(function () {
+        Route::get('/', HomeController::class)->name('home');
+        Route::prefix('learning')->name('learning.')->group(function () {
+            Route::get('/', [LearningController::class, 'index'])->name('index');
+            Route::get('{learningMaterial}', [LearningController::class, 'show'])->name('show');
+            Route::get('{learningMaterial}/stream', LearningMaterialStreamController::class)->name('stream');
+        });
+
+        Route::get('price-lists', PortalPriceListController::class)->name('price-lists.index');
+        Route::get('contact', ContactController::class)->name('contact.index');
+        Route::get('careers', CareersController::class)->name('careers.index');
+    });
 });
+
 
 require __DIR__ . '/auth.php';

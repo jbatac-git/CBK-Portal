@@ -4,9 +4,9 @@ import { Head } from '@inertiajs/react';
 
 export default function Create() {
     return (
-        <AdminLayout title="New Company">
-            <Head title="New Company" />
-            <LookupFormView routePrefix="admin.companies" backHref={route('admin.maintenance.index', { tab: 'companies' })} />
+        <AdminLayout title="New Department">
+            <Head title="New Department" />
+            <LookupFormView routePrefix="admin.departments" backHref={route('admin.maintenance.index', { tab: 'departments' })} />
         </AdminLayout>
     );
 }
