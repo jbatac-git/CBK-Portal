@@ -176,6 +176,35 @@ class VideoLinkMaterialTest extends TestCase
         Storage::disk('local')->assertMissing('learning-materials/video/old.mp4');
     }
 
+    public function test_link_video_orientation_is_saved_and_sent_to_the_portal(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $this->actingAs($admin)
+            ->post(route('admin.learning-materials.store'), $this->payload([
+                'external_url' => 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+                'orientation' => 'portrait',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $material = LearningMaterial::firstOrFail();
+        $this->assertSame('portrait', $material->orientation);
+
+        $this->actingAs($diser)
+            ->get(route('portal.learning.show', $material))
+            ->assertInertia(fn (Assert $page) => $page->where('material.orientation', 'portrait'));
+    }
+
+    public function test_an_unknown_orientation_is_rejected(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->post(route('admin.learning-materials.store'), $this->payload(['orientation' => 'square']))
+            ->assertSessionHasErrors('orientation');
+    }
+
     public function test_a_pdf_can_be_changed_into_a_video_link_on_edit(): void
     {
         $admin = $this->userWithRole(RoleName::Admin);

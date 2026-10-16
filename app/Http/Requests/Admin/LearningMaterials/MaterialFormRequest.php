@@ -44,6 +44,7 @@ abstract class MaterialFormRequest extends FormRequest
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'video_source' => $this->videoSourceRules(),
             'external_url' => $this->externalUrlRules(),
+            'orientation' => ['nullable', Rule::in(['landscape', 'portrait'])],
             'file' => $this->fileRules(),
         ];
     }

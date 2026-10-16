@@ -36,6 +36,7 @@ class LearningController extends Controller
                 'title' => $material->title,
                 'description' => $material->description,
                 'type' => $material->type->value,
+                'orientation' => $material->orientation,
                 // Uploads stream through our authorized route; link videos
                 // only get a rebuilt embed source, never a stream URL.
                 ...($material->isExternalLink()

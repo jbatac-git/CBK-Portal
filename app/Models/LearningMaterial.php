@@ -22,6 +22,7 @@ class LearningMaterial extends Model
         'description',
         'type',
         'external_url',
+        'orientation',
         'file_disk',
         'file_path',
         'mime_type',

@@ -4,7 +4,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import { useContentProtection } from '@/Hooks/useContentProtection';
 import { usePermission } from '@/Hooks/usePermission';
 import DiserLayout from '@/Layouts/DiserLayout';
-import { VideoEmbed } from '@/types/material';
+import { Orientation, VideoEmbed } from '@/types/material';
 import { Head } from '@inertiajs/react';
 import { FileText, PlayCircle, ShieldCheck } from 'lucide-react';
 import { useRef } from 'react';
@@ -19,6 +19,7 @@ interface MaterialProps {
         stream_url?: string;
         /** Set for videos that play from an external link. */
         embed?: VideoEmbed;
+        orientation: Orientation;
     };
 }
 
@@ -57,6 +58,7 @@ export default function Show({ material }: MaterialProps) {
                             title={material.title}
                             streamUrl={material.stream_url}
                             embed={material.embed}
+                            orientation={material.orientation}
                             viewer={viewer}
                             shielded={shielded}
                         />

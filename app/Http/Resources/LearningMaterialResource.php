@@ -22,6 +22,7 @@ class LearningMaterialResource extends JsonResource
             'type_label' => $isLink && $this->type === MaterialType::Video ? 'Video link' : $this->type->label(),
             'video_source' => $this->type === MaterialType::Video ? ($isLink ? 'link' : 'upload') : null,
             'external_url' => $this->external_url,
+            'orientation' => $this->orientation,
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'available_during_temporary' => $this->available_during_temporary,

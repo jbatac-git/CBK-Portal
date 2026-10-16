@@ -65,6 +65,7 @@ class LearningMaterialService
             'status' => $data['status'],
             'available_during_temporary' => $data['available_during_temporary'] ?? false,
             'sort_order' => $data['sort_order'] ?? 0,
+            'orientation' => $data['orientation'] ?? 'landscape',
             'uploaded_by' => $actor->id,
         ]));
     }
@@ -89,6 +90,7 @@ class LearningMaterialService
                 'status' => $data['status'],
                 'available_during_temporary' => $data['available_during_temporary'] ?? false,
                 'sort_order' => $data['sort_order'] ?? 0,
+                'orientation' => $data['orientation'] ?? $material->orientation,
                 // The format may change on edit (PDF, video file, video link);
                 // the guard above guarantees a matching new file or link.
                 'type' => $type,

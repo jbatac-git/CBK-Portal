@@ -18,6 +18,7 @@ export interface AdminMaterial {
     /** Only set for videos: where the video plays from. */
     video_source: VideoSource | null;
     external_url: string | null;
+    orientation: Orientation;
     status: 'draft' | 'published' | 'archived';
     status_label: string;
     available_during_temporary: boolean;
@@ -48,6 +49,9 @@ export interface PortalMaterial {
 }
 
 export type VideoSource = 'upload' | 'link';
+
+/** Frame shape for embedded videos; uploaded files are measured in the browser. */
+export type Orientation = 'landscape' | 'portrait';
 
 export interface VideoEmbed {
     kind: 'youtube' | 'vimeo' | 'drive' | 'direct';

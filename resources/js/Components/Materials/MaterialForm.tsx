@@ -4,7 +4,7 @@ import Card, { CardBody, CardFooter, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
 import Textarea from '@/Components/UI/Textarea';
-import { AdminMaterial, MaterialFormOptions, VideoSource } from '@/types/material';
+import { AdminMaterial, MaterialFormOptions, Orientation, VideoSource } from '@/types/material';
 import { Link, useForm } from '@inertiajs/react';
 import { FileText, Link2, LucideIcon, Video } from 'lucide-react';
 import { FormEventHandler, KeyboardEvent } from 'react';
@@ -87,6 +87,64 @@ function FormatPicker({ label, value, options, onChange, error }: FormatPickerPr
     );
 }
 
+const ORIENTATIONS: { value: Orientation; label: string; hint: string }[] = [
+    { value: 'landscape', label: 'Landscape', hint: '16:9 · regular YouTube, Vimeo' },
+    { value: 'portrait', label: 'Portrait', hint: '9:16 · Shorts, phone recordings' },
+];
+
+/** Frame shape for linked videos; the player cannot measure an embedded video itself. */
+function OrientationPicker({ value, onChange, error }: { value: Orientation; onChange: (value: Orientation) => void; error?: string }) {
+    const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+        e.preventDefault();
+        const next = value === 'landscape' ? 'portrait' : 'landscape';
+        onChange(next);
+        e.currentTarget.querySelector<HTMLButtonElement>(`[data-value="${next}"]`)?.focus();
+    };
+
+    return (
+        <div className="space-y-1.5">
+            <p id="orientation-label" className="text-[13px] font-medium text-stone-800">
+                Orientation
+            </p>
+            <div role="radiogroup" aria-labelledby="orientation-label" onKeyDown={onKeyDown} className="grid gap-3 sm:grid-cols-2">
+                {ORIENTATIONS.map((option) => {
+                    const selected = option.value === value;
+
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            role="radio"
+                            data-value={option.value}
+                            aria-checked={selected}
+                            tabIndex={selected ? 0 : -1}
+                            onClick={() => onChange(option.value)}
+                            className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-maroon-500/40 ${
+                                selected ? 'border-maroon-600 bg-maroon-50/50 ring-1 ring-maroon-600' : 'border-line bg-white hover:border-stone-300'
+                            }`}
+                        >
+                            {/* A tiny frame drawn in the chosen shape. */}
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center" aria-hidden="true">
+                                <span
+                                    className={`block rounded-[3px] border-2 ${selected ? 'border-maroon-700' : 'border-stone-400'} ${
+                                        option.value === 'landscape' ? 'h-[18px] w-8' : 'h-8 w-[18px]'
+                                    }`}
+                                />
+                            </span>
+                            <span className="min-w-0">
+                                <span className="block text-sm font-medium text-ink">{option.label}</span>
+                                <span className="mt-0.5 block text-xs text-stone-500">{option.hint}</span>
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+            {error && <p className="text-[13px] text-red-700">{error}</p>}
+        </div>
+    );
+}
+
 interface MaterialFormProps {
     options: MaterialFormOptions;
     material?: AdminMaterial;
@@ -103,6 +161,7 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
         sort_order: material?.sort_order ?? 0,
         video_source: (material?.video_source ?? 'upload') as VideoSource,
         external_url: material?.external_url ?? '',
+        orientation: (material?.orientation ?? 'landscape') as Orientation,
         file: null as File | null,
         _method: material ? 'put' : 'post',
     });
@@ -173,17 +232,32 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                     )}
 
                     {isLink ? (
-                        <Input
-                            label="Video link"
-                            name="external_url"
-                            type="url"
-                            inputMode="url"
-                            placeholder="https://www.youtube.com/watch?v=..."
-                            value={data.external_url}
-                            onChange={(e) => setData('external_url', e.target.value)}
-                            error={errors.external_url}
-                            hint="YouTube, Vimeo, Google Drive or a direct .mp4 link. For YouTube, set the video to Unlisted."
-                        />
+                        <>
+                            <Input
+                                label="Video link"
+                                name="external_url"
+                                type="url"
+                                inputMode="url"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                value={data.external_url}
+                                onChange={(e) => {
+                                    const url = e.target.value;
+                                    // YouTube Shorts are always vertical.
+                                    setData((current) => ({
+                                        ...current,
+                                        external_url: url,
+                                        orientation: /youtube\.com\/shorts\//i.test(url) ? 'portrait' : current.orientation,
+                                    }));
+                                }}
+                                error={errors.external_url}
+                                hint="YouTube, Vimeo, Google Drive or a direct .mp4 link. For YouTube, set the video to Unlisted."
+                            />
+                            <OrientationPicker
+                                value={data.orientation}
+                                onChange={(value) => setData('orientation', value)}
+                                error={errors.orientation}
+                            />
+                        </>
                     ) : (
                         <FileDropzone
                             key={format}
