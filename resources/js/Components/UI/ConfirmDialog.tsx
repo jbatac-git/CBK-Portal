@@ -1,4 +1,5 @@
 import Button, { ButtonVariant } from '@/Components/UI/Button';
+import { AlertTriangle } from 'lucide-react';
 import { PropsWithChildren, useEffect, useRef } from 'react';
 
 interface ConfirmDialogProps {
@@ -36,24 +37,40 @@ export default function ConfirmDialog({
     return (
         <dialog
             ref={ref}
+            aria-labelledby="confirm-dialog-title"
             onCancel={(e) => {
                 e.preventDefault(); // let React state decide when to close
-                onCancel();
+                if (!processing) onCancel();
             }}
-            className="w-full max-w-md rounded-xl p-0 backdrop:bg-black/40"
+            onClick={(e) => {
+                // Clicking the backdrop (the dialog element itself, outside the panel) cancels.
+                if (e.target === e.currentTarget && !processing) onCancel();
+            }}
+            className="w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-white p-0 shadow-overlay backdrop:bg-ink/40 backdrop:backdrop-blur-[2px] open:animate-rise-in"
         >
-            <div className="space-y-4 p-6">
-                <h2 className="text-lg font-medium text-maroon">{title}</h2>
-                {description && <p className="text-sm text-stone-600">{description}</p>}
-                {children}
-                <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="secondary" onClick={onCancel} disabled={processing}>
-                        Cancel
-                    </Button>
-                    <Button variant={variant} onClick={onConfirm} disabled={processing}>
-                        {confirmLabel}
-                    </Button>
+            <div className="p-6">
+                <div className="flex gap-4">
+                    {variant === 'danger' && (
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 ring-1 ring-red-100">
+                            <AlertTriangle className="h-[18px] w-[18px] text-red-700" aria-hidden="true" />
+                        </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <h2 id="confirm-dialog-title" className="text-base font-semibold text-ink">
+                            {title}
+                        </h2>
+                        {description && <p className="mt-1.5 text-sm leading-relaxed text-stone-600">{description}</p>}
+                        {children && <div className="mt-4">{children}</div>}
+                    </div>
                 </div>
+            </div>
+            <div className="flex justify-end gap-2 rounded-b-xl border-t border-line bg-paper px-6 py-3.5">
+                <Button variant="secondary" onClick={onCancel} disabled={processing}>
+                    Cancel
+                </Button>
+                <Button variant={variant} onClick={onConfirm} loading={processing}>
+                    {confirmLabel}
+                </Button>
             </div>
         </dialog>
     );

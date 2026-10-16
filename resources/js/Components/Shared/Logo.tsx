@@ -1,19 +1,30 @@
 import { PageProps } from '@/types';
 import { usePage } from '@inertiajs/react';
 
-export default function Logo({ className = '' }: { className?: string }) {
-    const { branding } = usePage<PageProps & { branding: { logo_url: string | null } }>().props;
+interface LogoProps {
+    /** "light" for dark backgrounds (sidebar), "dark" for light backgrounds. */
+    tone?: 'light' | 'dark';
+    className?: string;
+}
+
+export default function Logo({ tone = 'light', className = '' }: LogoProps) {
+    const { branding } = usePage<PageProps>().props;
+    const light = tone === 'light';
 
     return (
-        <div className={`flex items-center gap-2 ${className}`}>
-            {branding.logo_url ? (
-                <img src={branding.logo_url} alt="CBK" className="h-8 w-8 rounded object-contain" />
+        <div className={`flex items-center gap-2.5 ${className}`}>
+            {branding?.logo_url ? (
+                <img src={branding.logo_url} alt="CBK" className="h-8 w-8 rounded-md object-contain" />
             ) : (
-                <span className="rounded-md bg-white px-2 py-0.5 text-lg font-semibold tracking-tight text-maroon">
+                <span
+                    className={`flex h-8 items-center rounded-md px-2 font-display text-[15px] font-semibold tracking-tight ${
+                        light ? 'bg-white text-maroon-800' : 'bg-maroon-700 text-white'
+                    }`}
+                >
                     CBK
                 </span>
             )}
-            <span className="text-sm text-white/90">Portal</span>
+            <span className={`text-[13px] font-medium tracking-wide ${light ? 'text-white/80' : 'text-stone-600'}`}>Portal</span>
         </div>
     );
 }

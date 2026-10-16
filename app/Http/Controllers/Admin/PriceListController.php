@@ -11,6 +11,7 @@ use App\Models\PriceList;
 use App\Services\PriceLists\PriceListService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -36,7 +37,7 @@ class PriceListController extends Controller
                 'effective_date' => $p->effective_date?->toDateString(),
                 'status' => $p->status->value,
                 'status_label' => $p->status->label(),
-                'file_url' => \Illuminate\Support\Facades\Storage::disk($p->file_disk)->url($p->file_path),
+                'file_url' => Storage::disk($p->file_disk)->url($p->file_path),
                 'uploaded_by' => $p->uploader?->name,
                 'can_update' => $request->user()->can('update', $p),
                 'can_archive' => $request->user()->can('archive', $p) && $p->status !== PriceListStatus::Archived,
@@ -51,7 +52,9 @@ class PriceListController extends Controller
     {
         $this->authorize('create', PriceList::class);
 
-        return Inertia::render('Admin/PriceLists/Create');
+        return Inertia::render('Admin/PriceLists/Create', [
+            'maxFileMb' => (int) (config('portal.price_lists.max_kb') / 1024),
+        ]);
     }
 
     public function store(StorePriceListRequest $request): RedirectResponse
@@ -77,6 +80,7 @@ class PriceListController extends Controller
                 'effective_date' => $priceList->effective_date?->toDateString(),
                 'status' => $priceList->status->value,
             ],
+            'maxFileMb' => (int) (config('portal.price_lists.max_kb') / 1024),
         ]);
     }
 

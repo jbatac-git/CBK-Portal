@@ -1,25 +1,25 @@
-import { InputHTMLAttributes } from 'react';
+import FieldShell from '@/Components/UI/FieldShell';
+import { InputHTMLAttributes, ReactNode } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label: string;
     error?: string;
+    hint?: ReactNode;
+    optional?: boolean;
 }
 
-export default function Input({ label, error, id, className = '', ...props }: InputProps) {
-    const inputId = id ?? props.name;
+export default function Input({ label, error, hint, optional, id, className = '', ...props }: InputProps) {
+    const inputId = id ?? props.name ?? label;
 
     return (
-        <div>
-            <label htmlFor={inputId} className="block text-sm font-medium text-stone-700">
-                {label}
-            </label>
+        <FieldShell id={inputId} label={label} error={error} hint={hint} optional={optional}>
             <input
                 id={inputId}
                 {...props}
                 aria-invalid={error ? true : undefined}
-                className={`mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-maroon focus:ring-maroon ${className}`}
+                aria-describedby={error ? `${inputId}-error` : undefined}
+                className={`field ${className}`}
             />
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-        </div>
+        </FieldShell>
     );
 }

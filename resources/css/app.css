@@ -1,3 +1,60 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+        text-rendering: optimizeLegibility;
+        font-feature-settings: 'ss01', 'cv11';
+    }
+
+    body {
+        @apply bg-paper text-ink;
+    }
+
+    ::selection {
+        @apply bg-maroon-100 text-maroon-900;
+    }
+
+    :focus-visible {
+        @apply outline-none ring-2 ring-maroon-500/40 ring-offset-2 ring-offset-white;
+    }
+
+    /* Native date/number inputs and scrollbars that match the warm neutrals. */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #d6cec4 transparent;
+    }
+}
+
+@layer components {
+    /* Single source for text-field styling; used by Input, Select, Textarea and search fields. */
+    .field {
+        @apply block w-full rounded-md border-line bg-white px-3 py-2 text-sm text-ink shadow-hairline placeholder:text-stone-400
+            transition-colors focus:border-maroon-400 focus:ring-2 focus:ring-maroon-500/15
+            disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-500;
+    }
+
+    .field[aria-invalid='true'] {
+        @apply border-red-400 focus:border-red-500 focus:ring-red-500/15;
+    }
+
+    .eyebrow {
+        @apply font-mono text-2xs font-medium uppercase tracking-[0.14em] text-stone-500;
+    }
+
+    .link {
+        @apply font-medium text-maroon-700 underline decoration-maroon-200 underline-offset-4 transition-colors hover:decoration-maroon-500;
+    }
+
+    .checkbox {
+        @apply h-4 w-4 rounded border-stone-300 text-maroon-700 shadow-hairline focus:ring-maroon-500/30 focus:ring-offset-0;
+    }
+}
+
+@layer utilities {
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+}

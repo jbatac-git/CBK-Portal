@@ -1,11 +1,16 @@
 import Can from '@/Components/Shared/Can';
 import Badge, { BadgeTone } from '@/Components/UI/Badge';
-import { buttonClass } from '@/Components/UI/Button';
+import Button, { buttonClass } from '@/Components/UI/Button';
+import ConfirmDialog from '@/Components/UI/ConfirmDialog';
+import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
+import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Toolbar, { FilterSelect, SearchInput } from '@/Components/UI/Toolbar';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
+import { ExternalLink, FileText, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface PriceListRow {
@@ -20,15 +25,30 @@ interface PriceListRow {
     can_archive: boolean;
 }
 
-const tones: Record<string, BadgeTone> = { active: 'success', archived: 'neutral' };
-
-export default function Index({ priceLists, filters, statuses }: {
+interface IndexProps {
     priceLists: Paginated<PriceListRow>;
     filters: { search?: string; status?: string };
     statuses: Option[];
-}) {
+}
+
+const tones: Record<string, BadgeTone> = { active: 'success', archived: 'neutral' };
+
+const dateFormat = new Intl.DateTimeFormat('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+
+/** Formats a server `YYYY-MM-DD` date without shifting it across time zones. */
+function formatDate(value: string): string {
+    const [y, m, d] = value.split('-').map(Number);
+    if (!y || !m || !d) return value;
+    return dateFormat.format(new Date(y, m - 1, d));
+}
+
+export default function Index({ priceLists, filters, statuses }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
+    const [archiving, setArchiving] = useState<PriceListRow | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const hasFilters = Boolean(filters.search || filters.status);
 
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
@@ -38,74 +58,132 @@ export default function Index({ priceLists, filters, statuses }: {
         router.get(route('admin.price-lists.index'), params, { preserveState: true, replace: true });
     };
 
-    const archive = (row: PriceListRow) => {
-        if (confirm(`Archive "${row.title}"?`)) {
-            router.post(route('admin.price-lists.archive', row.id), {}, { preserveScroll: true });
-        }
+    const confirmArchive = () => {
+        if (!archiving) return;
+
+        router.post(
+            route('admin.price-lists.archive', archiving.id),
+            {},
+            {
+                preserveScroll: true,
+                onStart: () => setProcessing(true),
+                onFinish: () => {
+                    setProcessing(false);
+                    setArchiving(null);
+                },
+            },
+        );
     };
 
     return (
-        <AdminLayout title="Price Lists">
-            <Head title="Price Lists" />
+        <AdminLayout title="Price lists">
+            <Head title="Price lists" />
 
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <form onSubmit={applyFilters} className="flex flex-wrap items-center gap-2">
-                    <input type="search" value={search} onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search title"
-                        className="w-56 rounded-md border-stone-300 text-sm shadow-sm focus:border-maroon focus:ring-maroon" />
-                    <select value={status} onChange={(e) => setStatus(e.target.value)}
-                        className="rounded-md border-stone-300 text-sm shadow-sm focus:border-maroon focus:ring-maroon">
-                        <option value="">All statuses</option>
-                        {statuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                    </select>
-                    <button type="submit" className={buttonClass('secondary')}>Filter</button>
-                </form>
+            <PageHeader
+                title="Price lists"
+                description="PDF price lists that Disers can view and download from the portal."
+                actions={
+                    <Can permission="price-lists.create">
+                        <Link href={route('admin.price-lists.create')} className={buttonClass('primary')}>
+                            <Plus aria-hidden="true" />
+                            Upload price list
+                        </Link>
+                    </Can>
+                }
+            />
 
-                <Can permission="price-lists.create">
-                    <Link href={route('admin.price-lists.create')} className={buttonClass('primary')}>
-                        + Upload price list
-                    </Link>
-                </Can>
-            </div>
+            <Toolbar onSubmit={applyFilters}>
+                <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title" />
+                <FilterSelect value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
+                    <option value="">All statuses</option>
+                    {statuses.map((s) => (
+                        <option key={s.value} value={s.value}>
+                            {s.label}
+                        </option>
+                    ))}
+                </FilterSelect>
+                <Button type="submit" variant="secondary">
+                    Filter
+                </Button>
+            </Toolbar>
 
-            <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-                <table className="min-w-full divide-y divide-stone-200 text-sm">
-                    <thead className="bg-stone-50 text-left text-xs uppercase text-stone-500">
-                        <tr>
-                            <th className="px-4 py-3 font-medium">Title</th>
-                            <th className="px-4 py-3 font-medium">Effective date</th>
-                            <th className="px-4 py-3 font-medium">Uploaded by</th>
-                            <th className="px-4 py-3 font-medium">Status</th>
-                            <th className="px-4 py-3 text-right font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-                        {priceLists.data.map((row) => (
-                            <tr key={row.id}>
-                                <td className="px-4 py-3 font-medium text-stone-900">
-                                    <a href={row.file_url} target="_blank" rel="noopener" className="underline">{row.title}</a>
-                                </td>
-                                <td className="px-4 py-3 text-stone-600">{row.effective_date ?? '—'}</td>
-                                <td className="px-4 py-3 text-stone-600">{row.uploaded_by ?? '—'}</td>
-                                <td className="px-4 py-3"><Badge tone={tones[row.status]}>{row.status_label}</Badge></td>
-                                <td className="px-4 py-3 text-right space-x-3">
-                                    {row.can_update && (
-                                        <Link href={route('admin.price-lists.edit', row.id)} className="text-maroon underline">Edit</Link>
-                                    )}
-                                    {row.can_archive && (
-                                        <button onClick={() => archive(row)} className="text-red-700 underline">Archive</button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                        {priceLists.data.length === 0 && (
-                            <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-500">No price lists found.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <Table footer={<Pagination paginator={priceLists} />}>
+                <THead>
+                    <Th>Title</Th>
+                    <Th>Effective date</Th>
+                    <Th>Status</Th>
+                    <Th>File</Th>
+                    <Th align="right">
+                        <span className="sr-only">Actions</span>
+                    </Th>
+                </THead>
+                <TBody>
+                    {priceLists.data.map((row) => (
+                        <Tr key={row.id}>
+                            <Td>
+                                <p className="font-medium text-ink">{row.title}</p>
+                                <p className="mt-0.5 text-[13px] text-stone-500">
+                                    {row.uploaded_by ? `Uploaded by ${row.uploaded_by}` : 'Uploader unknown'}
+                                </p>
+                            </Td>
+                            <Td className="tabular whitespace-nowrap">
+                                {row.effective_date ? (
+                                    <time dateTime={row.effective_date}>{formatDate(row.effective_date)}</time>
+                                ) : (
+                                    <span className="text-stone-400">Not set</span>
+                                )}
+                            </Td>
+                            <Td>
+                                <Badge tone={tones[row.status] ?? 'neutral'}>{row.status_label}</Badge>
+                            </Td>
+                            <Td>
+                                <a
+                                    href={row.file_url}
+                                    target="_blank"
+                                    rel="noopener"
+                                    className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-maroon-700 hover:text-maroon-900"
+                                >
+                                    <FileText className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                                    Open PDF
+                                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                                    <span className="sr-only">for {row.title} (opens in a new tab)</span>
+                                </a>
+                            </Td>
+                            <Td align="right" className="whitespace-nowrap">
+                                {row.can_update && (
+                                    <Link href={route('admin.price-lists.edit', row.id)} className={rowActionClass}>
+                                        Edit
+                                    </Link>
+                                )}
+                                {row.can_archive && (
+                                    <button type="button" onClick={() => setArchiving(row)} className={rowDangerActionClass}>
+                                        Archive
+                                    </button>
+                                )}
+                            </Td>
+                        </Tr>
+                    ))}
+                    {priceLists.data.length === 0 && (
+                        <EmptyRow
+                            colSpan={5}
+                            icon={FileText}
+                            title={hasFilters ? 'No price lists match these filters' : 'No price lists yet'}
+                            hint={hasFilters ? 'Try a different search term or status.' : 'Upload a PDF to share it with Disers.'}
+                        />
+                    )}
+                </TBody>
+            </Table>
 
-            <Pagination paginator={priceLists} />
+            <ConfirmDialog
+                open={archiving !== null}
+                title="Archive price list"
+                description={archiving ? `"${archiving.title}" will no longer be visible to Disers.` : undefined}
+                confirmLabel="Archive"
+                variant="danger"
+                processing={processing}
+                onConfirm={confirmArchive}
+                onCancel={() => setArchiving(null)}
+            />
         </AdminLayout>
     );
 }

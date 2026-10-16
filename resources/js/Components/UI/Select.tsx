@@ -1,27 +1,27 @@
-import { SelectHTMLAttributes } from 'react';
+import FieldShell from '@/Components/UI/FieldShell';
+import { ReactNode, SelectHTMLAttributes } from 'react';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     label: string;
     error?: string;
+    hint?: ReactNode;
+    optional?: boolean;
 }
 
-export default function Select({ label, error, id, className = '', children, ...props }: SelectProps) {
-    const selectId = id ?? props.name;
+export default function Select({ label, error, hint, optional, id, className = '', children, ...props }: SelectProps) {
+    const selectId = id ?? props.name ?? label;
 
     return (
-        <div>
-            <label htmlFor={selectId} className="block text-sm font-medium text-stone-700">
-                {label}
-            </label>
+        <FieldShell id={selectId} label={label} error={error} hint={hint} optional={optional}>
             <select
                 id={selectId}
                 {...props}
                 aria-invalid={error ? true : undefined}
-                className={`mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-maroon focus:ring-maroon ${className}`}
+                aria-describedby={error ? `${selectId}-error` : undefined}
+                className={`field pr-9 ${className}`}
             >
                 {children}
             </select>
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-        </div>
+        </FieldShell>
     );
 }

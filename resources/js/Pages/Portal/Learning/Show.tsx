@@ -1,10 +1,10 @@
 import ProtectedPdfViewer from '@/Components/Materials/ProtectedPdfViewer';
 import ProtectedVideoPlayer from '@/Components/Materials/ProtectedVideoPlayer';
+import PageHeader from '@/Components/UI/PageHeader';
 import { usePermission } from '@/Hooks/usePermission';
 import DiserLayout from '@/Layouts/DiserLayout';
-import { Link } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { FileText, PlayCircle } from 'lucide-react';
 
 interface MaterialProps {
     material: {
@@ -18,23 +18,32 @@ interface MaterialProps {
 
 export default function Show({ material }: MaterialProps) {
     const { user } = usePermission();
+    const isPdf = material.type === 'pdf';
+    const TypeIcon = isPdf ? FileText : PlayCircle;
 
     return (
         <DiserLayout>
             <Head title={material.title} />
 
-            <Link href={route('portal.learning.index')} className="inline-flex items-center gap-1 text-sm text-maroon">
-                <ArrowLeft className="h-4 w-4" /> Back to Learning
-            </Link>
+            <article className="mx-auto max-w-3xl">
+                <PageHeader
+                    back={{ href: route('portal.learning.index'), label: 'Learning library' }}
+                    eyebrow={
+                        <span className="inline-flex items-center gap-1.5">
+                            <TypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {isPdf ? 'PDF document' : 'Video'}
+                        </span>
+                    }
+                    title={material.title}
+                    description={material.description ?? undefined}
+                />
 
-            <h1 className="mt-2 text-lg font-medium text-maroon">{material.title}</h1>
-            {material.description && <p className="mb-3 text-sm text-stone-600">{material.description}</p>}
-
-            {material.type === 'pdf' ? (
-                <ProtectedPdfViewer streamUrl={material.stream_url} username={user.username} />
-            ) : (
-                <ProtectedVideoPlayer streamUrl={material.stream_url} username={user.username} />
-            )}
+                {isPdf ? (
+                    <ProtectedPdfViewer streamUrl={material.stream_url} username={user.username} />
+                ) : (
+                    <ProtectedVideoPlayer streamUrl={material.stream_url} username={user.username} />
+                )}
+            </article>
         </DiserLayout>
     );
 }

@@ -1,4 +1,6 @@
-import LookupIndexView from '@/Components/Lookups/LookupIndexView';
+import LookupIndexView, { sentenceCase } from '@/Components/Lookups/LookupIndexView';
+import PageHeader from '@/Components/UI/PageHeader';
+import Tabs from '@/Components/UI/Tabs';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { LookupItem } from '@/types/lookup';
 import { Paginated } from '@/types/pagination';
@@ -27,21 +29,21 @@ export default function Index({ tab, tabs, items, filters, routePrefix, usageLab
         <AdminLayout title="Maintenance">
             <Head title="Maintenance" />
 
-            <div className="mb-4 flex gap-1 border-b border-stone-200">
-                {tabs.map((t) => (
-                    <button
-                        key={t.value}
-                        onClick={() => switchTab(t.value)}
-                        className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition ${t.value === tab
-                                ? 'border-maroon text-maroon'
-                                : 'border-transparent text-stone-500 hover:text-stone-700'
-                            }`}
-                    >
-                        {t.label}
-                    </button>
-                ))}
-            </div>
+            <PageHeader
+                title="Maintenance"
+                description="Reference lists used across the portal: companies, departments and removal reasons."
+            />
+
+            <Tabs
+                label="Reference lists"
+                value={tab}
+                onChange={switchTab}
+                tabs={tabs.map((t) => ({ value: t.value, label: sentenceCase(t.label) }))}
+            />
+
+            {/* Keyed by tab so the search box resets when switching lists. */}
             <LookupIndexView
+                key={tab}
                 title={tabs.find((t) => t.value === tab)?.label ?? ''}
                 usageLabel={usageLabel}
                 items={items}

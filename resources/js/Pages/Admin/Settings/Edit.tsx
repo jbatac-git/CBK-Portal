@@ -1,9 +1,16 @@
+import SettingsSection, { SettingsSections } from '@/Components/Settings/SettingsSection';
 import ImageCropper from '@/Components/Shared/ImageCropper';
 import Button from '@/Components/UI/Button';
+import Card, { CardBody, CardFooter } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
+import PageHeader from '@/Components/UI/PageHeader';
+import Switch from '@/Components/UI/Switch';
+import Textarea from '@/Components/UI/Textarea';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, router, useForm } from '@inertiajs/react';
-import { ChangeEvent, FormEventHandler, useState } from 'react';
+import { PageProps } from '@/types';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Upload } from 'lucide-react';
+import { ChangeEvent, FormEventHandler, useEffect, useRef, useState } from 'react';
 
 interface FooterData {
     company_name: string;
@@ -13,122 +20,226 @@ interface FooterData {
     address: string;
 }
 
-export default function Edit({ footer, logo_url, careers_enabled }: {
+export default function Edit({
+    footer,
+    logo_url,
+    careers_enabled,
+}: {
     footer: FooterData;
     logo_url: string | null;
-    careers_enabled: boolean;
+    careers_enabled?: boolean;
 }) {
+    const { features } = usePage<PageProps>().props;
     const { data, setData, put, processing, errors } = useForm({ footer });
+
+    const logoInputRef = useRef<HTMLInputElement>(null);
     const [rawLogo, setRawLogo] = useState<string | null>(null);
     const [logoProcessing, setLogoProcessing] = useState(false);
-    const [careersEnabled, setCareersEnabled] = useState(careers_enabled);
+    const [logoError, setLogoError] = useState<string | null>(null);
+
+    // The page prop may be absent; fall back to the shared feature flag.
+    const [careersEnabled, setCareersEnabled] = useState(careers_enabled ?? features?.careers_enabled ?? false);
     const [careersSaving, setCareersSaving] = useState(false);
 
-    const toggleCareers = () => {
-        const next = !careersEnabled;
+    // Free the previous object URL whenever it is replaced or the page unmounts.
+    useEffect(() => {
+        return () => {
+            if (rawLogo) URL.revokeObjectURL(rawLogo);
+        };
+    }, [rawLogo]);
 
-        router.put(route('admin.settings.careers.update'), { careers_enabled: next }, {
-            preserveScroll: true,
-            onStart: () => setCareersSaving(true),
-            onSuccess: () => setCareersEnabled(next),
-            onFinish: () => setCareersSaving(false),
-        });
+    const toggleCareers = (next: boolean) => {
+        router.put(
+            route('admin.settings.careers.update'),
+            { careers_enabled: next },
+            {
+                preserveScroll: true,
+                onStart: () => setCareersSaving(true),
+                onSuccess: () => setCareersEnabled(next),
+                onFinish: () => setCareersSaving(false),
+            },
+        );
     };
-    const update = (field: keyof FooterData, value: string) =>
-        setData('footer', { ...data.footer, [field]: value });
+
+    const update = (field: keyof FooterData, value: string) => setData('footer', { ...data.footer, [field]: value });
 
     const submitFooter: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('admin.settings.update'));
+        put(route('admin.settings.update'), { preserveScroll: true });
     };
 
     const onLogoSelected = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) setRawLogo(URL.createObjectURL(file));
-        e.target.value = '';
+        if (file) {
+            setLogoError(null);
+            setRawLogo(URL.createObjectURL(file));
+        }
+        e.target.value = ''; // allow re-selecting the same file later
     };
 
     const saveLogo = (blob: Blob) => {
         const form = new FormData();
-        form.append('_method', 'PUT'); // <-- idinagdag: method spoofing, kasing-paraan ng ibang forms
+        form.append('_method', 'PUT'); // method spoofing, same as the other forms
         form.append('logo', blob, 'logo.png');
-        Object.entries(data.footer).forEach(([key, value]) => {
-            form.append(`footer[${key}]`, value as string);
+        // The endpoint requires the footer, so send the last *saved* values —
+        // never the unsaved edits in the footer form below.
+        Object.entries(footer).forEach(([key, value]) => {
+            form.append(`footer[${key}]`, value ?? '');
         });
 
         router.post(route('admin.settings.update'), form, {
             preserveScroll: true,
-            onStart: () => setLogoProcessing(true),
+            onStart: () => {
+                setLogoError(null);
+                setLogoProcessing(true);
+            },
             onSuccess: () => setRawLogo(null),
+            onError: (errs) => setLogoError(errs.logo ?? Object.values(errs)[0] ?? 'The logo could not be uploaded.'),
             onFinish: () => setLogoProcessing(false),
         });
     };
 
     return (
-        <AdminLayout title="Portal Settings">
-            <Head title="Portal Settings" />
+        <AdminLayout title="Portal settings">
+            <Head title="Portal settings" />
 
-            <div className="max-w-xl space-y-6">
-                <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-5">
-                    <h2 className="text-base font-medium text-maroon">Portal logo</h2>
-                    <div className="flex items-center gap-4">
-                        {logo_url ? (
-                            <img src={logo_url} alt="CBK logo" className="h-16 w-16 rounded-lg object-contain" />
-                        ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-maroon text-sm text-white">CBK</div>
-                        )}
-                        <label className="cursor-pointer rounded-md border border-maroon px-3 py-1.5 text-sm text-maroon hover:bg-maroon/5">
-                            Change logo
-                            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={onLogoSelected} />
-                        </label>
-                    </div>
-                </section>
+            <PageHeader title="Portal settings" description="Branding, footer details and optional modules for the whole portal." />
 
-                <form onSubmit={submitFooter} className="space-y-4 rounded-xl border border-stone-200 bg-white p-5">
-                    <h2 className="text-base font-medium text-maroon">Footer information</h2>
-                    <Input label="Company name" name="company_name" value={data.footer.company_name}
-                        onChange={(e) => update('company_name', e.target.value)} error={errors['footer.company_name']} />
-                    <Input label="Copyright text" name="copyright" value={data.footer.copyright}
-                        onChange={(e) => update('copyright', e.target.value)} error={errors['footer.copyright']} />
-                    <Input label="Contact details" name="contact" value={data.footer.contact}
-                        onChange={(e) => update('contact', e.target.value)} error={errors['footer.contact']} />
-                    <Input label="Website" name="website" value={data.footer.website}
-                        onChange={(e) => update('website', e.target.value)} error={errors['footer.website']} />
-                    <Input label="Address" name="address" value={data.footer.address}
-                        onChange={(e) => update('address', e.target.value)} error={errors['footer.address']} />
+            <SettingsSections>
+                <SettingsSection title="Portal logo" description="Shown in the sidebar, sign-in screen and portal header.">
+                    <Card>
+                        <CardBody>
+                            <div className="flex items-center gap-5">
+                                {logo_url ? (
+                                    <img
+                                        src={logo_url}
+                                        alt="Current portal logo"
+                                        className="h-16 w-16 shrink-0 rounded-lg border border-line bg-paper object-contain p-1.5"
+                                    />
+                                ) : (
+                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-maroon-700 font-display text-base font-semibold text-white">
+                                        CBK
+                                    </div>
+                                )}
+                                <div className="min-w-0">
+                                    <input
+                                        ref={logoInputRef}
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/webp"
+                                        className="hidden"
+                                        tabIndex={-1}
+                                        aria-hidden="true"
+                                        onChange={onLogoSelected}
+                                    />
+                                    <Button variant="secondary" size="sm" onClick={() => logoInputRef.current?.click()}>
+                                        <Upload aria-hidden="true" />
+                                        {logo_url ? 'Change logo' : 'Upload logo'}
+                                    </Button>
+                                    {logoError && !rawLogo ? (
+                                        <p role="alert" className="mt-2 text-[13px] text-red-700">
+                                            {logoError}
+                                        </p>
+                                    ) : (
+                                        <p className="mt-2 text-[13px] text-stone-500">
+                                            PNG, JPG or WebP, cropped to a square. Uploads immediately.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </CardBody>
+                    </Card>
+                </SettingsSection>
 
-                    <div className="flex justify-end">
-                        <Button type="submit" disabled={processing}>Save footer</Button>
-                    </div>
-                </form>
-                <section className="space-y-3 rounded-xl border border-stone-200 bg-white p-5">
-                    <h2 className="text-base font-medium text-maroon">Future Modules</h2>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-stone-800">Careers</p>
-                            <p className="text-xs text-stone-500">
-                                Job postings and recruitment information. Not yet built — this only reserves the toggle for a future phase.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={toggleCareers}
-                            disabled={careersSaving}
-                            className={`relative h-6 w-11 shrink-0 rounded-full transition ${careersEnabled ? 'bg-maroon' : 'bg-stone-300'}`}
-                        >
-                            <span
-                                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${careersEnabled ? 'left-5' : 'left-0.5'}`}
-                            />
-                        </button>
-                    </div>
-                </section>
-            </div>
+                <SettingsSection title="Footer" description="Company details printed at the bottom of every portal page.">
+                    <form onSubmit={submitFooter}>
+                        <Card>
+                            <CardBody className="space-y-5">
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <Input
+                                        label="Company name"
+                                        name="company_name"
+                                        value={data.footer.company_name}
+                                        onChange={(e) => update('company_name', e.target.value)}
+                                        error={errors['footer.company_name']}
+                                    />
+                                    <Input
+                                        label="Copyright text"
+                                        name="copyright"
+                                        value={data.footer.copyright}
+                                        onChange={(e) => update('copyright', e.target.value)}
+                                        error={errors['footer.copyright']}
+                                        optional
+                                    />
+                                    <Input
+                                        label="Contact details"
+                                        name="contact"
+                                        value={data.footer.contact}
+                                        onChange={(e) => update('contact', e.target.value)}
+                                        error={errors['footer.contact']}
+                                        optional
+                                    />
+                                    <Input
+                                        label="Website"
+                                        name="website"
+                                        value={data.footer.website}
+                                        onChange={(e) => update('website', e.target.value)}
+                                        error={errors['footer.website']}
+                                        optional
+                                    />
+                                </div>
+                                <Textarea
+                                    label="Address"
+                                    name="address"
+                                    rows={2}
+                                    value={data.footer.address}
+                                    onChange={(e) => update('address', e.target.value)}
+                                    error={errors['footer.address']}
+                                    optional
+                                />
+                            </CardBody>
+                            <CardFooter>
+                                <Button type="submit" loading={processing}>
+                                    Save footer
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </form>
+                </SettingsSection>
+
+                <SettingsSection title="Modules" description="Turn optional portal modules on or off. Changes apply right away.">
+                    <Card>
+                        <CardBody>
+                            <div className="flex items-start justify-between gap-6">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-ink">
+                                        Careers
+                                    </p>
+                                    <p className="mt-0.5 text-[13px] leading-relaxed text-stone-500">
+                                        Job postings and recruitment information for Disers. Not built yet; this reserves the
+                                        toggle for a later phase.
+                                    </p>
+                                </div>
+                                <Switch
+                                    id="careers-toggle"
+                                    label="Careers module"
+                                    checked={careersEnabled}
+                                    onChange={toggleCareers}
+                                    disabled={careersSaving}
+                                />
+                            </div>
+                        </CardBody>
+                    </Card>
+                </SettingsSection>
+            </SettingsSections>
 
             {rawLogo && (
                 <ImageCropper
                     imageSrc={rawLogo}
                     aspect={1}
+                    cropShape="rect"
+                    title="Crop logo"
                     processing={logoProcessing}
+                    error={logoError}
                     onCancel={() => setRawLogo(null)}
                     onSave={saveLogo}
                 />

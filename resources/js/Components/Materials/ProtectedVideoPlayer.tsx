@@ -1,3 +1,4 @@
+import { ProtectionNote } from '@/Components/Materials/ProtectedPdfViewer';
 import Watermark from '@/Components/Shared/Watermark';
 
 export default function ProtectedVideoPlayer({ streamUrl, username }: { streamUrl: string; username: string }) {
@@ -5,20 +6,20 @@ export default function ProtectedVideoPlayer({ streamUrl, username }: { streamUr
         <div>
             <div
                 onContextMenu={(e) => e.preventDefault()}
-                className="relative overflow-hidden rounded-lg border border-stone-200 bg-black"
+                className="relative overflow-hidden rounded-xl border border-line bg-ink shadow-hairline"
             >
                 <video
                     src={streamUrl}
                     controls
                     controlsList="nodownload noremoteplayback"
                     disablePictureInPicture
-                    className="max-h-[70vh] w-full"
+                    playsInline
+                    preload="metadata"
+                    className="block aspect-video max-h-[70vh] w-full bg-ink"
                 />
-                <Watermark username={username} />
+                <Watermark username={username} tone="light" />
             </div>
-            <p className="mt-2 text-center text-xs text-stone-500">
-                View only. Downloading or sharing this material is not permitted.
-            </p>
+            <ProtectionNote />
         </div>
     );
 }

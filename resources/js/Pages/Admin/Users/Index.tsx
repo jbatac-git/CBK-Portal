@@ -1,15 +1,19 @@
+import Avatar from '@/Components/Shared/Avatar';
 import Can from '@/Components/Shared/Can';
 import StatusBadge from '@/Components/Shared/StatusBadge';
-import Avatar from '@/Components/Shared/Avatar';
 import Badge from '@/Components/UI/Badge';
-import { buttonClass } from '@/Components/UI/Button';
+import Button, { buttonClass } from '@/Components/UI/Button';
+import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
+import Table, { EmptyRow, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Toolbar, { FilterSelect, SearchInput } from '@/Components/UI/Toolbar';
 import RowActions from '@/Components/Users/RowActions';
 import ViewProfileModal from '@/Components/Users/ViewProfileModal';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Employee, Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
+import { Plus, Users } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface IndexProps {
@@ -19,10 +23,22 @@ interface IndexProps {
     removalReasons: Option[];
 }
 
+function DaysLeft({ days }: { days: number }) {
+    const urgent = days <= 2;
+
+    return (
+        <span className={`tabular text-2xs ${urgent ? 'font-medium text-gold-700' : 'text-stone-500'}`}>
+            {days} {days === 1 ? 'day' : 'days'} left
+        </span>
+    );
+}
+
 export default function Index({ users, filters, statuses, removalReasons }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [viewing, setViewing] = useState<Employee | null>(null);
+
+    const isFiltered = Boolean(filters.search || filters.status);
 
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
@@ -35,114 +51,117 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
     };
 
     return (
-        <AdminLayout title="User Management">
-            <Head title="User Management" />
+        <AdminLayout title="User management">
+            <Head title="User management" />
 
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <form onSubmit={applyFilters} className="flex flex-wrap items-center gap-2">
-                    <label htmlFor="search" className="sr-only">Search employees</label>
-                    <input
-                        id="search"
-                        type="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search name, username, ID, email"
-                        className="w-64 max-w-full rounded-md border-stone-300 text-sm shadow-sm focus:border-maroon focus:ring-maroon"
-                    />
+            <PageHeader
+                eyebrow="People"
+                title="User management"
+                description="Employee accounts, their status and what they can access in the portal."
+                actions={
+                    <Can permission="users.create">
+                        <Link href={route('admin.users.create')} className={buttonClass('primary')}>
+                            <Plus aria-hidden="true" />
+                            Add employee
+                        </Link>
+                    </Can>
+                }
+            />
 
-                    <label htmlFor="status" className="sr-only">Filter by status</label>
-                    <select
-                        id="status"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        className="rounded-md border-stone-300 text-sm shadow-sm focus:border-maroon focus:ring-maroon"
-                    >
-                        <option value="">All statuses</option>
-                        {statuses.map((s) => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
-                        ))}
-                    </select>
+            <Toolbar onSubmit={applyFilters}>
+                <SearchInput
+                    id="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search name, username, ID or email"
+                    className="sm:w-72"
+                />
 
-                    <button type="submit" className={buttonClass('secondary')}>Filter</button>
-                </form>
+                <FilterSelect
+                    id="status"
+                    aria-label="Filter by status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                >
+                    <option value="">All statuses</option>
+                    {statuses.map((s) => (
+                        <option key={s.value} value={s.value}>
+                            {s.label}
+                        </option>
+                    ))}
+                </FilterSelect>
 
-                <Can permission="users.create">
-                    <Link href={route('admin.users.create')} className={buttonClass('primary')}>
-                        + New employee
-                    </Link>
-                </Can>
-            </div>
+                <Button type="submit" variant="secondary">
+                    Filter
+                </Button>
+            </Toolbar>
 
-            <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-                <table className="min-w-full divide-y divide-stone-200 text-sm">
-                    <thead className="bg-stone-50 text-left text-xs uppercase text-stone-500">
-                        <tr>
-                            <th scope="col" className="px-4 py-3 font-medium">Employee</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Username</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Employee ID</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Role</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Status</th>
-                            <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-                        {users.data.map((user) => (
-                            <tr key={user.id}>
-                                <td className="px-4 py-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setViewing(user)}
-                                        className="group flex items-center gap-3 text-left"
-                                    >
-                                        <Avatar
-                                            name={user.name}
-                                            photoUrl={user.photo_url}
-                                            firstName={user.first_name}
-                                            lastName={user.last_name}
-                                            size="sm"
-                                        />
-                                        <div>
-                                            <div className="font-medium text-stone-900 group-hover:underline">
-                                                {user.name}
-                                            </div>
-                                            <div className="text-xs text-stone-500">{user.email}</div>
-                                        </div>
-                                    </button>
-                                </td>
-                                <td className="px-4 py-3 text-stone-700">{user.username}</td>
-                                <td className="px-4 py-3 text-stone-700">{user.employee_id}</td>
-                                <td className="px-4 py-3 text-stone-700">{user.role ?? '—'}</td>
-                                <td className="px-4 py-3">
+            <Table footer={<Pagination paginator={users} />}>
+                <THead>
+                    <Th>Employee</Th>
+                    <Th>Username</Th>
+                    <Th>Employee ID</Th>
+                    <Th>Role</Th>
+                    <Th>Status</Th>
+                    <Th align="right">
+                        <span className="sr-only">Actions</span>
+                    </Th>
+                </THead>
+                <TBody>
+                    {users.data.map((user) => (
+                        <Tr key={user.id}>
+                            <Td className="max-w-[18rem]">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewing(user)}
+                                    aria-label={`View profile of ${user.name}`}
+                                    className="group -mx-1 flex min-w-0 items-center gap-3 rounded-md px-1 py-0.5 text-left focus-visible:ring-2 focus-visible:ring-maroon-500/40"
+                                >
+                                    <Avatar
+                                        name={user.name}
+                                        photoUrl={user.photo_url}
+                                        firstName={user.first_name}
+                                        lastName={user.last_name}
+                                        size="sm"
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block truncate font-medium text-ink decoration-stone-300 underline-offset-4 group-hover:underline">
+                                            {user.name}
+                                        </span>
+                                        <span className="block truncate text-[13px] text-stone-500">{user.email}</span>
+                                    </span>
+                                </button>
+                            </Td>
+                            <Td className="whitespace-nowrap font-mono text-[13px] text-stone-700">{user.username}</Td>
+                            <Td className="tabular whitespace-nowrap font-mono text-[13px] text-stone-700">{user.employee_id}</Td>
+                            <Td className="whitespace-nowrap">{user.role ?? <span className="text-stone-400">—</span>}</Td>
+                            <Td>
+                                <div className="flex flex-col items-start gap-1">
                                     <StatusBadge status={user.status} label={user.status_label} />
-                                    {user.temporary_days_left !== null && (
-                                        <div className="mt-1 text-xs text-stone-500">
-                                            {user.temporary_days_left} day(s) left
-                                        </div>
-                                    )}
-                                    {user.has_pending_removal && (
-                                        <div className="mt-1">
-                                            <Badge tone="warning">Removal pending</Badge>
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    <RowActions user={user} removalReasons={removalReasons} />
-                                </td>
-                            </tr>
-                        ))}
+                                    {user.temporary_days_left !== null && <DaysLeft days={user.temporary_days_left} />}
+                                    {user.has_pending_removal && <Badge tone="warning">Removal pending</Badge>}
+                                </div>
+                            </Td>
+                            <Td align="right">
+                                <RowActions user={user} removalReasons={removalReasons} />
+                            </Td>
+                        </Tr>
+                    ))}
 
-                        {users.data.length === 0 && (
-                            <tr>
-                                <td colSpan={6} className="px-4 py-10 text-center text-stone-500">
-                                    No employees found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            <Pagination paginator={users} />
+                    {users.data.length === 0 && (
+                        <EmptyRow
+                            colSpan={6}
+                            icon={Users}
+                            title={isFiltered ? 'No employees match these filters' : 'No employees yet'}
+                            hint={
+                                isFiltered
+                                    ? 'Try a different name, ID or status.'
+                                    : 'Add an employee to create their portal account.'
+                            }
+                        />
+                    )}
+                </TBody>
+            </Table>
 
             <ViewProfileModal employee={viewing} onClose={() => setViewing(null)} />
         </AdminLayout>

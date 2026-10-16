@@ -1,5 +1,7 @@
 import Button, { buttonClass } from '@/Components/UI/Button';
+import Card, { CardBody, CardFooter } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
+import Switch from '@/Components/UI/Switch';
 import { LookupItem } from '@/types/lookup';
 import { Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -8,9 +10,11 @@ interface LookupFormViewProps {
     routePrefix: string;
     backHref: string;
     item?: Pick<LookupItem, 'id' | 'name' | 'is_active'>;
+    /** Label for the create button, e.g. "Add company". */
+    submitLabel?: string;
 }
 
-export default function LookupFormView({ routePrefix, backHref, item }: LookupFormViewProps) {
+export default function LookupFormView({ routePrefix, backHref, item, submitLabel = 'Add' }: LookupFormViewProps) {
     const { data, setData, post, put, processing, errors } = useForm({
         name: item?.name ?? '',
         is_active: item?.is_active ?? true,
@@ -27,21 +31,29 @@ export default function LookupFormView({ routePrefix, backHref, item }: LookupFo
     };
 
     return (
-        <form onSubmit={submit} className="max-w-md space-y-4 rounded-xl border border-stone-200 bg-white p-5">
-            <Input label="Name" name="name" value={data.name}
-                onChange={(e) => setData('name', e.target.value)} error={errors.name} />
+        <form onSubmit={submit}>
+            <Card>
+                <CardBody className="space-y-5">
+                    <Input label="Name" name="name" value={data.name} onChange={(e) => setData('name', e.target.value)} error={errors.name} />
 
-            <div className="flex items-center gap-2">
-                <input type="checkbox" id="is_active" checked={data.is_active}
-                    onChange={(e) => setData('is_active', e.target.checked)}
-                    className="rounded border-stone-300 text-maroon focus:ring-maroon" />
-                <label htmlFor="is_active" className="text-sm text-stone-700">Active</label>
-            </div>
-
-            <div className="flex justify-end gap-3">
-                <Link href={backHref} className={buttonClass('secondary')}>Cancel</Link>
-                <Button type="submit" disabled={processing}>{item ? 'Save changes' : 'Add'}</Button>
-            </div>
+                    <div className="flex items-start justify-between gap-4 rounded-md border border-line bg-paper px-4 py-3">
+                        <div>
+                            <p className="text-sm font-medium text-ink">Active</p>
+                            <p className="mt-0.5 text-[13px] text-stone-500">Inactive entries stay on existing records but can no longer be picked.</p>
+                        </div>
+                        <Switch id="is_active" label="Active" checked={data.is_active} onChange={(checked) => setData('is_active', checked)} />
+                    </div>
+                    {errors.is_active && <p className="text-[13px] text-red-700">{errors.is_active}</p>}
+                </CardBody>
+                <CardFooter>
+                    <Link href={backHref} className={buttonClass('secondary')}>
+                        Cancel
+                    </Link>
+                    <Button type="submit" loading={processing}>
+                        {item ? 'Save changes' : submitLabel}
+                    </Button>
+                </CardFooter>
+            </Card>
         </form>
     );
 }

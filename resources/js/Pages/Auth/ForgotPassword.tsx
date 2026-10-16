@@ -1,8 +1,8 @@
-import InputError from '@/Components/InputError';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
+import AuthHeader, { AuthNotice } from '@/Components/Auth/AuthHeader';
+import Button from '@/Components/UI/Button';
+import Input from '@/Components/UI/Input';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 export default function ForgotPassword({ status }: { status?: string }) {
@@ -18,39 +18,38 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
     return (
         <GuestLayout>
-            <Head title="Forgot Password" />
+            <Head title="Forgot password" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Forgot your password? No problem. Just let us know your email
-                address and we will email you a password reset link that will
-                allow you to choose a new one.
-            </div>
+            <AuthHeader
+                title="Reset your password"
+                description="Enter the email address on your account and we will send you a link to choose a new password."
+            />
 
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
+            {status && <AuthNotice>{status}</AuthNotice>}
 
-            <form onSubmit={submit}>
-                <TextInput
-                    id="email"
-                    type="email"
+            <form onSubmit={submit} className="space-y-5">
+                <Input
+                    label="Email address"
                     name="email"
+                    type="email"
+                    autoComplete="email"
+                    autoFocus
                     value={data.email}
-                    className="mt-1 block w-full"
-                    isFocused={true}
                     onChange={(e) => setData('email', e.target.value)}
+                    error={errors.email}
                 />
 
-                <InputError message={errors.email} className="mt-2" />
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Email Password Reset Link
-                    </PrimaryButton>
-                </div>
+                <Button type="submit" loading={processing} className="w-full">
+                    Email reset link
+                </Button>
             </form>
+
+            <p className="mt-6 text-center text-[13px] text-stone-500">
+                Remembered it?{' '}
+                <Link href={route('login')} className="link">
+                    Back to sign in
+                </Link>
+            </p>
         </GuestLayout>
     );
 }

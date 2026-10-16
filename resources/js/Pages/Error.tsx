@@ -1,5 +1,7 @@
+import { buttonClass } from '@/Components/UI/Button';
 import { PageProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 interface ErrorCopy {
     title: string;
@@ -9,7 +11,7 @@ interface ErrorCopy {
 const messages: Record<number, ErrorCopy> = {
     403: {
         title: "You don't have access to this page",
-        description: 'This section is not available for your account or role.',
+        description: 'This section is not available for your account or role. If you think it should be, ask your administrator.',
     },
     404: {
         title: 'Page not found',
@@ -17,11 +19,11 @@ const messages: Record<number, ErrorCopy> = {
     },
     419: {
         title: 'Session expired',
-        description: 'Your session has expired for your security. Please refresh and try again.',
+        description: 'Your session expired for your security. Refresh the page and try again.',
     },
     500: {
         title: 'Something went wrong',
-        description: "We're working on it. Please try again in a moment.",
+        description: 'The portal hit an unexpected problem. Please try again in a moment.',
     },
     503: {
         title: 'Portal under maintenance',
@@ -37,39 +39,38 @@ export default function Error({ status }: { status: number }) {
     };
 
     const homeHref = auth?.user ? route('dashboard') : route('login');
-    const homeLabel = auth?.user ? 'Go to dashboard' : 'Go to login';
+    const homeLabel = auth?.user ? 'Back to dashboard' : 'Go to sign in';
 
     return (
-        <div className="flex min-h-screen flex-col bg-cream">
+        <div className="flex min-h-screen flex-col bg-paper">
             <Head title={`${status} – ${copy.title}`} />
 
-            <header className="border-b-4 border-gold bg-maroon px-6 py-4">
-                <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-white px-2 py-0.5 text-lg font-semibold tracking-tight text-maroon">
-                        CBK
-                    </span>
-                    <span className="text-sm text-white/90">Portal</span>
-                </div>
-            </header>
-
-            <main className="flex flex-1 items-center justify-center px-4 py-10">
-                <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white p-8 text-center">
-                    <div className="mx-auto mb-4 h-1 w-10 bg-gold" />
-                    <div className="text-5xl font-semibold text-maroon">{status}</div>
-                    <h1 className="mt-3 text-lg font-medium text-stone-900">{copy.title}</h1>
-                    <p className="mt-2 text-sm text-stone-600">{copy.description}</p>
-
-                    <Link
-                        href={homeHref}
-                        className="mt-6 inline-flex items-center justify-center rounded-md bg-maroon px-4 py-2 text-sm font-medium text-white hover:bg-maroon-dark"
+            <main className="flex flex-1 items-center justify-center px-5 py-16">
+                <div className="w-full max-w-md animate-rise-in text-center">
+                    <p className="eyebrow">CBK Portal</p>
+                    <p className="tabular mt-4 font-display text-[120px] font-light leading-none tracking-[-0.04em] text-maroon-800 sm:text-[148px]"
                     >
-                        {homeLabel}
-                    </Link>
+                        {status}
+                    </p>
+                    <h1 className="mt-6 text-xl font-semibold text-ink">{copy.title}</h1>
+                    <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-stone-600">{copy.description}</p>
+
+                    <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                        <Link href={homeHref} className={buttonClass('primary')}>
+                            <ArrowLeft aria-hidden="true" />
+                            {homeLabel}
+                        </Link>
+                        {status === 419 && (
+                            <button type="button" onClick={() => window.location.reload()} className={buttonClass('secondary')}>
+                                Refresh page
+                            </button>
+                        )}
+                    </div>
                 </div>
             </main>
 
-            <footer className="bg-maroon-dark px-6 py-4 text-center text-xs text-white/70">
-                © {new Date().getFullYear()} CBK Hardware, Inc. All rights reserved.
+            <footer className="px-5 pb-8 text-center text-2xs text-stone-400">
+                © {new Date().getFullYear()} CBK Hardware, Inc.
             </footer>
         </div>
     );

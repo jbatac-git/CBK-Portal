@@ -1,4 +1,5 @@
-import PrimaryButton from '@/Components/PrimaryButton';
+import AuthHeader, { AuthNotice } from '@/Components/Auth/AuthHeader';
+import Button from '@/Components/UI/Button';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -14,38 +15,29 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
     return (
         <GuestLayout>
-            <Head title="Email Verification" />
+            <Head title="Verify your email" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
-            </div>
+            <AuthHeader
+                title="Verify your email"
+                description="We sent a verification link to your email address. Open it to activate your account. If it did not arrive, we can send another."
+            />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
+                <AuthNotice>A new verification link has been sent to your email address.</AuthNotice>
             )}
 
             <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
-
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Log Out
-                    </Link>
-                </div>
+                <Button type="submit" loading={processing} className="w-full">
+                    Resend verification email
+                </Button>
             </form>
+
+            <p className="mt-6 text-center text-[13px] text-stone-500">
+                Wrong account?{' '}
+                <Link href={route('logout')} method="post" as="button" className="link">
+                    Log out
+                </Link>
+            </p>
         </GuestLayout>
     );
 }

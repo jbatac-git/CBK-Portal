@@ -1,3 +1,5 @@
+import AuthHeader, { AuthNotice } from '@/Components/Auth/AuthHeader';
+import PasswordField from '@/Components/Auth/PasswordField';
 import Button from '@/Components/UI/Button';
 import Input from '@/Components/UI/Input';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -25,55 +27,55 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         <GuestLayout>
             <Head title="Log in" />
 
-            <h1 className="text-xl font-medium text-maroon">Sign in to CBK Portal</h1>
-            <div className="mb-6 mt-2 h-1 w-10 bg-gold" />
+            <AuthHeader title="Sign in" description="Use the username and password from your account email." />
 
-            {status && <div className="mb-4 text-sm text-green-700">{status}</div>}
+            {status && <AuthNotice>{status}</AuthNotice>}
 
-            <form onSubmit={submit} className="space-y-4">
+            <form onSubmit={submit} className="space-y-5">
                 <Input
                     label="Username"
                     name="username"
                     value={data.username}
                     autoComplete="username"
                     autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     autoFocus
                     onChange={(e) => setData('username', e.target.value)}
                     error={errors.username}
+                    className="font-mono"
                 />
 
-                <Input
+                <PasswordField
                     label="Password"
                     name="password"
-                    type="password"
                     value={data.password}
                     autoComplete="current-password"
                     onChange={(e) => setData('password', e.target.value)}
                     error={errors.password}
                 />
 
-                <label className="flex items-center gap-2 text-sm text-stone-600">
-                    <input
-                        type="checkbox"
-                        checked={data.remember}
-                        onChange={(e) => setData('remember', e.target.checked)}
-                        className="rounded border-stone-300 text-maroon focus:ring-maroon"
-                    />
-                    Remember me
-                </label>
-
-                <div className="flex items-center justify-between pt-2">
-                    {canResetPassword ? (
-                        <Link href={route('password.request')} className="text-sm text-maroon underline">
+                <div className="flex items-center justify-between gap-4">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600">
+                        <input
+                            type="checkbox"
+                            name="remember"
+                            checked={data.remember}
+                            onChange={(e) => setData('remember', e.target.checked)}
+                            className="checkbox"
+                        />
+                        Remember me
+                    </label>
+                    {canResetPassword && (
+                        <Link href={route('password.request')} className="link text-[13px]">
                             Forgot password?
                         </Link>
-                    ) : (
-                        <span />
                     )}
-                    <Button type="submit" disabled={processing}>
-                        Log in
-                    </Button>
                 </div>
+
+                <Button type="submit" loading={processing} className="w-full">
+                    Sign in
+                </Button>
             </form>
         </GuestLayout>
     );

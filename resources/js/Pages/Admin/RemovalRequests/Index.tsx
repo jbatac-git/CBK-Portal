@@ -1,6 +1,10 @@
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
+import PageHeader from '@/Components/UI/PageHeader';
+import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Textarea from '@/Components/UI/Textarea';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router } from '@inertiajs/react';
+import { UserMinus } from 'lucide-react';
 import { useState } from 'react';
 
 interface RemovalRequestRow {
@@ -16,6 +20,33 @@ interface RemovalRequestRow {
 
 type Mode = 'approve' | 'decline';
 
+const absoluteFormat = new Intl.DateTimeFormat('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+});
+
+const relativeFormat = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+function relativeTime(date: Date): string {
+    const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+    const units: [Intl.RelativeTimeFormatUnit, number][] = [
+        ['day', 86400],
+        ['hour', 3600],
+        ['minute', 60],
+    ];
+
+    for (const [unit, size] of units) {
+        if (Math.abs(seconds) >= size) {
+            return relativeFormat.format(Math.round(seconds / size), unit);
+        }
+    }
+
+    return 'just now';
+}
+
 export default function Index({ requests }: { requests: RemovalRequestRow[] }) {
     const [target, setTarget] = useState<{ request: RemovalRequestRow; mode: Mode } | null>(null);
     const [note, setNote] = useState('');
@@ -29,89 +60,106 @@ export default function Index({ requests }: { requests: RemovalRequestRow[] }) {
     const submit = () => {
         if (!target) return;
 
-        const routeName =
-            target.mode === 'approve' ? 'admin.removal-requests.approve' : 'admin.removal-requests.decline';
+        const routeName = target.mode === 'approve' ? 'admin.removal-requests.approve' : 'admin.removal-requests.decline';
 
-        router.post(
-            route(routeName, target.request.id),
-            target.mode === 'decline' ? { decision_note: note } : {},
-            {
-                preserveScroll: true,
-                onStart: () => setProcessing(true),
-                onSuccess: close,
-                onFinish: () => setProcessing(false),
-            },
-        );
+        router.post(route(routeName, target.request.id), target.mode === 'decline' ? { decision_note: note } : {}, {
+            preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onSuccess: close,
+            onFinish: () => setProcessing(false),
+        });
     };
 
     return (
-        <AdminLayout title="Removal Requests">
-            <Head title="Removal Requests" />
+        <AdminLayout title="Removal requests">
+            <Head title="Removal requests" />
 
-            <p className="text-sm text-stone-600">
-                Requests sent by HR for resigned, AWOL or separated employees. Approving a request disables the
-                account immediately.
-            </p>
+            <PageHeader
+                eyebrow="People"
+                title="Removal requests"
+                description="Requests from HR to remove resigned, AWOL or separated employees. Approving a request disables the account immediately."
+            />
 
-            <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-                <table className="min-w-full divide-y divide-stone-200 text-sm">
-                    <thead className="bg-stone-50 text-left text-xs uppercase text-stone-500">
-                        <tr>
-                            <th scope="col" className="px-4 py-3 font-medium">Employee</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Reason</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Requested by</th>
-                            <th scope="col" className="px-4 py-3 font-medium">Date</th>
-                            <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-                        {requests.map((r) => (
-                            <tr key={r.id}>
-                                <td className="px-4 py-3">
-                                    <div className="font-medium text-stone-900">{r.employee}</div>
-                                    <div className="text-xs text-stone-500">{r.username}</div>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="text-stone-800">{r.reason}</div>
-                                    {r.details && <div className="text-xs text-stone-500">{r.details}</div>}
-                                </td>
-                                <td className="px-4 py-3 text-stone-700">{r.requested_by}</td>
-                                <td className="px-4 py-3 text-stone-700">
-                                    {new Date(r.requested_at).toLocaleString()}
-                                </td>
-                                <td className="px-4 py-3 text-right">
+            <Table
+                footer={
+                    requests.length > 0 && (
+                        <p className="tabular text-[13px] text-stone-500">
+                            <span className="font-medium text-ink">{requests.length}</span> pending{' '}
+                            {requests.length === 1 ? 'request' : 'requests'}
+                        </p>
+                    )
+                }
+            >
+                <THead>
+                    <Th>Employee</Th>
+                    <Th>Reason</Th>
+                    <Th>Requested by</Th>
+                    <Th>Requested</Th>
+                    <Th align="right">
+                        <span className="sr-only">Actions</span>
+                    </Th>
+                </THead>
+                <TBody>
+                    {requests.map((r) => {
+                        const requestedAt = new Date(r.requested_at);
+
+                        return (
+                            <Tr key={r.id}>
+                                <Td className="whitespace-nowrap">
+                                    <div className="font-medium text-ink">{r.employee}</div>
+                                    <div className="font-mono text-[13px] text-stone-500">{r.username}</div>
+                                </Td>
+                                <Td className="min-w-[14rem] max-w-md">
+                                    <div className="text-ink">{r.reason}</div>
+                                    {r.details && (
+                                        <p className="mt-0.5 line-clamp-2 text-[13px] leading-relaxed text-stone-500" title={r.details}>
+                                            {r.details}
+                                        </p>
+                                    )}
+                                </Td>
+                                <Td className="whitespace-nowrap">{r.requested_by}</Td>
+                                <Td className="whitespace-nowrap">
+                                    <time dateTime={r.requested_at} title={absoluteFormat.format(requestedAt)}>
+                                        <span className="block text-stone-700">{relativeTime(requestedAt)}</span>
+                                        <span className="tabular block text-[13px] text-stone-500">
+                                            {absoluteFormat.format(requestedAt)}
+                                        </span>
+                                    </time>
+                                </Td>
+                                <Td align="right" className="whitespace-nowrap">
                                     {r.can_process && (
-                                        <div className="flex justify-end gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setTarget({ request: r, mode: 'approve' })}
-                                                className="text-red-700 underline"
-                                            >
-                                                Approve &amp; deactivate
-                                            </button>
+                                        <div className="flex justify-end gap-0.5">
                                             <button
                                                 type="button"
                                                 onClick={() => setTarget({ request: r, mode: 'decline' })}
-                                                className="text-stone-600 underline"
+                                                className={rowActionClass}
                                             >
                                                 Decline
                                             </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setTarget({ request: r, mode: 'approve' })}
+                                                className={rowDangerActionClass}
+                                            >
+                                                Approve and deactivate
+                                            </button>
                                         </div>
                                     )}
-                                </td>
-                            </tr>
-                        ))}
+                                </Td>
+                            </Tr>
+                        );
+                    })}
 
-                        {requests.length === 0 && (
-                            <tr>
-                                <td colSpan={5} className="px-4 py-10 text-center text-stone-500">
-                                    No pending removal requests.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                    {requests.length === 0 && (
+                        <EmptyRow
+                            colSpan={5}
+                            icon={UserMinus}
+                            title="No pending removal requests"
+                            hint="Requests appear here when HR asks for an employee's account to be removed."
+                        />
+                    )}
+                </TBody>
+            </Table>
 
             {target && (
                 <ConfirmDialog
@@ -132,19 +180,27 @@ export default function Index({ requests }: { requests: RemovalRequestRow[] }) {
                     onConfirm={submit}
                     onCancel={close}
                 >
-                    {target.mode === 'decline' && (
-                        <div>
-                            <label htmlFor="decision-note" className="block text-sm font-medium text-stone-700">
-                                Note (optional)
-                            </label>
-                            <textarea
-                                id="decision-note"
-                                rows={3}
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-maroon focus:ring-maroon"
-                            />
-                        </div>
+                    {target.mode === 'approve' ? (
+                        <dl className="space-y-1 rounded-md border border-line bg-paper px-3.5 py-3 text-[13px]">
+                            <div className="flex gap-2">
+                                <dt className="w-24 shrink-0 text-stone-500">Reason</dt>
+                                <dd className="text-ink">{target.request.reason}</dd>
+                            </div>
+                            <div className="flex gap-2">
+                                <dt className="w-24 shrink-0 text-stone-500">Requested by</dt>
+                                <dd className="text-ink">{target.request.requested_by}</dd>
+                            </div>
+                        </dl>
+                    ) : (
+                        <Textarea
+                            label="Note to requester"
+                            id="decision-note"
+                            name="decision_note"
+                            optional
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            hint="Explain why the account should stay active."
+                        />
                     )}
                 </ConfirmDialog>
             )}

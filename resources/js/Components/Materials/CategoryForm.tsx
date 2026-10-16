@@ -1,5 +1,8 @@
 import Button, { buttonClass } from '@/Components/UI/Button';
+import Card, { CardBody, CardFooter, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
+import Switch from '@/Components/UI/Switch';
+import Textarea from '@/Components/UI/Textarea';
 import { AdminCategory } from '@/types/material';
 import { Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -26,33 +29,45 @@ export default function CategoryForm({ category }: CategoryFormProps) {
     };
 
     return (
-        <form onSubmit={submit} className="max-w-xl space-y-4 rounded-xl border border-stone-200 bg-white p-5">
-            <Input label="Name" name="name" value={data.name}
-                onChange={(e) => setData('name', e.target.value)} error={errors.name} />
+        <form onSubmit={submit}>
+            <Card>
+                <CardHeader title="Category details" />
+                <CardBody className="space-y-5">
+                    <Input
+                        label="Name"
+                        name="name"
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        error={errors.name}
+                    />
 
-            <div>
-                <label htmlFor="description" className="block text-sm font-medium text-stone-700">Description</label>
-                <textarea
-                    id="description"
-                    rows={3}
-                    value={data.description}
-                    onChange={(e) => setData('description', e.target.value)}
-                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-maroon focus:ring-maroon"
-                />
-                {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
-            </div>
+                    <Textarea
+                        label="Description"
+                        name="description"
+                        optional
+                        value={data.description}
+                        onChange={(e) => setData('description', e.target.value)}
+                        error={errors.description}
+                    />
 
-            <div className="flex items-center gap-2">
-                <input type="checkbox" id="is_active" checked={data.is_active}
-                    onChange={(e) => setData('is_active', e.target.checked)}
-                    className="rounded border-stone-300 text-maroon focus:ring-maroon" />
-                <label htmlFor="is_active" className="text-sm text-stone-700">Active</label>
-            </div>
-
-            <div className="flex justify-end gap-3">
-                <Link href={route('admin.learning-material-categories.index')} className={buttonClass('secondary')}>Cancel</Link>
-                <Button type="submit" disabled={processing}>{category ? 'Save changes' : 'Add category'}</Button>
-            </div>
+                    <div className="flex items-start justify-between gap-4 rounded-md border border-line bg-paper px-4 py-3">
+                        <div>
+                            <p className="text-sm font-medium text-ink">Active</p>
+                            <p className="mt-0.5 text-[13px] text-stone-500">Inactive categories are hidden when uploading new materials.</p>
+                        </div>
+                        <Switch id="is_active" label="Active" checked={data.is_active} onChange={(checked) => setData('is_active', checked)} />
+                    </div>
+                    {errors.is_active && <p className="text-[13px] text-red-700">{errors.is_active}</p>}
+                </CardBody>
+                <CardFooter>
+                    <Link href={route('admin.learning-material-categories.index')} className={buttonClass('secondary')}>
+                        Cancel
+                    </Link>
+                    <Button type="submit" loading={processing}>
+                        {category ? 'Save changes' : 'Add category'}
+                    </Button>
+                </CardFooter>
+            </Card>
         </form>
     );
 }

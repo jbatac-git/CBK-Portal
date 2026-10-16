@@ -1,8 +1,10 @@
 import Button, { buttonClass } from '@/Components/UI/Button';
+import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
 import { Employee, UserFormOptions } from '@/types/user';
 import { Link, useForm } from '@inertiajs/react';
+import { Info } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 interface UserFormProps {
@@ -10,8 +12,6 @@ interface UserFormProps {
     /** Present = edit mode. Absent = create mode. */
     employee?: Employee;
 }
-
-const card = 'rounded-xl border border-stone-200 bg-white p-5';
 
 export default function UserForm({ options, employee }: UserFormProps) {
     const { data, setData, post, put, processing, errors } = useForm({
@@ -46,116 +46,203 @@ export default function UserForm({ options, employee }: UserFormProps) {
     return (
         <form onSubmit={submit} className="space-y-6">
             {!employee && (
-                <div className="rounded-lg border border-gold/50 bg-gold/10 p-4 text-sm text-stone-700">
-                    The username and a temporary password are generated automatically and emailed to the employee.
-                    Temporary access is valid for {options.temporary_access_days} days.
+                <div className="flex gap-3 rounded-lg border border-gold-200 bg-gold-50 px-4 py-3 text-[13px] leading-relaxed text-stone-700">
+                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-gold-700" aria-hidden="true" />
+                    <p>
+                        The username and a temporary password are generated automatically and emailed to the employee.
+                        Temporary access is valid for{' '}
+                        <span className="tabular font-medium text-ink">{options.temporary_access_days} days</span>.
+                    </p>
                 </div>
             )}
 
             {employee && (
-                <dl className={`${card} grid gap-4 text-sm sm:grid-cols-3`}>
-                    <div>
-                        <dt className="text-stone-500">Username</dt>
-                        <dd className="font-medium text-stone-900">{employee.username}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-stone-500">Employee ID</dt>
-                        <dd className="font-medium text-stone-900">{employee.employee_id}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-stone-500">Role</dt>
-                        <dd className="font-medium text-stone-900">{employee.role ?? '—'}</dd>
-                    </div>
-                </dl>
+                <Card>
+                    <dl className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                        <div className="px-5 py-4">
+                            <dt className="eyebrow">Username</dt>
+                            <dd className="mt-1.5 truncate font-mono text-sm text-ink">{employee.username}</dd>
+                        </div>
+                        <div className="px-5 py-4">
+                            <dt className="eyebrow">Employee ID</dt>
+                            <dd className="tabular mt-1.5 font-mono text-sm text-ink">{employee.employee_id}</dd>
+                        </div>
+                        <div className="px-5 py-4">
+                            <dt className="eyebrow">Role</dt>
+                            <dd className="mt-1.5 text-sm font-medium text-ink">{employee.role ?? '—'}</dd>
+                        </div>
+                    </dl>
+                </Card>
             )}
 
-            <section className={`${card} space-y-4`}>
-                <h2 className="text-base font-medium text-maroon">Employee information</h2>
+            <Card>
+                <CardHeader title="Identity" description="The employee's legal name and the email address their credentials are sent to." />
+                <CardBody className="space-y-5">
+                    <div className="grid gap-5 sm:grid-cols-3">
+                        <Input
+                            label="First name"
+                            name="first_name"
+                            autoComplete="off"
+                            value={data.first_name}
+                            onChange={(e) => setData('first_name', e.target.value)}
+                            error={errors.first_name}
+                        />
+                        <Input
+                            label="Middle name"
+                            name="middle_name"
+                            optional
+                            autoComplete="off"
+                            value={data.middle_name}
+                            onChange={(e) => setData('middle_name', e.target.value)}
+                            error={errors.middle_name}
+                        />
+                        <Input
+                            label="Last name"
+                            name="last_name"
+                            autoComplete="off"
+                            value={data.last_name}
+                            onChange={(e) => setData('last_name', e.target.value)}
+                            error={errors.last_name}
+                        />
+                    </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <Input label="First name" name="first_name" value={data.first_name}
-                        onChange={(e) => setData('first_name', e.target.value)} error={errors.first_name} />
-                    <Input label="Middle name (optional)" name="middle_name" value={data.middle_name}
-                        onChange={(e) => setData('middle_name', e.target.value)} error={errors.middle_name} />
-                    <Input label="Last name" name="last_name" value={data.last_name}
-                        onChange={(e) => setData('last_name', e.target.value)} error={errors.last_name} />
-                </div>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                        {!employee && (
+                            <Input
+                                label="Employee ID number"
+                                name="employee_id"
+                                inputMode="numeric"
+                                autoComplete="off"
+                                className="tabular font-mono"
+                                value={data.employee_id}
+                                onChange={(e) => setData('employee_id', e.target.value)}
+                                error={errors.employee_id}
+                                hint="Numbers only. It can't be edited after the account is created."
+                            />
+                        )}
+                        <Input
+                            label="Email address"
+                            name="email"
+                            type="email"
+                            autoComplete="off"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            error={errors.email}
+                            hint={employee ? undefined : 'Login details are sent here.'}
+                        />
+                    </div>
+                </CardBody>
+            </Card>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
+                <CardHeader title="Employment" description="Where the employee works and what kind of account they need." />
+                <CardBody className="space-y-5">
+                    <div className="grid gap-5 sm:grid-cols-2">
+                        <Select
+                            label="Company"
+                            name="company_id"
+                            value={data.company_id}
+                            onChange={(e) => setData('company_id', e.target.value)}
+                            error={errors.company_id}
+                        >
+                            <option value="">Select a company</option>
+                            {options.companies.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </Select>
+
+                        <Select
+                            label="Department"
+                            name="department_id"
+                            optional={isDiser}
+                            value={data.department_id}
+                            onChange={(e) => setData('department_id', e.target.value)}
+                            error={errors.department_id}
+                        >
+                            <option value="">{isDiser ? 'None' : 'Select a department'}</option>
+                            {options.departments.map((d) => (
+                                <option key={d.id} value={d.id}>
+                                    {d.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+
                     {!employee && (
-                        <Input label="Employee ID number" name="employee_id" inputMode="numeric"
-                            value={data.employee_id}
-                            onChange={(e) => setData('employee_id', e.target.value)} error={errors.employee_id} />
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <Select
+                                label="Role"
+                                name="role"
+                                value={data.role}
+                                onChange={(e) => setData('role', e.target.value)}
+                                error={errors.role}
+                                hint="Sets what the account can do in the portal."
+                            >
+                                {options.roles.map((r) => (
+                                    <option key={r.value} value={r.value}>
+                                        {r.label}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
                     )}
-                    <Input label="Email address" name="email" type="email" value={data.email}
-                        onChange={(e) => setData('email', e.target.value)} error={errors.email} />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <Select label="Company" name="company_id" value={data.company_id}
-                        onChange={(e) => setData('company_id', e.target.value)} error={errors.company_id}>
-                        <option value="">Select a company</option>
-                        {options.companies.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </Select>
-
-                    <Select label={`Department${isDiser ? ' (optional)' : ''}`} name="department_id"
-                        value={data.department_id}
-                        onChange={(e) => setData('department_id', e.target.value)} error={errors.department_id}>
-                        <option value="">{isDiser ? 'None' : 'Select a department'}</option>
-                        {options.departments.map((d) => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                    </Select>
-                </div>
-            </section>
-
-            {!employee && (
-                <section className={`${card} space-y-4`}>
-                    <h2 className="text-base font-medium text-maroon">Role</h2>
-                    <Select label="Role" name="role" value={data.role}
-                        onChange={(e) => setData('role', e.target.value)} error={errors.role}>
-                        {options.roles.map((r) => (
-                            <option key={r.value} value={r.value}>{r.label}</option>
-                        ))}
-                    </Select>
-                </section>
-            )}
+                </CardBody>
+            </Card>
 
             {isDiser && (
-                <section className={`${card} space-y-3`}>
-                    <h2 className="text-base font-medium text-maroon">Portal modules</h2>
+                <Card>
+                    <CardHeader
+                        title="Portal access"
+                        description={
+                            showModules
+                                ? 'Choose which sections of the Diser portal this employee can open.'
+                                : 'Sections of the Diser portal this employee can open.'
+                        }
+                    />
+                    <CardBody>
+                        {showModules ? (
+                            <fieldset>
+                                <legend className="sr-only">Portal modules</legend>
+                                <div className="divide-y divide-line overflow-hidden rounded-md border border-line">
+                                    {options.modules.map((m) => {
+                                        const checked = data.modules.includes(m.value);
 
-                    {showModules ? (
-                        <fieldset className="space-y-2">
-                            <legend className="sr-only">Portal modules</legend>
-                            {options.modules.map((m) => (
-                                <label key={m.value} className="flex items-center gap-2 text-sm text-stone-700">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.modules.includes(m.value)}
-                                        onChange={(e) => toggleModule(m.value, e.target.checked)}
-                                        className="rounded border-stone-300 text-maroon focus:ring-maroon"
-                                    />
-                                    {m.label}
-                                </label>
-                            ))}
-                            {errors.modules && <p className="text-sm text-red-600">{errors.modules}</p>}
-                        </fieldset>
-                    ) : (
-                        <p className="text-sm text-stone-600">
-                            Default modules are assigned automatically. An administrator can change the access later.
-                        </p>
-                    )}
-                </section>
+                                        return (
+                                            <label
+                                                key={m.value}
+                                                className={`flex cursor-pointer items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-paper ${
+                                                    checked ? 'text-ink' : 'text-stone-600'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={(e) => toggleModule(m.value, e.target.checked)}
+                                                    className="checkbox"
+                                                />
+                                                <span className="font-medium">{m.label}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {errors.modules && <p className="mt-2 text-[13px] text-red-700">{errors.modules}</p>}
+                            </fieldset>
+                        ) : (
+                            <p className="text-sm text-stone-600">
+                                Default modules are assigned automatically. An administrator can change the access later.
+                            </p>
+                        )}
+                    </CardBody>
+                </Card>
             )}
 
-            <div className="flex justify-end gap-3">
+            <div className="flex items-center justify-end gap-2 border-t border-line pt-5">
                 <Link href={route('admin.users.index')} className={buttonClass('secondary')}>
                     Cancel
                 </Link>
-                <Button type="submit" disabled={processing}>
+                <Button type="submit" loading={processing}>
                     {employee ? 'Save changes' : 'Create account'}
                 </Button>
             </div>

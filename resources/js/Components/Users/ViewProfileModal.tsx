@@ -1,16 +1,16 @@
 import Avatar from '@/Components/Shared/Avatar';
-import Button from '@/Components/UI/Button';
 import StatusBadge from '@/Components/Shared/StatusBadge';
+import Button from '@/Components/UI/Button';
 import { Employee } from '@/types/user';
-import { useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
+import { ReactNode, useEffect, useRef } from 'react';
 
-export default function ViewProfileModal({
-    employee,
-    onClose,
-}: {
+interface ViewProfileModalProps {
     employee: Employee | null;
     onClose: () => void;
-}) {
+}
+
+export default function ViewProfileModal({ employee, onClose }: ViewProfileModalProps) {
     const ref = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
@@ -23,46 +23,98 @@ export default function ViewProfileModal({
 
     if (!employee) return null;
 
-    const rows: [string, string][] = [
-        ['Username', employee.username],
-        ['Employee ID', employee.employee_id],
-        ['Email', employee.email],
-        ['Contact number', employee.contact_number ?? '—'],
-        ['Company', employee.company ?? '—'],
-        ['Department', employee.department ?? '—'],
-        ['Role', employee.role ?? '—'],
+    const dash = <span className="text-stone-400">—</span>;
+    const mono = (value: string) => <span className="font-mono text-[13px]">{value}</span>;
+
+    const sections: { heading: string; rows: [string, ReactNode][] }[] = [
+        {
+            heading: 'Account',
+            rows: [
+                ['Username', mono(employee.username)],
+                ['Employee ID', mono(employee.employee_id)],
+                ['Role', employee.role ?? dash],
+            ],
+        },
+        {
+            heading: 'Contact',
+            rows: [
+                ['Email', <span className="break-all">{employee.email}</span>],
+                ['Contact number', employee.contact_number ? mono(employee.contact_number) : dash],
+            ],
+        },
+        {
+            heading: 'Employment',
+            rows: [
+                ['Company', employee.company ?? dash],
+                ['Department', employee.department ?? dash],
+            ],
+        },
     ];
 
     return (
         <dialog
             ref={ref}
+            aria-labelledby="profile-dialog-title"
             onCancel={(e) => {
                 e.preventDefault();
                 onClose();
             }}
-            className="w-full max-w-md rounded-xl p-0 backdrop:bg-black/40"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+            className="w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-white p-0 shadow-overlay backdrop:bg-ink/40 backdrop:backdrop-blur-[2px] open:animate-rise-in"
         >
-            <div className="space-y-4 p-6">
-                <div className="flex items-center gap-4">
-                    <Avatar name={employee.name} photoUrl={employee.photo_url} size="lg" />
-                    <div>
-                        <h2 className="text-lg font-medium text-maroon">{employee.name}</h2>
+            <div className="flex items-start gap-4 border-b border-line px-6 py-5">
+                <Avatar
+                    name={employee.name}
+                    photoUrl={employee.photo_url}
+                    firstName={employee.first_name}
+                    lastName={employee.last_name}
+                    size="md"
+                />
+                <div className="min-w-0 flex-1">
+                    <h2 id="profile-dialog-title" className="truncate text-base font-semibold text-ink">
+                        {employee.name}
+                    </h2>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         <StatusBadge status={employee.status} label={employee.status_label} />
+                        {employee.temporary_days_left !== null && (
+                            <span className="tabular text-[13px] text-stone-500">
+                                {employee.temporary_days_left} {employee.temporary_days_left === 1 ? 'day' : 'days'} left
+                            </span>
+                        )}
                     </div>
                 </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Close"
+                    className="-mr-2 -mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-stone-400 transition-colors hover:bg-stone-100 hover:text-ink"
+                >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+            </div>
 
-                <dl className="divide-y divide-stone-100 text-sm">
-                    {rows.map(([label, value]) => (
-                        <div key={label} className="flex justify-between py-2">
-                            <dt className="text-stone-500">{label}</dt>
-                            <dd className="font-medium text-stone-800">{value}</dd>
-                        </div>
-                    ))}
-                </dl>
+            <div className="space-y-5 px-6 py-5">
+                {sections.map((section) => (
+                    <section key={section.heading}>
+                        <h3 className="eyebrow mb-1.5">{section.heading}</h3>
+                        <dl className="divide-y divide-line/80">
+                            {section.rows.map(([label, value]) => (
+                                <div key={label} className="flex items-baseline justify-between gap-4 py-2 text-sm">
+                                    <dt className="shrink-0 text-stone-500">{label}</dt>
+                                    <dd className="min-w-0 text-right text-ink">{value}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </section>
+                ))}
+            </div>
 
-                <div className="flex justify-end">
-                    <Button variant="secondary" onClick={onClose}>Close</Button>
-                </div>
+            <div className="flex justify-end gap-2 rounded-b-xl border-t border-line bg-paper px-6 py-3.5">
+                <Button variant="secondary" onClick={onClose}>
+                    Close
+                </Button>
             </div>
         </dialog>
     );

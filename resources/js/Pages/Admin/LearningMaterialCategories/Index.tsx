@@ -1,12 +1,16 @@
 import Can from '@/Components/Shared/Can';
 import Badge from '@/Components/UI/Badge';
-import { buttonClass } from '@/Components/UI/Button';
+import Button, { buttonClass } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
+import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
+import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Toolbar, { SearchInput } from '@/Components/UI/Toolbar';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { AdminCategory } from '@/types/material';
 import { Paginated } from '@/types/pagination';
 import { Head, Link, router } from '@inertiajs/react';
+import { FolderTree, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface IndexProps {
@@ -21,11 +25,7 @@ export default function Index({ categories, filters }: IndexProps) {
 
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(
-            route('admin.learning-material-categories.index'),
-            search ? { search } : {},
-            { preserveState: true, replace: true },
-        );
+        router.get(route('admin.learning-material-categories.index'), search ? { search } : {}, { preserveState: true, replace: true });
     };
 
     const confirmDelete = () => {
@@ -42,75 +42,80 @@ export default function Index({ categories, filters }: IndexProps) {
     };
 
     return (
-        <AdminLayout title="Learning Material Categories">
-            <Head title="Learning Material Categories" />
+        <AdminLayout title="Categories">
+            <Head title="Learning material categories" />
 
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <form onSubmit={applyFilters} className="flex items-center gap-2">
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search categories"
-                        className="w-56 rounded-md border-stone-300 text-sm shadow-sm focus:border-maroon focus:ring-maroon"
-                    />
-                    <button type="submit" className={buttonClass('secondary')}>Filter</button>
-                </form>
-
-                <div className="flex gap-2">
-                    <Link href={route('admin.learning-materials.index')} className={buttonClass('secondary')}>
-                        Back to materials
-                    </Link>
+            <PageHeader
+                back={{ href: route('admin.learning-materials.index'), label: 'Learning materials' }}
+                title="Categories"
+                description="Groups that organise learning materials in the Diser library."
+                actions={
                     <Can permission="learning-materials.create">
                         <Link href={route('admin.learning-material-categories.create')} className={buttonClass('primary')}>
-                            + Add category
+                            <Plus aria-hidden="true" />
+                            Add category
                         </Link>
                     </Can>
-                </div>
-            </div>
+                }
+            />
 
-            <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-                <table className="min-w-full divide-y divide-stone-200 text-sm">
-                    <thead className="bg-stone-50 text-left text-xs uppercase text-stone-500">
-                        <tr>
-                            <th className="px-4 py-3 font-medium">Name</th>
-                            <th className="px-4 py-3 font-medium">Description</th>
-                            <th className="px-4 py-3 font-medium">Materials</th>
-                            <th className="px-4 py-3 font-medium">Status</th>
-                            <th className="px-4 py-3 text-right font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-                        {categories.data.map((c) => (
-                            <tr key={c.id}>
-                                <td className="px-4 py-3 font-medium text-stone-900">{c.name}</td>
-                                <td className="px-4 py-3 text-stone-600">{c.description ?? '—'}</td>
-                                <td className="px-4 py-3 text-stone-600">{c.materials_count}</td>
-                                <td className="px-4 py-3">
-                                    <Badge tone={c.is_active ? 'success' : 'neutral'}>{c.is_active ? 'Active' : 'Inactive'}</Badge>
-                                </td>
-                                <td className="px-4 py-3 text-right space-x-3">
-                                    <Can permission="learning-materials.update">
-                                        <Link href={route('admin.learning-material-categories.edit', c.id)} className="text-maroon underline">
-                                            Edit
-                                        </Link>
-                                        {c.materials_count === 0 && (
-                                            <button onClick={() => setDeleting(c)} className="text-red-700 underline">
-                                                Delete
-                                            </button>
-                                        )}
-                                    </Can>
-                                </td>
-                            </tr>
-                        ))}
-                        {categories.data.length === 0 && (
-                            <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-500">No categories found.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <Toolbar onSubmit={applyFilters}>
+                <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search categories" />
+                <Button type="submit" variant="secondary">
+                    Filter
+                </Button>
+            </Toolbar>
 
-            <Pagination paginator={categories} />
+            <Table footer={<Pagination paginator={categories} />}>
+                <THead>
+                    <Th>Name</Th>
+                    <Th align="right">Materials</Th>
+                    <Th>Status</Th>
+                    <Th align="right">
+                        <span className="sr-only">Actions</span>
+                    </Th>
+                </THead>
+                <TBody>
+                    {categories.data.map((c) => (
+                        <Tr key={c.id}>
+                            <Td className="max-w-md">
+                                <p className="font-medium text-ink">{c.name}</p>
+                                {c.description && (
+                                    <p className="mt-0.5 line-clamp-1 text-[13px] text-stone-500" title={c.description}>
+                                        {c.description}
+                                    </p>
+                                )}
+                            </Td>
+                            <Td align="right" className="tabular">
+                                {c.materials_count}
+                            </Td>
+                            <Td>
+                                <Badge tone={c.is_active ? 'success' : 'neutral'}>{c.is_active ? 'Active' : 'Inactive'}</Badge>
+                            </Td>
+                            <Td align="right" className="whitespace-nowrap">
+                                <Can permission="learning-materials.update">
+                                    <Link href={route('admin.learning-material-categories.edit', c.id)} className={rowActionClass}>
+                                        Edit
+                                    </Link>
+                                    {c.materials_count === 0 && (
+                                        <button type="button" onClick={() => setDeleting(c)} className={rowDangerActionClass}>
+                                            Delete
+                                        </button>
+                                    )}
+                                </Can>
+                            </Td>
+                        </Tr>
+                    ))}
+                    {categories.data.length === 0 && (
+                        <EmptyRow
+                            colSpan={4}
+                            icon={FolderTree}
+                            title={filters.search ? 'No categories match your search' : 'No categories yet'}
+                            hint={filters.search ? 'Try a different search term.' : 'Add a category before uploading learning materials.'}
+                        />
+                    )}
+                </TBody>
+            </Table>
 
             <ConfirmDialog
                 open={deleting !== null}

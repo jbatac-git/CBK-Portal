@@ -1,5 +1,6 @@
+import AuthHeader from '@/Components/Auth/AuthHeader';
+import PasswordField from '@/Components/Auth/PasswordField';
 import Button from '@/Components/UI/Button';
-import Input from '@/Components/UI/Input';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -20,55 +21,51 @@ export default function ChangePassword() {
         <GuestLayout>
             <Head title="Set your password" />
 
-            <h1 className="text-xl font-medium text-maroon">Set your own password</h1>
-            <div className="mb-4 mt-2 h-1 w-10 bg-gold" />
-            <p className="mb-6 text-sm text-stone-600">
-                For your security, replace the temporary password from your email before continuing.
-            </p>
+            <AuthHeader
+                eyebrow="First sign-in"
+                title="Set your own password"
+                description="You signed in with the temporary password from your email. Replace it with one only you know before continuing."
+            />
 
-            <form onSubmit={submit} className="space-y-4">
-                <Input
+            <form onSubmit={submit} className="space-y-5">
+                <PasswordField
                     label="Temporary password"
                     name="current_password"
-                    type="password"
                     autoComplete="current-password"
+                    autoFocus
                     value={data.current_password}
                     onChange={(e) => setData('current_password', e.target.value)}
                     error={errors.current_password}
                 />
-                <Input
+                <PasswordField
                     label="New password"
                     name="password"
-                    type="password"
                     autoComplete="new-password"
                     value={data.password}
                     onChange={(e) => setData('password', e.target.value)}
                     error={errors.password}
+                    hint="At least 8 characters, and different from your temporary password."
                 />
-                <Input
+                <PasswordField
                     label="Confirm new password"
                     name="password_confirmation"
-                    type="password"
                     autoComplete="new-password"
                     value={data.password_confirmation}
                     onChange={(e) => setData('password_confirmation', e.target.value)}
                     error={errors.password_confirmation}
                 />
 
-                <div className="flex items-center justify-between pt-2">
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="text-sm text-maroon underline"
-                    >
-                        Log out
-                    </Link>
-                    <Button type="submit" disabled={processing}>
-                        Save password
-                    </Button>
-                </div>
+                <Button type="submit" loading={processing} className="w-full">
+                    Save password
+                </Button>
             </form>
+
+            <p className="mt-6 text-center text-[13px] text-stone-500">
+                Not you?{' '}
+                <Link href={route('logout')} method="post" as="button" className="link">
+                    Log out
+                </Link>
+            </p>
         </GuestLayout>
     );
 }

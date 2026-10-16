@@ -1,12 +1,15 @@
-import ProfileForm from '@/Components/Profile/ProfileForm';
+import ProfileForm, { ProfileData } from '@/Components/Profile/ProfileForm';
+import PageHeader from '@/Components/UI/PageHeader';
 import DiserLayout from '@/Layouts/DiserLayout';
 import { Head } from '@inertiajs/react';
 
-export default function Edit({ profile }: { profile: any }) {
+export default function Edit({ profile }: { profile: ProfileData }) {
     return (
         <DiserLayout>
-            <Head title="My Profile" />
-            <h1 className="mb-1 text-lg font-medium text-maroon">My Profile</h1>
+            <Head title="My profile" />
+
+            <PageHeader title="My profile" description="Your photo, contact number and password." />
+
             <ProfileForm profile={profile} />
         </DiserLayout>
     );

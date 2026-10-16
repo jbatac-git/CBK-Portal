@@ -1,8 +1,13 @@
-import { buttonClass } from '@/Components/UI/Button';
+import Button, { buttonClass } from '@/Components/UI/Button';
+import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import Pagination from '@/Components/UI/Pagination';
-import { Paginated } from '@/types/pagination';
+import Switch from '@/Components/UI/Switch';
+import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Toolbar, { SearchInput } from '@/Components/UI/Toolbar';
 import { LookupItem } from '@/types/lookup';
+import { Paginated } from '@/types/pagination';
 import { Link, router } from '@inertiajs/react';
+import { ListChecks, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface LookupIndexViewProps {
@@ -11,27 +16,53 @@ interface LookupIndexViewProps {
     items: Paginated<LookupItem>;
     filters: { search?: string };
     routePrefix: string;
-    /** Kasalukuyang Maintenance tab — kailangan para tama ang target ng search form. */
+    /** Current Maintenance tab, needed so the search form targets the right list. */
     tab: string;
+}
+
+/** "Removal Reasons" becomes "Removal reasons". */
+export function sentenceCase(value: string): string {
+    return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}
+
+/** "Companies" becomes "company", "Removal Reasons" becomes "removal reason". */
+function singular(value: string): string {
+    const lower = value.toLowerCase();
+    if (lower.endsWith('ies')) return `${lower.slice(0, -3)}y`;
+    if (lower.endsWith('s')) return lower.slice(0, -1);
+    return lower;
+}
+
+/** Resolves server labels like "employee(s)" against a count. */
+function usage(count: number, label: string): string {
+    return `${count} ${label.replace('(s)', count === 1 ? '' : 's')}`;
 }
 
 export default function LookupIndexView({ title, usageLabel, items, filters, routePrefix, tab }: LookupIndexViewProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState<LookupItem | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const noun = singular(title);
+    const plural = title.toLowerCase();
 
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(
-            route('admin.maintenance.index'),
-            search ? { tab, search } : { tab },
-            { preserveState: true, replace: true },
-        );
+        router.get(route('admin.maintenance.index'), search ? { tab, search } : { tab }, { preserveState: true, replace: true });
     };
 
-    const remove = (item: LookupItem) => {
-        if (confirm(`Delete "${item.name}"?`)) {
-            router.delete(route(`${routePrefix}.destroy`, item.id), { preserveScroll: true });
-        }
+    const confirmDelete = () => {
+        if (!deleting) return;
+
+        router.delete(route(`${routePrefix}.destroy`, deleting.id), {
+            preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => {
+                setProcessing(false);
+                setDeleting(null);
+            },
+        });
     };
 
     const toggleActive = (item: LookupItem) => {
@@ -45,75 +76,80 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
 
     return (
         <div>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <form onSubmit={applyFilters} className="flex items-center gap-2">
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder={`Search ${title.toLowerCase()}`}
-                        className="w-56 rounded-md border-stone-300 text-sm shadow-sm focus:border-maroon focus:ring-maroon"
-                    />
-                    <button type="submit" className={buttonClass('secondary')}>Filter</button>
-                </form>
+            <Toolbar
+                onSubmit={applyFilters}
+                actions={
+                    <Link href={route(`${routePrefix}.create`)} className={buttonClass('primary')}>
+                        <Plus aria-hidden="true" />
+                        Add {noun}
+                    </Link>
+                }
+            >
+                <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Search ${plural}`} />
+                <Button type="submit" variant="secondary">
+                    Filter
+                </Button>
+            </Toolbar>
 
-                <Link href={route(`${routePrefix}.create`)} className={buttonClass('primary')}>
-                    + Add {title.replace(/s$/, '')}
-                </Link>
-            </div>
-
-            <div className="mt-4 overflow-x-auto rounded-xl border border-stone-200 bg-white">
-                <table className="min-w-full divide-y divide-stone-200 text-sm">
-                    <thead className="bg-stone-50 text-left text-xs uppercase text-stone-500">
-                        <tr>
-                            <th className="px-4 py-3 font-medium">Name</th>
-                            <th className="px-4 py-3 font-medium">In use</th>
-                            <th className="px-4 py-3 font-medium">Active</th>
-                            <th className="px-4 py-3 text-right font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-                        {items.data.map((item) => (
-                            <tr key={item.id}>
-                                <td className="px-4 py-3 font-medium text-stone-900">{item.name}</td>
-                                <td className="px-4 py-3 text-stone-600">{item.usage_count} {usageLabel}</td>
-                                <td className="px-4 py-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => toggleActive(item)}
-                                        disabled={togglingId === item.id}
-                                        title={item.is_active ? 'Active — i-click para i-deactivate' : 'Inactive — i-click para i-activate'}
-                                        className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
-                                            item.is_active ? 'bg-maroon' : 'bg-stone-300'
-                                        }`}
-                                    >
-                                        <span
-                                            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
-                                                item.is_active ? 'left-5' : 'left-0.5'
-                                            }`}
-                                        />
+            <Table footer={<Pagination paginator={items} />}>
+                <THead>
+                    <Th>Name</Th>
+                    <Th>In use</Th>
+                    <Th>Active</Th>
+                    <Th align="right">
+                        <span className="sr-only">Actions</span>
+                    </Th>
+                </THead>
+                <TBody>
+                    {items.data.map((item) => (
+                        <Tr key={item.id}>
+                            <Td>
+                                <span className={`font-medium ${item.is_active ? 'text-ink' : 'text-stone-500'}`}>{item.name}</span>
+                            </Td>
+                            <Td className="tabular whitespace-nowrap">
+                                {item.usage_count === 0 ? <span className="text-stone-400">Not in use</span> : usage(item.usage_count, usageLabel)}
+                            </Td>
+                            <Td>
+                                <Switch
+                                    checked={item.is_active}
+                                    onChange={() => toggleActive(item)}
+                                    disabled={togglingId === item.id}
+                                    label={`${item.name} active`}
+                                />
+                            </Td>
+                            <Td align="right" className="whitespace-nowrap">
+                                <Link href={route(`${routePrefix}.edit`, item.id)} className={rowActionClass}>
+                                    Edit
+                                </Link>
+                                {item.usage_count === 0 && (
+                                    <button type="button" onClick={() => setDeleting(item)} className={rowDangerActionClass}>
+                                        Delete
                                     </button>
-                                </td>
-                                <td className="px-4 py-3 text-right space-x-3">
-                                    <Link href={route(`${routePrefix}.edit`, item.id)} className="text-maroon underline">
-                                        Edit
-                                    </Link>
-                                    {item.usage_count === 0 && (
-                                        <button onClick={() => remove(item)} className="text-red-700 underline">
-                                            Delete
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                        {items.data.length === 0 && (
-                            <tr><td colSpan={4} className="px-4 py-10 text-center text-stone-500">No records found.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                                )}
+                            </Td>
+                        </Tr>
+                    ))}
+                    {items.data.length === 0 && (
+                        <EmptyRow
+                            colSpan={4}
+                            icon={ListChecks}
+                            title={filters.search ? `No ${plural} match your search` : `No ${plural} yet`}
+                            hint={filters.search ? 'Try a different search term.' : `Add a ${noun} so it can be picked in forms.`}
+                        />
+                    )}
+                </TBody>
+            </Table>
 
-            <div className="mt-4"><Pagination paginator={items} /></div>
+            <ConfirmDialog
+                open={deleting !== null}
+                title={`Delete ${noun}`}
+                description={deleting ? `Delete "${deleting.name}"? This cannot be undone.` : undefined}
+                confirmLabel="Delete"
+                variant="danger"
+                processing={processing}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleting(null)}
+            />
         </div>
     );
 }
