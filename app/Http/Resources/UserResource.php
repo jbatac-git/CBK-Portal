@@ -3,10 +3,11 @@
 namespace App\Http\Resources;
 
 use App\Enums\AccountStatus;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\User */
+/** @mixin User */
 class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -15,7 +16,7 @@ class UserResource extends JsonResource
         $status = $this->status;
         $pendingRemoval = $this->pendingRemovalRequest !== null;
 
-        $can = fn(string $ability): bool => $actor?->can($ability, $this->resource) ?? false;
+        $can = fn (string $ability): bool => $actor?->can($ability, $this->resource) ?? false;
 
         return [
             'id' => $this->id,
@@ -37,9 +38,15 @@ class UserResource extends JsonResource
             'status_label' => $status->label(),
             'temporary_days_left' => $this->temporaryDaysLeft(),
             'has_pending_removal' => $pendingRemoval,
+            // Delivery of the latest temporary-credentials email.
+            'credentials_email' => $this->credentials_email_status ? [
+                'status' => $this->credentials_email_status,
+                'sent_at' => $this->credentials_email_sent_at?->toIso8601String(),
+                'error' => $this->credentials_email_error,
+            ] : null,
             'modules' => $this->whenLoaded(
                 'permissions',
-                fn() => $this->permissions->pluck('name')->values(),
+                fn () => $this->permissions->pluck('name')->values(),
             ),
 
             // Abilities: permission + hierarchy (Policy) AND a legal state change.

@@ -64,6 +64,44 @@ class EmailTest extends TestCase
         });
     }
 
+    public function test_creating_an_employee_records_that_the_credentials_email_was_sent(): void
+    {
+        $admin = User::factory()->create(['company_id' => Company::factory()]);
+        $admin->assignRole(RoleName::Admin->value);
+
+        $this->actingAs($admin)->post(route('admin.users.store'), [
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+            'employee_id' => '200501',
+            'email' => 'maria.santos@example.com',
+            'company_id' => $admin->company_id,
+            'role' => RoleName::Diser->value,
+        ])->assertSessionHasNoErrors();
+
+        $employee = User::where('email', 'maria.santos@example.com')->firstOrFail();
+        $this->assertSame(TemporaryAccessMail::STATUS_SENT, $employee->credentials_email_status);
+        $this->assertNotNull($employee->credentials_email_sent_at);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index'))
+            ->assertInertia(fn ($page) => $page->where(
+                'users.data',
+                fn ($rows) => collect($rows)->firstWhere('email', 'maria.santos@example.com')['credentials_email']['status'] === 'sent',
+            ));
+    }
+
+    public function test_a_credentials_email_that_keeps_failing_is_marked_failed_with_the_reason(): void
+    {
+        $user = $this->diser(['status' => AccountStatus::Temporary, 'temporary_access_expires_at' => now()->addDays(7)]);
+        TemporaryAccessMail::markQueued($user);
+
+        (new TemporaryAccessMail($user, 'Tmp-Pass-123'))->failed(new \RuntimeException('535 5.7.3 Authentication unsuccessful'));
+
+        $user->refresh();
+        $this->assertSame(TemporaryAccessMail::STATUS_FAILED, $user->credentials_email_status);
+        $this->assertStringContainsString('535 5.7.3', $user->credentials_email_error);
+    }
+
     public function test_mail_test_command_refuses_to_run_without_smtp_credentials(): void
     {
         config(['mail.default' => 'smtp', 'mail.mailers.smtp.username' => null]);

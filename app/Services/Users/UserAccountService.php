@@ -9,12 +9,12 @@ use App\Mail\TemporaryAccessMail;
 use App\Models\Company;
 use App\Models\Department;
 use App\Models\User;
+use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use DomainException;
 
 class UserAccountService
 {
@@ -27,27 +27,27 @@ class UserAccountService
      * Employees the actor is allowed to see: only accounts ranked below them
      * (Super Admin sees everyone).
      */
-   public function list(User $actor, ?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
-{
-    return User::query()
-        ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])
-        ->visibleTo($actor)
-        ->when($status, fn (Builder $q) => $q->where('status', $status))
-        ->when($search, function (Builder $q) use ($search) {
-            $term = '%'.$search.'%';
+    public function list(User $actor, ?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
+    {
+        return User::query()
+            ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])
+            ->visibleTo($actor)
+            ->when($status, fn (Builder $q) => $q->where('status', $status))
+            ->when($search, function (Builder $q) use ($search) {
+                $term = '%'.$search.'%';
 
-            $q->where(function (Builder $q) use ($term) {
-                $q->whereRaw("concat_ws(' ', first_name, middle_name, last_name) ilike ?", [$term])
-                    ->orWhere('username', 'ilike', $term)
-                    ->orWhere('employee_id', 'ilike', $term)
-                    ->orWhere('email', 'ilike', $term);
-            });
-        })
-        ->orderBy('last_name')
-        ->orderBy('first_name')
-        ->paginate($perPage)
-        ->withQueryString();
-}
+                $q->where(function (Builder $q) use ($term) {
+                    $q->whereRaw("concat_ws(' ', first_name, middle_name, last_name) ilike ?", [$term])
+                        ->orWhere('username', 'ilike', $term)
+                        ->orWhere('employee_id', 'ilike', $term)
+                        ->orWhere('email', 'ilike', $term);
+                });
+            })
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
 
     /** Dropdown data for the create/edit form. */
     public function formOptions(User $actor): array
@@ -56,10 +56,10 @@ class UserAccountService
             'companies' => Company::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'roles' => collect(RoleName::assignableBy($actor))
-                ->map(fn(RoleName $role) => ['value' => $role->value, 'label' => $role->value])
+                ->map(fn (RoleName $role) => ['value' => $role->value, 'label' => $role->value])
                 ->values(),
             'modules' => collect(PortalModule::cases())
-                ->map(fn(PortalModule $m) => ['value' => $m->value, 'label' => $m->label()])
+                ->map(fn (PortalModule $m) => ['value' => $m->value, 'label' => $m->label()])
                 ->values(),
             'default_modules' => PortalModule::defaults(),
             'can_manage_access' => $actor->can('users.manage-access'),
@@ -110,6 +110,7 @@ class UserAccountService
 
         // Outside the transaction: the queue worker must never run before the
         // user row is actually committed.
+        TemporaryAccessMail::markQueued($user);
         Mail::to($user->email)->queue(new TemporaryAccessMail($user, $temporaryPassword));
 
         return $user;
@@ -208,6 +209,7 @@ class UserAccountService
             $this->sessions->revoke($user); // the old password must stop working everywhere
         });
 
+        TemporaryAccessMail::markQueued($user);
         Mail::to($user->email)->queue(new TemporaryAccessMail($user, $temporaryPassword));
     }
 

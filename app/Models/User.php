@@ -53,6 +53,7 @@ class User extends Authenticatable
             'temporary_access_expires_at' => 'datetime',
             'must_change_password' => 'boolean',
             'status_changed_at' => 'datetime',
+            'credentials_email_sent_at' => 'datetime',
         ];
     }
 

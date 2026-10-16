@@ -1,5 +1,6 @@
 import Avatar from '@/Components/Shared/Avatar';
 import StatusBadge from '@/Components/Shared/StatusBadge';
+import CredentialsEmailStatus from '@/Components/Users/CredentialsEmailStatus';
 import Button from '@/Components/UI/Button';
 import { Employee } from '@/types/user';
 import { X } from 'lucide-react';
@@ -84,6 +85,11 @@ export default function ViewProfileModal({ employee, onClose }: ViewProfileModal
                             </span>
                         )}
                     </div>
+                    {employee.credentials_email && (
+                        <div className="mt-2">
+                            <CredentialsEmailStatus email={employee.credentials_email} variant="detail" />
+                        </div>
+                    )}
                 </div>
                 <button
                     type="button"

@@ -8,6 +8,12 @@ export interface LookupOption {
     name: string;
 }
 
+export interface CredentialsEmail {
+    status: 'queued' | 'sent' | 'failed';
+    sent_at: string | null;
+    error: string | null;
+}
+
 export interface Employee {
     id: number;
     name: string;
@@ -27,6 +33,8 @@ export interface Employee {
     status: string;
     status_label: string;
     temporary_days_left: number | null;
+    /** Delivery of the latest temporary-credentials email; null when none was sent. */
+    credentials_email: CredentialsEmail | null;
     modules?: string[];
     can_update: boolean;
     has_pending_removal: boolean;
