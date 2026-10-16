@@ -17,6 +17,8 @@ export default function DiserLayout({ children }: PropsWithChildren) {
     );
     // Profile lives in the header avatar on mobile, so the bottom bar stays at four or five tabs.
     const tabItems = items.filter((item) => item.routeName !== 'profile.edit');
+    // Reading a material is a focused view: the tab bar would sit on top of the page controls.
+    const reading = route().current('portal.learning.show');
 
     const footer =
         branding.footer.copyright || `© ${new Date().getFullYear()} ${branding.footer.company_name || 'CBK Hardware, Inc.'}`;
@@ -105,10 +107,11 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                 </div>
             )}
 
-            <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-6 sm:px-6 sm:pt-10 md:pb-16">{children}</main>
+            <main className={`mx-auto w-full max-w-5xl flex-1 px-4 pt-6 sm:px-6 sm:pt-10 md:pb-16 ${reading ? 'pb-10' : 'pb-28'}`}>{children}</main>
 
             <footer className="mx-auto hidden w-full max-w-5xl px-6 pb-8 text-2xs text-stone-400 md:block">{footer}</footer>
 
+            {!reading && (
             <nav
                 aria-label="Main"
                 className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
@@ -149,6 +152,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                     })}
                 </div>
             </nav>
+            )}
 
             <FlashMessage />
         </div>

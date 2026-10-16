@@ -28,7 +28,7 @@ export default function ProtectedVideoPlayer({ title, viewer, streamUrl, embed, 
     // Fullscreen goes on this wrapper, never the <video>/<iframe>, so the
     // watermark and the privacy shield stay on top in fullscreen too.
     const wrapperRef = useRef<HTMLDivElement>(null);
-    const { isFullscreen, supported, toggle } = useFullscreen(wrapperRef);
+    const { isFullscreen, supported, pseudoClass, toggle } = useFullscreen(wrapperRef);
 
     // A direct .mp4/.webm link plays in our own <video>; providers get an iframe.
     const videoSrc = streamUrl ?? (embed?.kind === 'direct' ? embed.src : undefined);
@@ -71,7 +71,7 @@ export default function ProtectedVideoPlayer({ title, viewer, streamUrl, embed, 
             <div
                 ref={wrapperRef}
                 onContextMenu={(e) => e.preventDefault()}
-                className={`flex flex-col overflow-hidden bg-ink ${isFullscreen ? 'h-full w-full' : 'rounded-xl border border-line shadow-hairline'}`}
+                className={`flex flex-col overflow-hidden bg-ink ${isFullscreen ? 'h-full w-full' : 'rounded-xl border border-line shadow-hairline'} ${pseudoClass}`}
             >
                 <div className={`flex items-center justify-center ${isFullscreen ? 'min-h-0 flex-1' : ''}`}>
                     <div className="relative mx-auto overflow-hidden" style={frameStyle}>
@@ -111,12 +111,12 @@ export default function ProtectedVideoPlayer({ title, viewer, streamUrl, embed, 
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-white/10 px-3 py-1.5">
+                <div className="flex items-center justify-between gap-3 border-t border-white/10 px-3 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
                     <p className="flex min-w-0 items-center gap-1.5 truncate text-2xs text-white/50">
                         <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         View only · {isPortrait ? 'Portrait' : 'Landscape'}
                     </p>
-                    {supported && <FullscreenButton isFullscreen={isFullscreen} onToggle={() => void toggle()} tone="light" />}
+                    {supported && <FullscreenButton isFullscreen={isFullscreen} onToggle={() => void toggle()} tone="light" showLabel />}
                 </div>
             </div>
             <ProtectionNote />

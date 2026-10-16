@@ -43,7 +43,7 @@ export default function FlashMessage() {
     return (
         <div
             aria-live="polite"
-            className="pointer-events-none fixed inset-x-4 bottom-24 z-50 flex flex-col items-end gap-2 sm:inset-x-auto sm:bottom-6 sm:right-6"
+            className="pointer-events-none fixed inset-x-4 top-16 z-[80] flex flex-col items-center gap-2 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:top-auto sm:items-end"
         >
             {toasts.map((toast) => {
                 const Icon = toast.tone === 'success' ? CircleCheck : CircleAlert;

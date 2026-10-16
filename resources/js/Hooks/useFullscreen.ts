@@ -13,19 +13,25 @@ function fullscreenElement(): Element | null {
     return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
+/** Classes that turn the wrapper into a full-viewport layer when native fullscreen is unavailable. */
+const PSEUDO_CLASS = 'fixed inset-0 z-[70] h-[100dvh] w-screen';
+
 /**
  * Fullscreen for a WRAPPER element (not the <video>/<iframe> itself), so
  * overlays inside it — the watermark and the privacy shield — stay visible.
+ *
+ * iPhone Safari (and some in-app browsers) cannot make an element
+ * fullscreen. There the hook falls back to a "pseudo" fullscreen: the
+ * wrapper covers the whole viewport and the page behind it stops scrolling.
+ * Callers add `pseudoClass` to the wrapper so both modes look the same.
  */
 export function useFullscreen<T extends HTMLElement>(ref: RefObject<T | null>) {
-    const [isFullscreen, setIsFullscreen] = useState(false);
-
-    const doc = typeof document !== 'undefined' ? (document as WebkitDocument) : null;
-    const supported = Boolean(doc && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled));
+    const [isNative, setIsNative] = useState(false);
+    const [isPseudo, setIsPseudo] = useState(false);
 
     useEffect(() => {
         // Covers every way out: our button, Escape, F11, the browser's own UI.
-        const sync = () => setIsFullscreen(ref.current !== null && fullscreenElement() === ref.current);
+        const sync = () => setIsNative(ref.current !== null && fullscreenElement() === ref.current);
 
         document.addEventListener('fullscreenchange', sync);
         document.addEventListener('webkitfullscreenchange', sync);
@@ -36,7 +42,21 @@ export function useFullscreen<T extends HTMLElement>(ref: RefObject<T | null>) {
         };
     }, [ref]);
 
+    // While the pseudo layer is open the page underneath must not scroll.
+    useEffect(() => {
+        if (!isPseudo) return;
+
+        const previous = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previous;
+        };
+    }, [isPseudo]);
+
     const exit = useCallback(async () => {
+        setIsPseudo(false);
+
         const d = document as WebkitDocument;
         if (!fullscreenElement()) return;
 
@@ -53,15 +73,24 @@ export function useFullscreen<T extends HTMLElement>(ref: RefObject<T | null>) {
         if (!el) return;
 
         try {
-            if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
-            else await el.webkitRequestFullscreen?.();
+            if (el.requestFullscreen) {
+                await el.requestFullscreen({ navigationUI: 'hide' });
+                return;
+            }
+            if (el.webkitRequestFullscreen) {
+                await el.webkitRequestFullscreen();
+                return;
+            }
         } catch {
-            // Blocked by the browser (e.g. not triggered by a user gesture).
+            // Refused (e.g. iPhone, in-app browsers): use the pseudo layer below.
         }
+
+        setIsPseudo(true);
     }, [ref]);
 
-    // Browsers already leave fullscreen on Escape; this is a fallback for
-    // engines that swallow the key while an embedded frame is not focused.
+    const isFullscreen = isNative || isPseudo;
+
+    // Browsers already leave native fullscreen on Escape; the pseudo layer needs it too.
     useEffect(() => {
         if (!isFullscreen) return;
 
@@ -78,5 +107,13 @@ export function useFullscreen<T extends HTMLElement>(ref: RefObject<T | null>) {
 
     const toggle = useCallback(() => (isFullscreen ? exit() : enter()), [isFullscreen, enter, exit]);
 
-    return { isFullscreen, supported, enter, exit, toggle };
+    return {
+        isFullscreen,
+        /** Always true: every browser gets either native or pseudo fullscreen. */
+        supported: true,
+        pseudoClass: isPseudo ? PSEUDO_CLASS : '',
+        enter,
+        exit,
+        toggle,
+    };
 }

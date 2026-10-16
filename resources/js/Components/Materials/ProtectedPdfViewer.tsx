@@ -27,7 +27,8 @@ export default function ProtectedPdfViewer({ streamUrl, viewer, shielded = false
     // Fullscreen goes on the whole reader (page + toolbar), so the watermark,
     // the privacy shield and the page controls stay visible.
     const readerRef = useRef<HTMLDivElement>(null);
-    const { isFullscreen, supported, toggle } = useFullscreen(readerRef);
+    const { isFullscreen, supported, pseudoClass, toggle } = useFullscreen(readerRef);
+    const touchStart = useRef<{ x: number; y: number } | null>(null);
     const [doc, setDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState<Status>('loading');
@@ -117,7 +118,7 @@ export default function ProtectedPdfViewer({ streamUrl, viewer, shielded = false
 
     const pageCount = doc?.numPages ?? 0;
     const navButton =
-        'inline-flex h-9 w-9 items-center justify-center rounded-md text-stone-600 transition-colors hover:bg-stone-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-maroon-500/40 disabled:pointer-events-none disabled:text-stone-300';
+        'inline-flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-md text-stone-600 transition-colors hover:bg-stone-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-maroon-500/40 disabled:pointer-events-none disabled:text-stone-300';
 
     return (
         <div>
@@ -125,13 +126,28 @@ export default function ProtectedPdfViewer({ streamUrl, viewer, shielded = false
                 ref={readerRef}
                 className={`flex flex-col overflow-hidden bg-white ${
                     isFullscreen ? 'h-full w-full' : 'rounded-xl border border-line shadow-hairline'
-                }`}
+                } ${pseudoClass}`}
             >
                 {/* Watermark + shield sit on this non-scrolling box, so they cover the visible area at any scroll position. */}
                 <div className={`relative ${isFullscreen ? 'min-h-0 flex-1' : ''}`}>
                     <div
                         ref={scrollRef}
                         onContextMenu={(e) => e.preventDefault()}
+                        // Swipe left/right to turn pages on touch screens.
+                        onTouchStart={(e) => {
+                            const t = e.touches[0];
+                            touchStart.current = { x: t.clientX, y: t.clientY };
+                        }}
+                        onTouchEnd={(e) => {
+                            const start = touchStart.current;
+                            touchStart.current = null;
+                            if (!start) return;
+                            const t = e.changedTouches[0];
+                            const dx = t.clientX - start.x;
+                            const dy = t.clientY - start.y;
+                            if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+                            setPage((p) => (dx < 0 ? Math.min(pageCount, p + 1) : Math.max(1, p - 1)));
+                        }}
                         className={`select-none overflow-auto bg-stone-100/70 p-3 transition-[filter] duration-150 sm:p-6 ${
                             isFullscreen ? 'h-full' : 'max-h-[70vh] min-h-[16rem]'
                         } ${shielded ? 'blur-2xl' : ''}`}
@@ -164,7 +180,7 @@ export default function ProtectedPdfViewer({ streamUrl, viewer, shielded = false
                 </div>
 
                 {pageCount > 0 && status === 'ready' && (
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-line bg-paper px-3 py-2">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-line bg-paper px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                         <span aria-hidden="true" />
                         <div className="flex items-center gap-3">
                             <button
@@ -193,7 +209,7 @@ export default function ProtectedPdfViewer({ streamUrl, viewer, shielded = false
                             </button>
                         </div>
                         <div className="flex justify-end">
-                            {supported && <FullscreenButton isFullscreen={isFullscreen} onToggle={() => void toggle()} />}
+                            {supported && <FullscreenButton isFullscreen={isFullscreen} onToggle={() => void toggle()} showLabel />}
                         </div>
                     </div>
                 )}

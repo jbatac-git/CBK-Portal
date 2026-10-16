@@ -5,9 +5,11 @@ interface FullscreenButtonProps {
     onToggle: () => void;
     /** "light" for dark toolbars (video), "dark" for light toolbars (documents). */
     tone?: 'dark' | 'light';
+    /** Show "Fullscreen" / "Exit" next to the icon so it is easy to find on phones. */
+    showLabel?: boolean;
 }
 
-export function FullscreenButton({ isFullscreen, onToggle, tone = 'dark' }: FullscreenButtonProps) {
+export function FullscreenButton({ isFullscreen, onToggle, tone = 'dark', showLabel = false }: FullscreenButtonProps) {
     const Icon = isFullscreen ? Minimize2 : Maximize2;
     const label = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
 
@@ -17,11 +19,12 @@ export function FullscreenButton({ isFullscreen, onToggle, tone = 'dark' }: Full
             aria-label={label}
             title={label}
             onClick={onToggle}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-maroon-500/40 ${
-                tone === 'light' ? 'text-white/70 hover:bg-white/10 hover:text-white' : 'text-stone-600 hover:bg-stone-100 hover:text-ink'
-            }`}
+            className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-md text-[13px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-maroon-500/40 sm:h-9 ${
+                showLabel ? 'px-3' : 'w-11 sm:w-9'
+            } ${tone === 'light' ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-stone-600 hover:bg-stone-100 hover:text-ink'}`}
         >
             <Icon className="h-4 w-4" aria-hidden="true" />
+            {showLabel && <span aria-hidden="true">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>}
         </button>
     );
 }
