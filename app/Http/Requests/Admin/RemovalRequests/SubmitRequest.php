@@ -15,7 +15,7 @@ class SubmitRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'removal_reason_id' => ['required', Rule::exists('removal_reasons', 'id')->where('is_active', true)],
+            'removal_reason_id' => ['required', Rule::exists('removal_reasons', 'id')->where('is_active', true)->whereNull('deleted_at')],
             'details' => ['nullable', 'string', 'max:1000'],
         ];
     }

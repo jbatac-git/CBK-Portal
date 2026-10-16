@@ -48,6 +48,20 @@ class PortalSettingsTest extends TestCase
         $this->assertDatabaseHas('portal_settings', ['key' => 'contact.email', 'value' => 'info@cbk.com.ph']);
     }
 
+    public function test_a_deleted_company_name_can_be_added_again(): void
+    {
+        $superAdmin = $this->userWithRole(RoleName::SuperAdmin);
+        $company = Company::factory()->create(['name' => 'ACME Trading']);
+
+        $this->actingAs($superAdmin)->delete(route('admin.companies.destroy', $company));
+
+        $this->actingAs($superAdmin)
+            ->post(route('admin.companies.store'), ['name' => 'ACME Trading', 'is_active' => true])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(1, Company::where('name', 'ACME Trading')->count());
+    }
+
     public function test_hr_cannot_update_contact_us(): void
     {
         $hr = $this->userWithRole(RoleName::Hr);

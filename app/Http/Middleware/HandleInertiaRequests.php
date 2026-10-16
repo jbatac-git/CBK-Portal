@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Settings\PortalSettingService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Services\Settings\PortalSettingService;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -29,6 +29,7 @@ class HandleInertiaRequests extends Middleware
                     'id' => $user->id,
                     'name' => $user->name,
                     'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
                     'username' => $user->username,
                     'email' => $user->email,
                     'roles' => $user->getRoleNames()->values(),
@@ -44,23 +45,20 @@ class HandleInertiaRequests extends Middleware
                 'logo_url' => $this->settings->logoUrl(),
                 'footer' => $this->settings->stripPrefix(
                     $this->settings->getMany(
-                        \App\Services\Settings\PortalSettingService::FOOTER_KEYS
+                        PortalSettingService::FOOTER_KEYS
                     ),
                     'footer.',
                 ),
             ],
 
             'flash' => [
-                'success' => fn() => $request->session()->get('success'),
-                'error' => fn() => $request->session()->get('error'),
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
 
             'features' => [
                 'careers_enabled' => $this->settings->careersEnabled(),
             ],
-
-            'first_name' => $user?->first_name,
-            'last_name' => $user?->last_name,
         ];
     }
 }

@@ -376,6 +376,39 @@ class AccountLifecycleTest extends TestCase
         $this->actingAs($temporary)->get(route('portal.contact.index'))->assertForbidden();
     }
 
+    public function test_changing_the_temporary_password_signs_out_other_sessions(): void
+    {
+        $user = $this->temporaryDiser(['password' => 'password']);
+
+        DB::table('sessions')->insert([
+            'id' => 'other-device-session',
+            'user_id' => $user->id,
+            'payload' => '',
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $this->actingAs($user)->post(route('password.change.store'), [
+            'current_password' => 'password',
+            'password' => 'N3w-Secure-Pass!',
+            'password_confirmation' => 'N3w-Secure-Pass!',
+        ]);
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'other-device-session']);
+    }
+
+    public function test_removal_request_with_a_deleted_reason_is_rejected(): void
+    {
+        $hr = $this->userWithRole(RoleName::Hr);
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $reason = RemovalReason::where('slug', 'awol')->firstOrFail();
+        $reason->delete();
+
+        $this->actingAs($hr)
+            ->post(route('admin.users.removal-request', $diser), ['removal_reason_id' => $reason->id])
+            ->assertSessionHasErrors('removal_reason_id');
+    }
+
     public function test_portal_requires_the_forced_password_change_first(): void
     {
         $diser = $this->userWithRole(RoleName::Diser, ['must_change_password' => true]);

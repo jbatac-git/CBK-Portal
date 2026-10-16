@@ -3,6 +3,7 @@
 namespace App\Services\Settings;
 
 use App\Models\PortalSetting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -26,13 +27,18 @@ class PortalSettingService
     ];
 
     public const LOGO_KEY = 'branding.logo_path';
+
     public const CAREERS_KEY = 'features.careers_enabled';
+
+    /** Settings are read on every Inertia request, so the whole table is cached until it changes. */
+    private const CACHE_KEY = 'portal_settings.all';
+
     /** Returns every requested key, defaulting missing ones to an empty string. */
     public function getMany(array $keys): array
     {
-        $rows = PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
+        $rows = $this->all();
 
-        return collect($keys)->mapWithKeys(fn(string $key) => [$key => $rows[$key] ?? ''])->all();
+        return collect($keys)->mapWithKeys(fn (string $key) => [$key => $rows[$key] ?? ''])->all();
     }
 
     public function setMany(array $data): void
@@ -45,11 +51,13 @@ class PortalSettingService
                 );
             }
         });
+
+        Cache::forget(self::CACHE_KEY);
     }
 
     public function logoUrl(): ?string
     {
-        $path = PortalSetting::where('key', self::LOGO_KEY)->value('value');
+        $path = $this->all()[self::LOGO_KEY] ?? null;
 
         return $path ? Storage::disk('public')->url($path) : null;
     }
@@ -63,7 +71,7 @@ class PortalSettingService
     public function stripPrefix(array $flat, string $prefix): array
     {
         return collect($flat)->mapWithKeys(
-            fn($value, string $key) => [Str::after($key, $prefix) => $value]
+            fn ($value, string $key) => [Str::after($key, $prefix) => $value]
         )->all();
     }
 
@@ -74,11 +82,21 @@ class PortalSettingService
     public function addPrefix(array $nested, string $prefix): array
     {
         return collect($nested)->mapWithKeys(
-            fn($value, string $key) => [$prefix . $key => $value]
+            fn ($value, string $key) => [$prefix.$key => $value]
         )->all();
     }
+
     public function careersEnabled(): bool
     {
-        return PortalSetting::where('key', self::CAREERS_KEY)->value('value') === '1';
+        return ($this->all()[self::CAREERS_KEY] ?? null) === '1';
+    }
+
+    /** @return array<string, string|null> */
+    private function all(): array
+    {
+        return Cache::rememberForever(
+            self::CACHE_KEY,
+            fn () => PortalSetting::pluck('value', 'key')->all(),
+        );
     }
 }

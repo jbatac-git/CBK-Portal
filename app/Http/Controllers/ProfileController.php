@@ -6,9 +6,9 @@ use App\Http\Requests\Profile\UpdateContactRequest;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Requests\Profile\UpdatePhotoRequest;
 use App\Services\Media\ImageService;
+use App\Services\Users\SessionRevoker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -64,10 +64,13 @@ class ProfileController extends Controller
         return back()->with('success', 'Profile picture updated.');
     }
 
-    public function updatePassword(UpdatePasswordRequest $request): RedirectResponse
+    public function updatePassword(UpdatePasswordRequest $request, SessionRevoker $sessions): RedirectResponse
     {
         $request->user()->update(['password' => $request->validated('password')]); // hashed by the cast
 
-        return back()->with('success', 'Password updated.');
+        $request->session()->regenerate();
+        $sessions->revokeOthers($request->user(), $request->session()->getId());
+
+        return back()->with('success', 'Password updated. Other devices have been signed out.');
     }
 }

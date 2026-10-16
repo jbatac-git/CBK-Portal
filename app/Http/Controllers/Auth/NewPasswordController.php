@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Users\SessionRevoker;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -48,9 +48,11 @@ class NewPasswordController extends Controller
             function ($user) use ($request) {
                 $user->forceFill([
                     'password' => Hash::make($request->password),
-                    'remember_token' => Str::random(60),
                     'must_change_password' => false,
                 ])->save();
+
+                // A reset means the old password may be compromised: end every session.
+                app(SessionRevoker::class)->revoke($user);
 
                 event(new PasswordReset($user));
             }

@@ -41,7 +41,8 @@ class RemovalRequest extends Model
     // Explicit foreign key: Eloquent would otherwise guess "reason_id".
     public function reason(): BelongsTo
     {
-        return $this->belongsTo(RemovalReason::class, 'removal_reason_id');
+        // withTrashed: a reason deleted later must still label the requests that used it.
+        return $this->belongsTo(RemovalReason::class, 'removal_reason_id')->withTrashed();
     }
 
     public function scopePending(Builder $query): Builder

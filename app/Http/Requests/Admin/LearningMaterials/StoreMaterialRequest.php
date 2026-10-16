@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Admin\LearningMaterials;
 
+use App\Enums\MaterialType;
 use App\Models\LearningMaterial;
 use Illuminate\Validation\Rules\Enum;
-use App\Enums\MaterialType;
 
 class StoreMaterialRequest extends MaterialFormRequest
 {
@@ -16,6 +16,11 @@ class StoreMaterialRequest extends MaterialFormRequest
     protected function fileRequired(): bool
     {
         return true;
+    }
+
+    protected function materialType(): ?MaterialType
+    {
+        return MaterialType::tryFrom((string) $this->input('type'));
     }
 
     public function rules(): array

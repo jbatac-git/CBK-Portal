@@ -23,4 +23,19 @@ class SessionRevoker
         //    cookie could log the user straight back in.
         $user->forceFill(['remember_token' => Str::random(60)])->save();
     }
+
+    /**
+     * Signs the user out everywhere EXCEPT the given session. Used after a
+     * password change, so anyone who logged in with the old password
+     * (e.g. an intercepted temporary password) loses access at once.
+     */
+    public function revokeOthers(User $user, string $keepSessionId): void
+    {
+        DB::table(config('session.table', 'sessions'))
+            ->where('user_id', $user->id)
+            ->where('id', '!=', $keepSessionId)
+            ->delete();
+
+        $user->forceFill(['remember_token' => Str::random(60)])->save();
+    }
 }

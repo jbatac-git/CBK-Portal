@@ -5,11 +5,12 @@ namespace App\Services\Materials;
 use App\Models\LearningMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\Response;
 
 class SecureFileStreamer
 {
-    public function stream(Request $request, LearningMaterial $material): StreamedResponse
+    public function stream(Request $request, LearningMaterial $material): Response
     {
         $disk = Storage::disk($material->file_disk);
 
@@ -25,7 +26,7 @@ class SecureFileStreamer
             // never cached on disk/shared caches: this is protected company content
             'Cache-Control' => 'private, no-store, max-age=0',
             'X-Content-Type-Options' => 'nosniff',
-            'Content-Disposition' => 'inline; filename="'.addslashes($material->title).'"',
+            'Content-Disposition' => $this->inlineDisposition($material->title),
         ];
 
         if (! $range) {
@@ -36,11 +37,13 @@ class SecureFileStreamer
             }, 200, [...$baseHeaders, 'Content-Length' => $size]);
         }
 
-        [$start, $end] = $this->parseRange($range, $size);
+        $parsed = $this->parseRange($range, $size);
 
-        if ($start > $end || $end >= $size) {
+        if ($parsed === null) {
             return response('', 416, ['Content-Range' => "bytes */{$size}"]);
         }
+
+        [$start, $end] = $parsed;
 
         $length = $end - $start + 1;
 
@@ -64,15 +67,38 @@ class SecureFileStreamer
         ]);
     }
 
-    /** Parses "bytes=START-END" (END is optional, meaning "to the end of the file"). */
-    private function parseRange(string $header, int $size): array
+    /**
+     * Parses a single "bytes=START-END", "bytes=START-" or suffix
+     * "bytes=-LENGTH" range. Returns null for anything unsatisfiable or
+     * unsupported (including multi-range requests), which becomes a 416.
+     *
+     * @return array{0: int, 1: int}|null
+     */
+    private function parseRange(string $header, int $size): ?array
     {
-        $range = str_replace('bytes=', '', $header);
-        [$start, $end] = array_pad(explode('-', $range, 2), 2, '');
+        if ($size === 0 || ! preg_match('/^bytes=(\d*)-(\d*)$/', trim($header), $m) || ($m[1] === '' && $m[2] === '')) {
+            return null;
+        }
 
-        $start = $start === '' ? 0 : (int) $start;
-        $end = $end === '' ? $size - 1 : (int) $end;
+        if ($m[1] === '') {
+            // Suffix range: the last N bytes of the file.
+            $length = min((int) $m[2], $size);
 
-        return [$start, min($end, $size - 1)];
+            return $length > 0 ? [$size - $length, $size - 1] : null;
+        }
+
+        $start = (int) $m[1];
+        $end = $m[2] === '' ? $size - 1 : min((int) $m[2], $size - 1);
+
+        return $start <= $end ? [$start, $end] : null;
+    }
+
+    /** Builds a header-safe filename, with a UTF-8 variant for non-ASCII titles. */
+    private function inlineDisposition(string $title): string
+    {
+        $name = trim((string) preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $title)) ?: 'material';
+        $fallback = trim((string) preg_replace('/[^\x20-\x7E]|["\\\\%\/]/', '', $name)) ?: 'material';
+
+        return HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, $fallback, $name);
     }
 }

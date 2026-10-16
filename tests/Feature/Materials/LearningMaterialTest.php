@@ -156,6 +156,53 @@ class LearningMaterialTest extends TestCase
         $this->assertSame(100, strlen($response->streamedContent()));
     }
 
+    public function test_stream_handles_suffix_and_invalid_ranges(): void
+    {
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $material = LearningMaterial::factory()->for($this->category, 'category')->create([
+            'status' => 'published',
+            'type' => 'video',
+            'file_path' => 'learning-materials/video/sample.mp4',
+            'mime_type' => 'video/mp4',
+            'file_size' => 1000,
+        ]);
+
+        Storage::disk('local')->put($material->file_path, str_repeat('a', 1000));
+
+        $this->actingAs($diser)
+            ->withHeaders(['Range' => 'bytes=-100'])
+            ->get(route('portal.learning.stream', $material))
+            ->assertStatus(206)
+            ->assertHeader('Content-Range', 'bytes 900-999/1000');
+
+        $this->actingAs($diser)
+            ->withHeaders(['Range' => 'bytes=0-10,20-30'])
+            ->get(route('portal.learning.stream', $material))
+            ->assertStatus(416);
+
+        $this->actingAs($diser)
+            ->withHeaders(['Range' => 'bytes=2000-'])
+            ->get(route('portal.learning.stream', $material))
+            ->assertStatus(416);
+    }
+
+    public function test_a_pdf_cannot_use_the_video_size_allowance(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        config(['portal.learning_materials.max_pdf_kb' => 1]);
+
+        $this->actingAs($admin)->post(route('admin.learning-materials.store'), [
+            'learning_material_category_id' => $this->category->id,
+            'title' => 'Too big',
+            'type' => 'pdf',
+            'status' => 'published',
+            'file' => UploadedFile::fake()->createWithContent('big.pdf', '%PDF-1.4'.str_repeat(' ', 4096)),
+        ])->assertSessionHasErrors('file');
+
+        $this->assertSame(0, LearningMaterial::count());
+    }
+
     public function test_category_with_materials_cannot_be_deleted(): void
     {
         $admin = $this->userWithRole(RoleName::Admin);

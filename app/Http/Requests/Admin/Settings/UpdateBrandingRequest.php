@@ -14,7 +14,7 @@ class UpdateBrandingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:'.config('portal.logo.max_kb')],
+            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:'.config('portal.logo.max_kb'), 'dimensions:max_width=4000,max_height=4000'],
             'footer' => ['required', 'array'],
             'footer.company_name' => ['required', 'string', 'max:255'],
             'footer.copyright' => ['nullable', 'string', 'max:255'],

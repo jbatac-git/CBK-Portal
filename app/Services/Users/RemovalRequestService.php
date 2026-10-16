@@ -18,7 +18,7 @@ class RemovalRequestService
     /** Oldest first: the longest-waiting request gets handled first. */
     public function pending(): Collection
     {
-        return RemovalRequest::pending()->with(['user', 'requester'])->oldest()->get();
+        return RemovalRequest::pending()->with(['user.roles', 'requester', 'reason'])->oldest()->get();
     }
 
     public function submit(User $user, User $actor, array $data): RemovalRequest

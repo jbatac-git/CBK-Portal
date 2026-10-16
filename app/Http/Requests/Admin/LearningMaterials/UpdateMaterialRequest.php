@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Admin\LearningMaterials;
 
-use App\Models\LearningMaterial;
+use App\Enums\MaterialType;
 
 class UpdateMaterialRequest extends MaterialFormRequest
 {
@@ -14,6 +14,11 @@ class UpdateMaterialRequest extends MaterialFormRequest
     protected function fileRequired(): bool
     {
         return false; // replacing the file is optional on edit
+    }
+
+    protected function materialType(): ?MaterialType
+    {
+        return $this->route('learning_material')->type;
     }
 
     public function rules(): array
