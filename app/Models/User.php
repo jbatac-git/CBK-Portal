@@ -3,17 +3,19 @@
 namespace App\Models;
 
 use App\Enums\AccountStatus;
+use App\Enums\RemovalRequestStatus;
+use App\Enums\RoleName;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
-use App\Enums\RemovalRequestStatus;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Enums\RoleName;
-use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -53,13 +55,14 @@ class User extends Authenticatable
             'status_changed_at' => 'datetime',
         ];
     }
+
     /**
      * Full display name, e.g. "Jhonel Ganal Batac".
      * Computed, so there is no duplicated data to keep in sync.
      */
     protected function name(): Attribute
     {
-        return Attribute::get(fn() => implode(' ', array_filter([
+        return Attribute::get(fn () => implode(' ', array_filter([
             $this->first_name,
             $this->middle_name,
             $this->last_name,
@@ -81,6 +84,12 @@ class User extends Authenticatable
      * Used by the login request AND the per-request middleware, so the
      * rule lives in exactly one place.
      */
+    /** Password reset emails use the CBK Academy design. */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
     public function hasPortalAccess(): bool
     {
         return match ($this->status) {
@@ -114,13 +123,15 @@ class User extends Authenticatable
     {
         return $this->status === AccountStatus::Temporary && ! $this->can('admin.access');
     }
+
     /** Null when no custom photo was uploaded; the frontend falls back to initials. */
     public function profilePhotoUrl(): ?string
     {
         return $this->profile_photo_path
-            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path)
+            ? Storage::disk('public')->url($this->profile_photo_path)
             : null;
     }
+
     /**
      * The ONE place that defines "which accounts can this actor see at all" —
      * used by both the User Management table (UserAccountService::list) and
@@ -136,14 +147,14 @@ class User extends Authenticatable
         $assignable = RoleName::assignableBy($actor);
 
         $hiddenRoles = collect(RoleName::cases())
-            ->reject(fn(RoleName $role) => in_array($role, $assignable, true))
-            ->map(fn(RoleName $role) => $role->value)
+            ->reject(fn (RoleName $role) => in_array($role, $assignable, true))
+            ->map(fn (RoleName $role) => $role->value)
             ->values()
             ->all();
 
-        return $query->when($hiddenRoles, fn(Builder $q) => $q->whereDoesntHave(
+        return $query->when($hiddenRoles, fn (Builder $q) => $q->whereDoesntHave(
             'roles',
-            fn(Builder $roles) => $roles->whereIn('name', $hiddenRoles),
+            fn (Builder $roles) => $roles->whereIn('name', $hiddenRoles),
         ));
     }
 }

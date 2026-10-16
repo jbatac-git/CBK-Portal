@@ -1,53 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<body style="margin:0;background:#FBF6F0;font-family:Arial,Helvetica,sans-serif;color:#2B1A1C;">
-<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-        <td align="center" style="padding:24px;">
-            <table width="560" cellpadding="0" cellspacing="0" role="presentation"
-                   style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;">
-                <tr>
-                    <td style="background:#7A1421;border-bottom:4px solid #C9973F;padding:16px 24px;color:#ffffff;font-size:18px;">
-                        CBK Academy
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:24px;font-size:14px;line-height:1.6;">
-                        <p>Hello {{ $user->first_name }},</p>
-                        <p>An account has been created for you on the CBK Academy. Use the temporary credentials below to log in.</p>
+@extends('mail.layout')
 
-                        <table cellpadding="8" cellspacing="0" role="presentation"
-                               style="background:#FBF6F0;border:1px solid #EADFD6;border-radius:6px;margin:16px 0;">
-                            <tr>
-                                <td style="color:#7A6A6C;">Username</td>
-                                <td><strong>{{ $user->username }}</strong></td>
-                            </tr>
-                            <tr>
-                                <td style="color:#7A6A6C;">Temporary password</td>
-                                <td><strong style="font-family:monospace;font-size:16px;">{{ $temporaryPassword }}</strong></td>
-                            </tr>
-                        </table>
+@section('title', 'Your CBK Academy account')
+@section('preheader', 'Your username and temporary password for CBK Academy.')
 
-                        <p>
-                            <a href="{{ route('login') }}"
-                               style="display:inline-block;background:#7A1421;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;">
-                                Log in to CBK Academy
-                            </a>
-                        </p>
+@section('content')
+    <h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:#1C1714;">
+        Welcome to CBK Academy, {{ $user->first_name }}
+    </h1>
+    <p style="margin:0 0 16px 0;">An account has been created for you. Sign in with the details below.</p>
 
-                        <p>
-                            This temporary access is valid for <strong>{{ $days }} days</strong>
-                            (until {{ $user->temporary_access_expires_at->format('F j, Y') }}).
-                            During this period you can only access the learning materials assigned by the company.
-                        </p>
-                        <p style="color:#7A6A6C;font-size:12px;">
-                            Do not share your credentials with anyone. CBK will never ask for your password.
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
-</body>
-</html>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF8F5;border:1px solid #E8E2DA;border-radius:8px;">
+        <tr>
+            <td style="padding:14px 18px;border-bottom:1px solid #E8E2DA;">
+                <span style="display:block;font-size:12px;color:#78716C;">Username</span>
+                <span style="font-family:Consolas,'Courier New',monospace;font-size:17px;font-weight:600;color:#1C1714;">{{ $user->username }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:14px 18px;">
+                <span style="display:block;font-size:12px;color:#78716C;">Temporary password</span>
+                <span style="font-family:Consolas,'Courier New',monospace;font-size:17px;font-weight:600;color:#1C1714;letter-spacing:0.5px;">{{ $temporaryPassword }}</span>
+            </td>
+        </tr>
+    </table>
+
+    @include('mail.partials.button', ['url' => route('login'), 'label' => 'Sign in to CBK Academy'])
+
+    <p style="margin:0 0 12px 0;">
+        You will be asked to choose your own password the first time you sign in.
+    </p>
+    <p style="margin:0;color:#78716C;font-size:14px;">
+        This temporary access is valid for <strong style="color:#1C1714;">{{ $days }} days</strong>
+        (until {{ $user->temporary_access_expires_at->format('F j, Y') }}). Until your account is approved,
+        only the starter learning materials are available.
+    </p>
+@endsection
