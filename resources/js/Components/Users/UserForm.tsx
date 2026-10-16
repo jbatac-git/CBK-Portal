@@ -1,9 +1,9 @@
-import Button, { buttonClass } from '@/Components/UI/Button';
+import FormActions from '@/Components/UI/FormActions';
 import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
 import { Employee, UserFormOptions } from '@/types/user';
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Info } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
@@ -238,14 +238,7 @@ export default function UserForm({ options, employee }: UserFormProps) {
                 </Card>
             )}
 
-            <div className="flex items-center justify-end gap-2 border-t border-line pt-5">
-                <Link href={route('admin.users.index')} className={buttonClass('secondary')}>
-                    Cancel
-                </Link>
-                <Button type="submit" loading={processing}>
-                    {employee ? 'Save changes' : 'Create account'}
-                </Button>
-            </div>
+            <FormActions cancelHref={route('admin.users.index')} submitLabel={employee ? 'Save changes' : 'Add employee'} processing={processing} />
         </form>
     );
 }

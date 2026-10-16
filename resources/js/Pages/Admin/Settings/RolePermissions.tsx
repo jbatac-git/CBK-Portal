@@ -162,7 +162,7 @@ export default function RolePermissions({ permissions, roles }: { permissions: s
                                                     loading={saving === row.role}
                                                     aria-label={`Save ${row.role} permissions`}
                                                 >
-                                                    Save
+                                                    Save changes
                                                 </Button>
                                                 {isDirty(row) && <Badge tone="warning">Unsaved</Badge>}
                                             </div>

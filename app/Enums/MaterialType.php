@@ -10,8 +10,8 @@ enum MaterialType: string
     public function label(): string
     {
         return match ($this) {
-            self::Pdf => 'PDF Document',
-            self::Video => 'Training Video',
+            self::Pdf => 'PDF document',
+            self::Video => 'Video file',
         };
     }
 

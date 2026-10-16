@@ -1,9 +1,9 @@
-import Button, { buttonClass } from '@/Components/UI/Button';
-import Card, { CardBody, CardFooter } from '@/Components/UI/Card';
+import FormActions from '@/Components/UI/FormActions';
+import Card, { CardBody } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Switch from '@/Components/UI/Switch';
 import { LookupItem } from '@/types/lookup';
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 interface LookupFormViewProps {
@@ -31,7 +31,7 @@ export default function LookupFormView({ routePrefix, backHref, item, submitLabe
     };
 
     return (
-        <form onSubmit={submit}>
+        <form onSubmit={submit} className="space-y-6">
             <Card>
                 <CardBody className="space-y-5">
                     <Input label="Name" name="name" value={data.name} onChange={(e) => setData('name', e.target.value)} error={errors.name} />
@@ -45,15 +45,8 @@ export default function LookupFormView({ routePrefix, backHref, item, submitLabe
                     </div>
                     {errors.is_active && <p className="text-[13px] text-red-700">{errors.is_active}</p>}
                 </CardBody>
-                <CardFooter>
-                    <Link href={backHref} className={buttonClass('secondary')}>
-                        Cancel
-                    </Link>
-                    <Button type="submit" loading={processing}>
-                        {item ? 'Save changes' : submitLabel}
-                    </Button>
-                </CardFooter>
             </Card>
+            <FormActions cancelHref={backHref} submitLabel={item ? 'Save changes' : submitLabel} processing={processing} />
         </form>
     );
 }

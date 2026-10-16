@@ -1,11 +1,11 @@
 import FileDropzone from '@/Components/Materials/FileDropzone';
-import Button, { buttonClass } from '@/Components/UI/Button';
-import Card, { CardBody, CardFooter, CardHeader } from '@/Components/UI/Card';
+import FormActions from '@/Components/UI/FormActions';
+import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
 import Textarea from '@/Components/UI/Textarea';
 import { AdminMaterial, MaterialFormOptions, Orientation, VideoSource } from '@/types/material';
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { FileText, Link2, LucideIcon, Video } from 'lucide-react';
 import { FormEventHandler, KeyboardEvent } from 'react';
 
@@ -361,15 +361,8 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                         />
                     </div>
                 </CardBody>
-                <CardFooter>
-                    <Link href={route('admin.learning-materials.index')} className={buttonClass('secondary')}>
-                        Cancel
-                    </Link>
-                    <Button type="submit" loading={processing}>
-                        {material ? 'Save changes' : isLink ? 'Add material' : 'Upload material'}
-                    </Button>
-                </CardFooter>
             </Card>
+            <FormActions cancelHref={route('admin.learning-materials.index')} submitLabel={material ? 'Save changes' : 'Add material'} processing={processing} />
         </form>
     );
 }

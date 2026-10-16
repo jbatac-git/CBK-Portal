@@ -1,10 +1,12 @@
-import LookupIndexView, { sentenceCase } from '@/Components/Lookups/LookupIndexView';
+import LookupIndexView, { sentenceCase, singular } from '@/Components/Lookups/LookupIndexView';
+import { buttonClass } from '@/Components/UI/Button';
 import PageHeader from '@/Components/UI/PageHeader';
 import Tabs from '@/Components/UI/Tabs';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { LookupItem } from '@/types/lookup';
 import { Paginated } from '@/types/pagination';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 
 interface Tab {
     value: string;
@@ -32,6 +34,12 @@ export default function Index({ tab, tabs, items, filters, routePrefix, usageLab
             <PageHeader
                 title="Maintenance"
                 description="Reference lists used across CBK Academy: companies, departments and removal reasons."
+                actions={
+                    <Link href={route(`${routePrefix}.create`)} className={buttonClass('primary')}>
+                        <Plus aria-hidden="true" />
+                        Add {singular(tabs.find((t) => t.value === tab)?.label ?? '')}
+                    </Link>
+                }
             />
 
             <Tabs

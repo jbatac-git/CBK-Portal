@@ -13,7 +13,7 @@ import { AdminMaterial, Category } from '@/types/material';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, FileText, FolderTree, Pencil, PlayCircle, Plus } from 'lucide-react';
+import { BookOpen, FileText, Pencil, PlayCircle, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface IndexProps {
@@ -70,13 +70,12 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                 actions={
                     <>
                         <Link href={route('admin.learning-material-categories.index')} className={buttonClass('secondary')}>
-                            <FolderTree aria-hidden="true" />
                             Categories
                         </Link>
                         <Can permission="learning-materials.create">
                             <Link href={route('admin.learning-materials.create')} className={buttonClass('primary')}>
                                 <Plus aria-hidden="true" />
-                                Upload material
+                                Add material
                             </Link>
                         </Can>
                     </>

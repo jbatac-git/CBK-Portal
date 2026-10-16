@@ -197,7 +197,7 @@ export default function Edit({
                             </CardBody>
                             <CardFooter>
                                 <Button type="submit" loading={processing}>
-                                    Save footer
+                                    Save changes
                                 </Button>
                             </CardFooter>
                         </Card>

@@ -1,4 +1,4 @@
-import Button, { buttonClass } from '@/Components/UI/Button';
+import Button from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import Pagination from '@/Components/UI/Pagination';
 import Badge from '@/Components/UI/Badge';
@@ -8,8 +8,8 @@ import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Compone
 import Toolbar, { SearchInput } from '@/Components/UI/Toolbar';
 import { LookupItem } from '@/types/lookup';
 import { Paginated } from '@/types/pagination';
-import { Link, router } from '@inertiajs/react';
-import { ListChecks, Pencil, Plus } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import { ListChecks, Pencil } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface LookupIndexViewProps {
@@ -28,7 +28,7 @@ export function sentenceCase(value: string): string {
 }
 
 /** "Companies" becomes "company", "Removal Reasons" becomes "removal reason". */
-function singular(value: string): string {
+export function singular(value: string): string {
     const lower = value.toLowerCase();
     if (lower.endsWith('ies')) return `${lower.slice(0, -3)}y`;
     if (lower.endsWith('s')) return lower.slice(0, -1);
@@ -78,12 +78,6 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
         <div>
             <Toolbar
                 onSubmit={applyFilters}
-                actions={
-                    <Link href={route(`${routePrefix}.create`)} className={buttonClass('primary')}>
-                        <Plus aria-hidden="true" />
-                        Add {noun}
-                    </Link>
-                }
             >
                 <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Search ${plural}`} />
                 <Button type="submit" variant="secondary">

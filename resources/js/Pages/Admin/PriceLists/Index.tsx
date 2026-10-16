@@ -88,7 +88,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                     <Can permission="price-lists.create">
                         <Link href={route('admin.price-lists.create')} className={buttonClass('primary')}>
                             <Plus aria-hidden="true" />
-                            Upload price list
+                            Add price list
                         </Link>
                     </Can>
                 }

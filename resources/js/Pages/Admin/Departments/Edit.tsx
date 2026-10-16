@@ -10,7 +10,7 @@ export default function Edit({ item }: { item: LookupItem }) {
     return (
         <AdminLayout title="Edit department">
             <Head title="Edit department" />
-            <div className="max-w-xl">
+            <div className="max-w-3xl">
                 <PageHeader back={{ href: backHref, label: 'Departments' }} eyebrow="Edit department" title={item.name} description="Departments that employees can be assigned to." />
                 <LookupFormView routePrefix="admin.departments" item={item} backHref={backHref} />
             </div>

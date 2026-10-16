@@ -6,12 +6,12 @@ import { Head } from '@inertiajs/react';
 
 export default function Create(options: MaterialFormOptions) {
     return (
-        <AdminLayout title="Upload material">
-            <Head title="Upload material" />
+        <AdminLayout title="Add material">
+            <Head title="Add material" />
             <div className="max-w-3xl">
                 <PageHeader
                     back={{ href: route('admin.learning-materials.index'), label: 'Learning materials' }}
-                    title="Upload material"
+                    title="Add material"
                     description="Add a PDF, a training video or a video link to the Diser learning library."
                 />
                 <MaterialForm options={options} />

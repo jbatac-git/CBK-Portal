@@ -91,7 +91,7 @@ export default function ProfileForm({ profile }: { profile: ProfileData }) {
                         </CardBody>
                         <CardFooter>
                             <Button type="submit" loading={contactForm.processing}>
-                                Save
+                                Save changes
                             </Button>
                         </CardFooter>
                     </Card>

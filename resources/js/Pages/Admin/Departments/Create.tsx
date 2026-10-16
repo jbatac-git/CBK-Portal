@@ -7,10 +7,10 @@ export default function Create() {
     const backHref = route('admin.maintenance.index', { tab: 'departments' });
 
     return (
-        <AdminLayout title="New department">
-            <Head title="New department" />
-            <div className="max-w-xl">
-                <PageHeader back={{ href: backHref, label: 'Departments' }} title="New department" description="Departments that employees can be assigned to." />
+        <AdminLayout title="Add department">
+            <Head title="Add department" />
+            <div className="max-w-3xl">
+                <PageHeader back={{ href: backHref, label: 'Departments' }} title="Add department" description="Departments that employees can be assigned to." />
                 <LookupFormView routePrefix="admin.departments" backHref={backHref} submitLabel="Add department" />
             </div>
         </AdminLayout>

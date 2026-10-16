@@ -1,9 +1,9 @@
 import FileDropzone from '@/Components/Materials/FileDropzone';
-import Button, { buttonClass } from '@/Components/UI/Button';
-import Card, { CardBody, CardFooter, CardHeader } from '@/Components/UI/Card';
+import FormActions from '@/Components/UI/FormActions';
+import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 export interface EditablePriceList {
@@ -33,7 +33,7 @@ export default function PriceListForm({ priceList, maxFileMb }: PriceListFormPro
     };
 
     return (
-        <form onSubmit={submit}>
+        <form onSubmit={submit} className="space-y-6">
             <Card>
                 <CardHeader title="Price list details" />
                 <CardBody className="space-y-5">
@@ -81,15 +81,8 @@ export default function PriceListForm({ priceList, maxFileMb }: PriceListFormPro
                         hint={priceList ? 'Leave empty to keep the current file.' : undefined}
                     />
                 </CardBody>
-                <CardFooter>
-                    <Link href={route('admin.price-lists.index')} className={buttonClass('secondary')}>
-                        Cancel
-                    </Link>
-                    <Button type="submit" loading={processing}>
-                        {priceList ? 'Save changes' : 'Upload price list'}
-                    </Button>
-                </CardFooter>
             </Card>
+            <FormActions cancelHref={route('admin.price-lists.index')} submitLabel={priceList ? 'Save changes' : 'Add price list'} processing={processing} />
         </form>
     );
 }

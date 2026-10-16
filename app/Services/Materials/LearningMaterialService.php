@@ -78,7 +78,7 @@ class LearningMaterialService
 
         if ($link === null && $file === null && ($material->isExternalLink() || $changesType)) {
             throw new DomainException($changesType
-                ? "Upload a {$type->label()} file to change this material's format."
+                ? "Upload a new file to change this material's format."
                 : 'Upload a file to replace the video link.');
         }
 

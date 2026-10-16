@@ -51,3 +51,12 @@
 - Learning material category slugs are generated once on create (numbered if the slug already exists, including soft-deleted rows) and are never edited; names must be unique among non-deleted categories.
 - Video materials may play from an external link (`external_url`) instead of an upload: YouTube, Vimeo, Google Drive, or any https .mp4/.webm. PDFs are always uploads. VideoEmbed rebuilds the embed URL from the parsed ID (never echoes the raw link into an iframe); link videos have no stream URL and the stream route 404s for them. Switching a video upload -> link deletes the stored file after the DB update.
 - Learning pages use deterrents only (browsers cannot block OS screenshots or cameras): content is shielded on window blur / hidden tab / PrintScreen, save/print/devtools shortcuts, context menu, copy and drag are blocked, the viewer is hidden in print, and a tiled watermark (full name, username, date) makes captures traceable. Fullscreen is applied to the viewer wrapper so the watermark stays visible.
+
+## UI conventions (buttons and layouts)
+
+- Button hierarchy: one **primary** (maroon) action per view; **secondary** (white, bordered) for alternatives such as Cancel, Filter, Categories; **ghost** for low-emphasis actions; **danger** (red) only to confirm a destructive action inside a ConfirmDialog.
+- Labels are verb + noun in sentence case. Create = "Add {item}" (page title, header button and submit button all match). Edit and settings = "Save changes". Icons on buttons only for create (Plus) and upload/change-file actions.
+- Index pages: PageHeader (title, one-line description, primary "Add {item}" on the right) → Toolbar (search, filters, "Filter") → Table with pagination in its footer.
+- Table rows: Edit = pencil IconButton with tooltip; decisions (Approve/Decline) = small buttons; everything else (Archive, Delete, Activate/Deactivate, Re-send) in the "⋯" Menu with a ConfirmDialog for destructive items; status is always a Badge, never an inline switch.
+- Create/edit pages: max-w-3xl, PageHeader with a back link (edit pages add an "Edit {item}" eyebrow), form sections as Cards, and the shared sticky FormActions bar (Cancel, then primary submit).
+- Settings-style pages: left description column + right Card per section, each section saving on its own with "Save changes" in its CardFooter. Switches are only used inside forms.

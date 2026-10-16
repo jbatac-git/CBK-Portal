@@ -1,10 +1,10 @@
-import Button, { buttonClass } from '@/Components/UI/Button';
-import Card, { CardBody, CardFooter, CardHeader } from '@/Components/UI/Card';
+import FormActions from '@/Components/UI/FormActions';
+import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Switch from '@/Components/UI/Switch';
 import Textarea from '@/Components/UI/Textarea';
 import { AdminCategory } from '@/types/material';
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 interface CategoryFormProps {
@@ -29,7 +29,7 @@ export default function CategoryForm({ category }: CategoryFormProps) {
     };
 
     return (
-        <form onSubmit={submit}>
+        <form onSubmit={submit} className="space-y-6">
             <Card>
                 <CardHeader title="Category details" />
                 <CardBody className="space-y-5">
@@ -59,15 +59,8 @@ export default function CategoryForm({ category }: CategoryFormProps) {
                     </div>
                     {errors.is_active && <p className="text-[13px] text-red-700">{errors.is_active}</p>}
                 </CardBody>
-                <CardFooter>
-                    <Link href={route('admin.learning-material-categories.index')} className={buttonClass('secondary')}>
-                        Cancel
-                    </Link>
-                    <Button type="submit" loading={processing}>
-                        {category ? 'Save changes' : 'Add category'}
-                    </Button>
-                </CardFooter>
             </Card>
+            <FormActions cancelHref={route('admin.learning-material-categories.index')} submitLabel={category ? 'Save changes' : 'Add category'} processing={processing} />
         </form>
     );
 }

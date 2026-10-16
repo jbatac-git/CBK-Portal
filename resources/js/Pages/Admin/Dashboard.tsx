@@ -4,7 +4,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import { usePermission } from '@/Hooks/usePermission';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 
 interface DashboardProps {
     stats: Record<string, number>;
@@ -57,6 +57,7 @@ export default function Dashboard({ stats }: DashboardProps) {
                 actions={
                     can('users.create') && (
                         <Link href={route('admin.users.create')} className={buttonClass('primary')}>
+                            <Plus aria-hidden="true" />
                             Add employee
                         </Link>
                     )

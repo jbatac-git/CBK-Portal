@@ -146,7 +146,7 @@ export default function ImageCropper({
                     Cancel
                 </Button>
                 <Button onClick={save} loading={busy} disabled={!area}>
-                    Save
+                    Apply
                 </Button>
             </div>
         </dialog>
