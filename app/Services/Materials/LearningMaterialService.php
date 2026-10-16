@@ -71,13 +71,17 @@ class LearningMaterialService
 
     public function update(LearningMaterial $material, array $data, ?UploadedFile $file): LearningMaterial
     {
-        $link = $this->linkFrom($data, $material->type);
+        $type = isset($data['type']) ? MaterialType::from($data['type']) : $material->type;
+        $changesType = $type !== $material->type;
+        $link = $this->linkFrom($data, $type);
 
-        if ($link === null && $file === null && $material->isExternalLink()) {
-            throw new DomainException('Upload a file to replace the video link.');
+        if ($link === null && $file === null && ($material->isExternalLink() || $changesType)) {
+            throw new DomainException($changesType
+                ? "Upload a {$type->label()} file to change this material's format."
+                : 'Upload a file to replace the video link.');
         }
 
-        DB::transaction(function () use ($material, $data, $file, $link) {
+        DB::transaction(function () use ($material, $data, $file, $link, $type) {
             $updates = [
                 'learning_material_category_id' => $data['learning_material_category_id'],
                 'title' => $data['title'],
@@ -85,12 +89,11 @@ class LearningMaterialService
                 'status' => $data['status'],
                 'available_during_temporary' => $data['available_during_temporary'] ?? false,
                 'sort_order' => $data['sort_order'] ?? 0,
+                // The format may change on edit (PDF, video file, video link);
+                // the guard above guarantees a matching new file or link.
+                'type' => $type,
             ];
 
-            // Replacing the source keeps the same TYPE (a PDF stays a PDF slot);
-            // changing type at once is rare enough to just ask the admin to
-            // archive this one and add a fresh material instead. A video may
-            // switch between an uploaded file and an external link.
             $old = $material->file_path ? ['disk' => $material->file_disk, 'path' => $material->file_path] : null;
             $replacesFile = false;
 
@@ -98,8 +101,8 @@ class LearningMaterialService
                 $updates = [...$updates, ...$this->linkColumns($link)];
                 $replacesFile = true;
             } elseif ($file) {
-                $this->assertRealMimeMatches($file, $material->type);
-                $updates = [...$updates, ...$this->fileColumns($this->storeFile($file, $material->type))];
+                $this->assertRealMimeMatches($file, $type);
+                $updates = [...$updates, ...$this->fileColumns($this->storeFile($file, $type))];
                 $replacesFile = true;
             }
 

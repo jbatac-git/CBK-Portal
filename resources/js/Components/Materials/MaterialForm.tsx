@@ -19,6 +19,7 @@ const FORMATS: { value: Format; label: string; hint: string; icon: LucideIcon }[
 ];
 
 interface FormatPickerProps {
+    label: string;
     value: Format;
     options: Format[];
     onChange: (format: Format) => void;
@@ -26,7 +27,7 @@ interface FormatPickerProps {
 }
 
 /** Card-style radio group so the three ways to add content are visible up front. */
-function FormatPicker({ value, options, onChange, error }: FormatPickerProps) {
+function FormatPicker({ label, value, options, onChange, error }: FormatPickerProps) {
     const items = FORMATS.filter((f) => options.includes(f.value));
 
     const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -42,7 +43,7 @@ function FormatPicker({ value, options, onChange, error }: FormatPickerProps) {
     return (
         <div className="space-y-1.5">
             <p id="format-label" className="text-[13px] font-medium text-stone-800">
-                What are you adding?
+                {label}
             </p>
             <div
                 role="radiogroup"
@@ -109,11 +110,17 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
     const isVideo = data.type === 'video';
     const isLink = isVideo && data.video_source === 'link';
     const format: Format = !isVideo ? 'pdf' : isLink ? 'video-link' : 'video-upload';
-    // The type is fixed after creation: a PDF stays a PDF, a video can switch between file and link.
-    const formatOptions: Format[] = !material ? ['pdf', 'video-upload', 'video-link'] : material.type === 'video' ? ['video-upload', 'video-link'] : ['pdf'];
+    const formatOptions: Format[] = ['pdf', 'video-upload', 'video-link'];
     const maxMb = (isVideo ? options.max_video_mb : options.max_pdf_mb) ?? undefined;
-    // An existing upload can keep its file; a link switched to upload cannot.
-    const hasStoredFile = Boolean(material) && material?.video_source !== 'link';
+    // The current file can only be kept when the format stays the same upload type.
+    const originalFormat: Format | null = !material
+        ? null
+        : material.type === 'pdf'
+          ? 'pdf'
+          : material.video_source === 'link'
+            ? 'video-link'
+            : 'video-upload';
+    const hasStoredFile = originalFormat !== null && originalFormat !== 'video-link' && format === originalFormat;
 
     const chooseFormat = (next: Format) => {
         setData((current) => ({
@@ -156,8 +163,13 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                     }
                 />
                 <CardBody className="space-y-5">
-                    {formatOptions.length > 1 && (
-                        <FormatPicker value={format} options={formatOptions} onChange={chooseFormat} error={errors.type ?? errors.video_source} />
+                    <FormatPicker label={material ? 'Format' : 'What are you adding?'} value={format} options={formatOptions} onChange={chooseFormat} error={errors.type ?? errors.video_source} />
+
+                    {originalFormat !== null && format !== originalFormat && (
+                        <p className="rounded-md border border-gold-200 bg-gold-50 px-3.5 py-2.5 text-[13px] text-gold-700">
+                            Changing the format replaces the current content when you save.
+                            {format === 'video-link' ? ' Paste the new video link below.' : ' Add the new file below.'}
+                        </p>
                     )}
 
                     {isLink ? (

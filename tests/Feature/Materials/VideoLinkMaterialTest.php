@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Materials;
 
+use App\Enums\MaterialType;
 use App\Enums\RoleName;
 use App\Models\Company;
 use App\Models\LearningMaterial;
@@ -173,6 +174,40 @@ class VideoLinkMaterialTest extends TestCase
         $this->assertSame('https://vimeo.com/76979871', $material->external_url);
         $this->assertNull($material->file_path);
         Storage::disk('local')->assertMissing('learning-materials/video/old.mp4');
+    }
+
+    public function test_a_pdf_can_be_changed_into_a_video_link_on_edit(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        Storage::disk('local')->put('learning-materials/pdf/old.pdf', '%PDF-1.4');
+
+        $material = LearningMaterial::factory()->for($this->category, 'category')->create([
+            'type' => 'pdf',
+            'file_path' => 'learning-materials/pdf/old.pdf',
+            'mime_type' => 'application/pdf',
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.learning-materials.update', $material), $this->payload())
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.learning-materials.index'));
+
+        $material->refresh();
+        $this->assertSame(MaterialType::Video, $material->type);
+        $this->assertSame('https://www.youtube.com/watch?v=dQw4w9WgXcQ', $material->external_url);
+        Storage::disk('local')->assertMissing('learning-materials/pdf/old.pdf');
+    }
+
+    public function test_changing_a_pdf_into_a_video_file_requires_a_new_file(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        $material = LearningMaterial::factory()->for($this->category, 'category')->create(['type' => 'pdf']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.learning-materials.update', $material), $this->payload(['video_source' => 'upload', 'external_url' => null]))
+            ->assertSessionHasErrors('file');
+
+        $this->assertSame(MaterialType::Pdf, $material->fresh()->type);
     }
 
     public function test_switching_from_link_to_upload_requires_a_file(): void
