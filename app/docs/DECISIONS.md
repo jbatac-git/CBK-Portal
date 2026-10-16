@@ -12,6 +12,7 @@
 - Access checks use permissions, never role names.
 - Role hierarchy: Super Admin > Admin > HR > Diser (RoleName::rank()). A user may create/edit only accounts ranked below their own; Super Admin may manage anyone.
 - Username = first initial + last name + last 2 digits of Employee ID (lowercase, a-z0-9). On collision, widen to 3, 4... digits. Never regenerated.
+- Employee ID is entered in full as printed on company records (letters, digits, spaces, - / .; e.g. CBK-2024-0153), stored trimmed and uppercased so duplicates are caught; it must contain at least 2 digits for the username.
 - Temporary access = 7 days (config/portal.php). Password = 12 random chars, stored hashed, emailed via encrypted queued mail.
 - Only users with users.manage-access (Admin, Super Admin) choose Diser modules. HR gets defaults on create and cannot change them.
 - Role changes after creation are NOT part of Phase 2.

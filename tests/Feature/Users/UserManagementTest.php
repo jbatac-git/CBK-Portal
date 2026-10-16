@@ -53,6 +53,37 @@ class UserManagementTest extends TestCase
         ];
     }
 
+    public function test_the_full_employee_id_is_accepted_and_the_username_uses_its_last_two_digits(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), $this->payload(['employee_id' => '  cbk-2024-0153 ']))
+            ->assertSessionHasNoErrors();
+
+        $user = User::where('email', 'jhonel@example.com')->firstOrFail();
+        $this->assertSame('CBK-2024-0153', $user->employee_id);
+        $this->assertSame('jbatac53', $user->username);
+
+        // The same ID typed differently is still recognised as a duplicate.
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), $this->payload(['employee_id' => 'CBK-2024-0153', 'email' => 'other@example.com']))
+            ->assertSessionHasErrors(['employee_id' => 'This Employee ID is already registered.']);
+    }
+
+    public function test_an_employee_id_needs_at_least_two_digits_and_only_safe_characters(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), $this->payload(['employee_id' => 'CBK-A1']))
+            ->assertSessionHasErrors('employee_id');
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), $this->payload(['employee_id' => 'CBK#2024<01>']))
+            ->assertSessionHasErrors('employee_id');
+    }
+
     public function test_admin_can_create_a_temporary_employee_account(): void
     {
         Mail::fake();
@@ -73,22 +104,22 @@ class UserManagementTest extends TestCase
 
         Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) => $mail->hasTo('jhonel@example.com'));
     }
-public function test_the_emailed_password_is_the_one_stored_hashed(): void
-{
-    Mail::fake();
-    $admin = $this->userWithRole(RoleName::Admin);
 
-    $this->actingAs($admin)
-        ->post(route('admin.users.store'), $this->payload())
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('admin.users.index'));
+    public function test_the_emailed_password_is_the_one_stored_hashed(): void
+    {
+        Mail::fake();
+        $admin = $this->userWithRole(RoleName::Admin);
 
-    $user = User::where('username', 'jbatac01')->firstOrFail();
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), $this->payload())
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.users.index'));
 
-    Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) =>
-        $mail->temporaryPassword !== $user->password
-        && Hash::check($mail->temporaryPassword, $user->password));
-}
+        $user = User::where('username', 'jbatac01')->firstOrFail();
+
+        Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) => $mail->temporaryPassword !== $user->password
+            && Hash::check($mail->temporaryPassword, $user->password));
+    }
 
     public function test_hr_gets_default_modules_even_if_they_send_others(): void
     {

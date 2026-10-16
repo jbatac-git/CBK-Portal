@@ -7,6 +7,28 @@ import { useForm } from '@inertiajs/react';
 import { Info } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
+/**
+ * Mirrors UsernameGenerator on the server: first initial + last name + last
+ * 2 digits of the Employee ID. The server still decides the final username
+ * (it widens the digits when a username is already taken).
+ */
+function usernamePreview(firstName: string, lastName: string, employeeId: string): string | null {
+    const clean = (value: string) =>
+        value
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+    const first = clean(firstName);
+    const last = clean(lastName);
+    const digits = employeeId.replace(/\D/g, '');
+
+    if (!first || !last || digits.length < 2) return null;
+
+    return `${first[0]}${last}${digits.slice(-2)}`;
+}
+
 interface UserFormProps {
     options: UserFormOptions;
     /** Present = edit mode. Absent = create mode. */
@@ -26,6 +48,7 @@ export default function UserForm({ options, employee }: UserFormProps) {
         modules: employee?.modules ?? options.default_modules,
     });
 
+    const previewUsername = employee ? null : usernamePreview(data.first_name, data.last_name, data.employee_id);
     const currentRole = employee ? employee.role : data.role;
     const isDiser = currentRole === 'Diser';
     const showModules = isDiser && options.can_manage_access;
@@ -109,15 +132,26 @@ export default function UserForm({ options, employee }: UserFormProps) {
                     <div className="grid gap-5 sm:grid-cols-2">
                         {!employee && (
                             <Input
-                                label="Employee ID number"
+                                label="Employee ID"
                                 name="employee_id"
-                                inputMode="numeric"
                                 autoComplete="off"
-                                className="tabular font-mono"
+                                autoCapitalize="characters"
+                                spellCheck={false}
+                                placeholder="e.g. CBK-2024-0153"
+                                className="tabular font-mono uppercase"
                                 value={data.employee_id}
                                 onChange={(e) => setData('employee_id', e.target.value)}
                                 error={errors.employee_id}
-                                hint="Numbers only. It can't be edited after the account is created."
+                                hint={
+                                    previewUsername ? (
+                                        <>
+                                            Username will be <span className="font-mono font-medium text-ink">{previewUsername}</span>
+                                            {' '}(more digits are added if it is already taken). The ID can't be edited later.
+                                        </>
+                                    ) : (
+                                        'Enter the full ID as on the employee’s records. The username uses its last 2 digits.'
+                                    )
+                                }
                             />
                         )}
                         <Input
