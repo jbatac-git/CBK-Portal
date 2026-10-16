@@ -175,10 +175,10 @@ export default function RowActions({
                         <div className="space-y-3">
                             <Select
                                 label="Reason"
-                                name="reason"
+                                name="removal_reason_id"
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
-                                error={errors.reason}
+                                error={errors.removal_reason_id}
                             >
                                 {removalReasons.map((r) => (
                                     <option key={r.value} value={r.value}>

@@ -51,6 +51,7 @@ class PriceListTest extends TestCase
     public function test_diser_only_sees_active_price_lists(): void
     {
         $diser = $this->userWithRole(RoleName::Diser);
+        $diser->givePermissionTo('portal.price-lists');
 
         PriceList::factory()->create(['status' => 'active', 'title' => 'Active List']);
         PriceList::factory()->create(['status' => 'archived', 'title' => 'Old List']);
@@ -82,11 +83,12 @@ class PriceListTest extends TestCase
 
         $this->actingAs($hr)->get(route('admin.price-lists.index'))->assertForbidden();
     }
+
     private function fakePdf(string $name = 'file.pdf'): UploadedFile
-{
-    return UploadedFile::fake()->createWithContent(
-        $name,
-        "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>",
-    );
-}
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>",
+        );
+    }
 }

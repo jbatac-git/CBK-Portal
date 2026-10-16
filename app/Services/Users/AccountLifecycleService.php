@@ -60,8 +60,12 @@ class AccountLifecycleService
             ->where('temporary_access_expires_at', '<=', now())
             ->chunkById(100, function ($users) use (&$count) {
                 foreach ($users as $user) {
-                    $this->restrict($user, null);
-                    $count++;
+                    try {
+                        $this->restrict($user, null);
+                        $count++;
+                    } catch (DomainException) {
+                        // Approved or deactivated by someone after this chunk was loaded.
+                    }
                 }
             });
 
@@ -78,22 +82,36 @@ class AccountLifecycleService
         });
     }
 
-    /** Every status change in the whole app goes through this one method. */
+    /**
+     * Every status change in the whole app goes through this one method.
+     *
+     * The row is re-read under a lock, so two concurrent requests (e.g.
+     * Approve and Deactivate on the same user) are serialized and the
+     * second one validates against the status the first one committed,
+     * not the stale copy loaded by route model binding.
+     */
     private function transition(User $user, AccountStatus $to, ?User $actor, array $extra = []): User
     {
-        if (! $user->status->canTransitionTo($to)) {
-            throw new DomainException(
-                "An account that is {$user->status->label()} cannot be changed to {$to->label()}."
-            );
-        }
+        return DB::transaction(function () use ($user, $to, $actor, $extra) {
+            $locked = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
-        $user->forceFill([
-            ...$extra,
-            'status' => $to,
-            'status_changed_at' => now(),
-            'status_changed_by' => $actor?->id,
-        ])->save();
+            if (! $locked->status->canTransitionTo($to)) {
+                throw new DomainException(
+                    "An account that is {$locked->status->label()} cannot be changed to {$to->label()}."
+                );
+            }
 
-        return $user;
+            $locked->forceFill([
+                ...$extra,
+                'status' => $to,
+                'status_changed_at' => now(),
+                'status_changed_by' => $actor?->id,
+            ])->save();
+
+            // Keep the caller's instance in sync with what was saved.
+            $user->setRawAttributes($locked->getAttributes(), true);
+
+            return $user;
+        });
     }
 }

@@ -9,6 +9,7 @@ use App\Models\User;
 use DomainException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 class RemovalRequestService
 {
@@ -46,28 +47,38 @@ class RemovalRequestService
 
     public function approve(RemovalRequest $request, User $actor): void
     {
-        $this->ensurePending($request);
+        DB::transaction(function () use ($request, $actor) {
+            $locked = $this->lockPending($request);
 
-        // Deactivating also marks this request as approved.
-        $this->lifecycle->deactivate($request->user, $actor);
+            // Deactivating also marks this request as approved.
+            $this->lifecycle->deactivate($locked->user, $actor);
+        });
     }
 
     public function decline(RemovalRequest $request, User $actor, ?string $note): void
     {
-        $this->ensurePending($request);
-
-        $request->forceFill([
-            'status' => RemovalRequestStatus::Declined,
-            'processed_by' => $actor->id,
-            'processed_at' => now(),
-            'decision_note' => $note,
-        ])->save();
+        DB::transaction(function () use ($request, $actor, $note) {
+            $this->lockPending($request)->forceFill([
+                'status' => RemovalRequestStatus::Declined,
+                'processed_by' => $actor->id,
+                'processed_at' => now(),
+                'decision_note' => $note,
+            ])->save();
+        });
     }
 
-    private function ensurePending(RemovalRequest $request): void
+    /**
+     * Re-reads the request under a row lock so a concurrent approve and
+     * decline cannot both pass the "still pending" check.
+     */
+    private function lockPending(RemovalRequest $request): RemovalRequest
     {
-        if ($request->status !== RemovalRequestStatus::Pending) {
+        $locked = RemovalRequest::query()->whereKey($request->getKey())->lockForUpdate()->firstOrFail();
+
+        if ($locked->status !== RemovalRequestStatus::Pending) {
             throw new DomainException('This request has already been processed.');
         }
+
+        return $locked;
     }
 }

@@ -64,11 +64,16 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                     <button type="submit" className={buttonClass('secondary')}>Filter</button>
                 </form>
 
-                <Can permission="learning-materials.create">
-                    <Link href={route('admin.learning-materials.create')} className={buttonClass('primary')}>
-                        + Upload material
+                <div className="flex gap-2">
+                    <Link href={route('admin.learning-material-categories.index')} className={buttonClass('secondary')}>
+                        Categories
                     </Link>
-                </Can>
+                    <Can permission="learning-materials.create">
+                        <Link href={route('admin.learning-materials.create')} className={buttonClass('primary')}>
+                            + Upload material
+                        </Link>
+                    </Can>
+                </div>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\RemovalReason;
 use App\Enums\RemovalRequestStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -15,18 +14,15 @@ class RemovalRequest extends Model
 
     // status / processed_* / decision_note are NOT fillable: only services change them.
     protected $fillable = ['user_id', 'requested_by', 'removal_reason_id', 'details'];
+
     protected function casts(): array
     {
         return [
-            'reason' => RemovalReason::class,
             'status' => RemovalRequestStatus::class,
             'processed_at' => 'datetime',
         ];
     }
-    public function reason(): BelongsTo
-    {
-        return $this->belongsTo(RemovalReason::class);
-    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -40,6 +36,12 @@ class RemovalRequest extends Model
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    // Explicit foreign key: Eloquent would otherwise guess "reason_id".
+    public function reason(): BelongsTo
+    {
+        return $this->belongsTo(RemovalReason::class, 'removal_reason_id');
     }
 
     public function scopePending(Builder $query): Builder

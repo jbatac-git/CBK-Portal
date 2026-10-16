@@ -19,6 +19,7 @@ class LearningMaterialTest extends TestCase
     use RefreshDatabase;
 
     private Company $company;
+
     private LearningMaterialCategory $category;
 
     protected function setUp(): void
@@ -45,13 +46,13 @@ class LearningMaterialTest extends TestCase
         return $user;
     }
 
-   private function fakePdf(string $name = 'overview.pdf'): UploadedFile
-{
-    return UploadedFile::fake()->createWithContent(
-        $name,
-        "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>",
-    );
-}
+    private function fakePdf(string $name = 'overview.pdf'): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>",
+        );
+    }
 
     public function test_admin_can_upload_a_published_pdf(): void
     {
@@ -165,6 +166,61 @@ class LearningMaterialTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertDatabaseHas('learning_material_categories', ['id' => $this->category->id, 'deleted_at' => null]);
+    }
+
+    public function test_admin_can_open_the_category_pages(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->get(route('admin.learning-material-categories.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/LearningMaterialCategories/Index')
+                ->where('categories.data.0.name', 'Company Overview'));
+
+        $this->actingAs($admin)
+            ->get(route('admin.learning-material-categories.create'))
+            ->assertInertia(fn ($page) => $page->component('Admin/LearningMaterialCategories/Create'));
+
+        $this->actingAs($admin)
+            ->get(route('admin.learning-material-categories.edit', $this->category))
+            ->assertInertia(fn ($page) => $page->component('Admin/LearningMaterialCategories/Edit'));
+    }
+
+    public function test_category_can_be_renamed_without_sending_a_slug(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->put(route('admin.learning-material-categories.update', $this->category), [
+                'name' => 'About CBK',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('admin.learning-material-categories.index'));
+
+        $this->assertSame('About CBK', $this->category->fresh()->name);
+    }
+
+    public function test_a_deleted_category_name_can_be_reused_but_not_an_active_one(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->post(route('admin.learning-material-categories.store'), ['name' => 'Company Overview'])
+            ->assertSessionHasErrors('name');
+
+        $this->actingAs($admin)->delete(route('admin.learning-material-categories.destroy', $this->category));
+
+        $this->actingAs($admin)
+            ->post(route('admin.learning-material-categories.store'), ['name' => 'Company Overview'])
+            ->assertRedirect(route('admin.learning-material-categories.index'));
+
+        $this->assertDatabaseHas('learning_material_categories', [
+            'name' => 'Company Overview',
+            'slug' => 'company-overview-2',
+            'deleted_at' => null,
+        ]);
     }
 
     public function test_hr_cannot_manage_learning_materials(): void

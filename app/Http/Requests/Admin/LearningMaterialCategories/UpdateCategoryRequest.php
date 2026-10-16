@@ -12,16 +12,17 @@ class UpdateCategoryRequest extends FormRequest
         return $this->user()->can('update', $this->route('learning_material_category'));
     }
 
+    /** The slug is generated once on create and never edited, so it is not accepted here. */
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => [
+            'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('learning_material_categories', 'slug')
-                    ->ignore($this->route('learning_material_category')),
+                Rule::unique('learning_material_categories', 'name')
+                    ->ignore($this->route('learning_material_category'))
+                    ->whereNull('deleted_at'),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
@@ -32,7 +33,7 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'name.required' => 'Category name is required.',
-            'slug.unique' => 'This slug is already used by another category.',
+            'name.unique' => 'A category with this name already exists.',
         ];
     }
 }

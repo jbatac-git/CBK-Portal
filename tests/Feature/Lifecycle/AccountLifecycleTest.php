@@ -7,16 +7,19 @@ use App\Enums\RemovalRequestStatus;
 use App\Enums\RoleName;
 use App\Mail\TemporaryAccessMail;
 use App\Models\Company;
+use App\Models\RemovalReason;
 use App\Models\RemovalRequest;
 use App\Models\User;
+use App\Services\Users\AccountLifecycleService;
+use App\Services\Users\RemovalRequestService;
 use Database\Seeders\RolePermissionSeeder;
+use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
-use App\Models\RemovalReason;
 
 class AccountLifecycleTest extends TestCase
 {
@@ -137,80 +140,81 @@ class AccountLifecycleTest extends TestCase
         $this->actingAs($superAdmin)->post(route('admin.users.deactivate', $superAdmin))->assertForbidden();
     }
 
- public function test_hr_removal_request_is_processed_by_an_admin(): void
-{
-    $hr = $this->userWithRole(RoleName::Hr);
-    $admin = $this->userWithRole(RoleName::Admin);
-    $diser = $this->userWithRole(RoleName::Diser);
+    public function test_hr_removal_request_is_processed_by_an_admin(): void
+    {
+        $hr = $this->userWithRole(RoleName::Hr);
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
 
-    $resigned = RemovalReason::where('slug', 'resigned')->value('id');
-    $awol = RemovalReason::where('slug', 'awol')->value('id');
+        $resigned = RemovalReason::where('slug', 'resigned')->value('id');
+        $awol = RemovalReason::where('slug', 'awol')->value('id');
 
-    $this->actingAs($hr)
-        ->post(route('admin.users.removal-request', $diser), [
+        $this->actingAs($hr)
+            ->post(route('admin.users.removal-request', $diser), [
+                'removal_reason_id' => $resigned,
+                'details' => 'Last day: Friday',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('removal_requests', [
+            'user_id' => $diser->id,
+            'requested_by' => $hr->id,
+            'status' => 'pending',
+        ]);
+
+        // A second pending request for the same employee is refused.
+        $this->actingAs($hr)
+            ->post(route('admin.users.removal-request', $diser), ['removal_reason_id' => $awol])
+            ->assertSessionHas('error');
+        $this->assertSame(1, RemovalRequest::count());
+
+        $request = RemovalRequest::firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('admin.removal-requests.approve', $request))
+            ->assertSessionHas('success');
+
+        $this->assertSame(AccountStatus::Deactivated, $diser->fresh()->status);
+        $this->assertSame(RemovalRequestStatus::Approved, $request->fresh()->status);
+        $this->assertSame($admin->id, $request->fresh()->processed_by);
+    }
+
+    public function test_declined_removal_request_keeps_the_account_active(): void
+    {
+        $hr = $this->userWithRole(RoleName::Hr);
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $separated = RemovalReason::where('slug', 'separated')->value('id');
+
+        $this->actingAs($hr)->post(route('admin.users.removal-request', $diser), [
+            'removal_reason_id' => $separated,
+        ]);
+        $request = RemovalRequest::firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('admin.removal-requests.decline', $request), ['decision_note' => 'Still employed'])
+            ->assertSessionHas('success');
+
+        $this->assertSame(AccountStatus::Active, $diser->fresh()->status);
+        $this->assertSame(RemovalRequestStatus::Declined, $request->fresh()->status);
+    }
+
+    public function test_hr_cannot_process_removal_requests(): void
+    {
+        $hr = $this->userWithRole(RoleName::Hr);
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $resigned = RemovalReason::where('slug', 'resigned')->value('id');
+
+        $this->actingAs($hr)->post(route('admin.users.removal-request', $diser), [
             'removal_reason_id' => $resigned,
-            'details' => 'Last day: Friday',
-        ])
-        ->assertSessionHas('success');
+        ]);
+        $request = RemovalRequest::firstOrFail();
 
-    $this->assertDatabaseHas('removal_requests', [
-        'user_id' => $diser->id,
-        'requested_by' => $hr->id,
-        'status' => 'pending',
-    ]);
-
-    // A second pending request for the same employee is refused.
-    $this->actingAs($hr)
-        ->post(route('admin.users.removal-request', $diser), ['removal_reason_id' => $awol])
-        ->assertSessionHas('error');
-    $this->assertSame(1, RemovalRequest::count());
-
-    $request = RemovalRequest::firstOrFail();
-
-    $this->actingAs($admin)
-        ->post(route('admin.removal-requests.approve', $request))
-        ->assertSessionHas('success');
-
-    $this->assertSame(AccountStatus::Deactivated, $diser->fresh()->status);
-    $this->assertSame(RemovalRequestStatus::Approved, $request->fresh()->status);
-    $this->assertSame($admin->id, $request->fresh()->processed_by);
-}
-   public function test_declined_removal_request_keeps_the_account_active(): void
-{
-    $hr = $this->userWithRole(RoleName::Hr);
-    $admin = $this->userWithRole(RoleName::Admin);
-    $diser = $this->userWithRole(RoleName::Diser);
-
-    $separated = RemovalReason::where('slug', 'separated')->value('id');
-
-    $this->actingAs($hr)->post(route('admin.users.removal-request', $diser), [
-        'removal_reason_id' => $separated,
-    ]);
-    $request = RemovalRequest::firstOrFail();
-
-    $this->actingAs($admin)
-        ->post(route('admin.removal-requests.decline', $request), ['decision_note' => 'Still employed'])
-        ->assertSessionHas('success');
-
-    $this->assertSame(AccountStatus::Active, $diser->fresh()->status);
-    $this->assertSame(RemovalRequestStatus::Declined, $request->fresh()->status);
-}
-
-   public function test_hr_cannot_process_removal_requests(): void
-{
-    $hr = $this->userWithRole(RoleName::Hr);
-    $diser = $this->userWithRole(RoleName::Diser);
-
-    $resigned = RemovalReason::where('slug', 'resigned')->value('id');
-
-    $this->actingAs($hr)->post(route('admin.users.removal-request', $diser), [
-        'removal_reason_id' => $resigned,
-    ]);
-    $request = RemovalRequest::firstOrFail();
-
-    $this->actingAs($hr)->post(route('admin.removal-requests.approve', $request))->assertForbidden();
-    $this->actingAs($hr)->get(route('admin.removal-requests.index'))->assertForbidden();
-}
+        $this->actingAs($hr)->post(route('admin.removal-requests.approve', $request))->assertForbidden();
+        $this->actingAs($hr)->get(route('admin.removal-requests.index'))->assertForbidden();
+    }
 
     public function test_expire_command_restricts_only_overdue_temporary_accounts(): void
     {
@@ -233,7 +237,7 @@ class AccountLifecycleTest extends TestCase
 
         $this->actingAs($admin)->post(route('admin.users.resend-credentials', $diser))->assertSessionHas('success');
 
-        Mail::assertQueued(TemporaryAccessMail::class, fn($mail) => $mail->hasTo($diser->email));
+        Mail::assertQueued(TemporaryAccessMail::class, fn ($mail) => $mail->hasTo($diser->email));
         $this->assertFalse(Hash::check('password', $diser->fresh()->password));
     }
 
@@ -287,8 +291,8 @@ class AccountLifecycleTest extends TestCase
     {
         // Probe routes: the real learning / price-list pages arrive in later phases.
         Route::middleware(['web', 'auth', 'active', 'temporary.scope'])->group(function () {
-            Route::get('/_probe/learning', fn() => 'ok')->name('portal.learning.probe');
-            Route::get('/_probe/price-lists', fn() => 'ok')->name('portal.price-lists.probe');
+            Route::get('/_probe/learning', fn () => 'ok')->name('portal.learning.probe');
+            Route::get('/_probe/price-lists', fn () => 'ok')->name('portal.price-lists.probe');
         });
 
         $temporary = $this->temporaryDiser(['must_change_password' => false]);
@@ -297,5 +301,85 @@ class AccountLifecycleTest extends TestCase
         $this->actingAs($temporary)->get('/_probe/learning')->assertOk();
         $this->actingAs($temporary)->get('/_probe/price-lists')->assertForbidden();
         $this->actingAs($active)->get('/_probe/price-lists')->assertOk();
+    }
+
+    public function test_removal_requests_page_shows_the_reason_name(): void
+    {
+        $hr = $this->userWithRole(RoleName::Hr);
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $resigned = RemovalReason::where('slug', 'resigned')->value('id');
+
+        $this->actingAs($hr)->post(route('admin.users.removal-request', $diser), [
+            'removal_reason_id' => $resigned,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.removal-requests.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/RemovalRequests/Index')
+                ->where('requests.0.reason', 'Resigned'));
+    }
+
+    public function test_a_stale_approve_cannot_reactivate_a_deactivated_account(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->temporaryDiser();
+        $staleCopy = User::findOrFail($diser->id);
+
+        $lifecycle = app(AccountLifecycleService::class);
+        $lifecycle->deactivate($diser, $admin);
+
+        try {
+            $lifecycle->approve($staleCopy, $admin);
+            $this->fail('Approving a deactivated account should be refused.');
+        } catch (DomainException) {
+            // expected
+        }
+
+        $this->assertSame(AccountStatus::Deactivated, $diser->fresh()->status);
+    }
+
+    public function test_an_approved_removal_request_cannot_be_declined_by_a_stale_copy(): void
+    {
+        $hr = $this->userWithRole(RoleName::Hr);
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
+
+        $this->actingAs($hr)->post(route('admin.users.removal-request', $diser), [
+            'removal_reason_id' => RemovalReason::where('slug', 'resigned')->value('id'),
+        ]);
+        $staleCopy = RemovalRequest::firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.removal-requests.approve', $staleCopy));
+
+        try {
+            app(RemovalRequestService::class)->decline($staleCopy, $admin, 'Too late');
+            $this->fail('Declining an already approved request should be refused.');
+        } catch (DomainException) {
+            // expected
+        }
+
+        $this->assertSame(RemovalRequestStatus::Approved, $staleCopy->fresh()->status);
+        $this->assertSame(AccountStatus::Deactivated, $diser->fresh()->status);
+    }
+
+    public function test_temporary_diser_cannot_open_real_portal_routes_outside_the_allowed_list(): void
+    {
+        $temporary = $this->temporaryDiser(['must_change_password' => false]);
+        $temporary->syncPermissions(['portal.learning', 'portal.price-lists', 'portal.contact-us']);
+
+        $this->actingAs($temporary)->get(route('portal.home'))->assertOk();
+        $this->actingAs($temporary)->get(route('portal.price-lists.index'))->assertForbidden();
+        $this->actingAs($temporary)->get(route('portal.contact.index'))->assertForbidden();
+    }
+
+    public function test_portal_requires_the_forced_password_change_first(): void
+    {
+        $diser = $this->userWithRole(RoleName::Diser, ['must_change_password' => true]);
+
+        $this->actingAs($diser)->get(route('portal.home'))->assertRedirect(route('password.change'));
     }
 }

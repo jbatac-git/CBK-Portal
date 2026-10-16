@@ -4,7 +4,7 @@ import { Head } from '@inertiajs/react';
 import MaterialsGrid from '@/Components/Materials/MaterialsGrid';
 import { PortalMaterial } from '@/types/material';
 export default function Home({ materials }: { materials: PortalMaterial[] }) {
-    const { user } = usePermission();
+    const { user, can } = usePermission();
 
     return (
         <DiserLayout>
@@ -28,13 +28,15 @@ export default function Home({ materials }: { materials: PortalMaterial[] }) {
                 <div className="mt-3 h-1 w-12 bg-gold" />
             </section>
 
-            <section>
-                <h2 className="text-center text-lg font-medium text-maroon">Learn and grow with CBK</h2>
-                <div className="mx-auto mt-1 h-1 w-10 bg-gold" />
-                <div className="mt-4 rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500">
-                   <MaterialsGrid materials={materials.slice(0, 8)} />
-                </div>
-            </section>
+            {can('portal.learning') && (
+                <section>
+                    <h2 className="text-center text-lg font-medium text-maroon">Learn and grow with CBK</h2>
+                    <div className="mx-auto mt-1 h-1 w-10 bg-gold" />
+                    <div className="mt-4 rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500">
+                        <MaterialsGrid materials={materials.slice(0, 8)} />
+                    </div>
+                </section>
+            )}
         </DiserLayout>
     );
 }

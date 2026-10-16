@@ -30,6 +30,9 @@ class CareersFlagTest extends TestCase
 
         app(PortalSettingService::class)->setMany([PortalSettingService::CAREERS_KEY => '1']);
 
-        $this->actingAs($diser)->get(route('portal.careers.index'))->assertOk();
+        $this->actingAs($diser)
+            ->get(route('portal.careers.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Portal/Careers/Index'));
     }
 }

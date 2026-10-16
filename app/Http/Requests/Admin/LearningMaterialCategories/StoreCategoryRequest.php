@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin\LearningMaterialCategories;
 
 use App\Models\LearningMaterialCategory;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCategoryRequest extends FormRequest
 {
@@ -15,7 +16,12 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('learning_material_categories', 'name')->whereNull('deleted_at'),
+            ],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
         ];
@@ -26,6 +32,7 @@ class StoreCategoryRequest extends FormRequest
         return [
             'name.required' => 'Category name is required.',
             'name.max' => 'Category name cannot exceed 255 characters.',
+            'name.unique' => 'A category with this name already exists.',
         ];
     }
 }

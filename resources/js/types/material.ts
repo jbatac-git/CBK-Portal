@@ -3,6 +3,12 @@ export interface Category {
     name: string;
 }
 
+export interface AdminCategory extends Category {
+    description: string | null;
+    is_active: boolean;
+    materials_count: number;
+}
+
 export interface AdminMaterial {
     id: number;
     title: string;
