@@ -34,7 +34,8 @@ export interface AdminMaterial {
 export interface MaterialFormOptions {
     categories: Category[];
     max_pdf_mb: number;
-    max_video_mb: number;
+    /** null = no size limit set by the app. */
+    max_video_mb: number | null;
 }
 
 export interface PortalMaterial {

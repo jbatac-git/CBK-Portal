@@ -23,10 +23,10 @@ export default function GuestLayout({ children }: PropsWithChildren) {
                     }}
                 />
 
-                <Logo size={44} className="relative" />
+                <Logo size={40} tone="light" className="relative" />
 
                 <div className="relative max-w-md">
-                    <p className="text-[13px] font-medium text-gold-300/80">CBK Academy</p>
+                    <p className="text-[13px] font-medium text-gold-300/80">Co Ban Kiat Hardware, Inc.</p>
                     <p className="mt-5 font-display text-[44px] font-normal leading-[1.08] tracking-[-0.015em]">
                         Knowledge.
                         <br />

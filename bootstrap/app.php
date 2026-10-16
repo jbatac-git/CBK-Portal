@@ -1,36 +1,54 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsurePasswordIsChanged;
+use App\Http\Middleware\EnsureTemporaryAccessScope;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-
+use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Symfony\Component\HttpFoundation\Response;
+
 // use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__ . '/../routes/web.php',
-        commands: __DIR__ . '/../routes/console.php',
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
 
         $middleware->alias([
-            'active' => \App\Http\Middleware\EnsureAccountIsActive::class,
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'password.changed' => \App\Http\Middleware\EnsurePasswordIsChanged::class,
-            'temporary.scope' => \App\Http\Middleware\EnsureTemporaryAccessScope::class,
+            'active' => EnsureAccountIsActive::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'password.changed' => EnsurePasswordIsChanged::class,
+            'temporary.scope' => EnsureTemporaryAccessScope::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // An upload bigger than PHP's post_max_size arrives with an empty body,
+        // so validation never runs. Send the user back with a clear message.
+        $exceptions->render(function (PostTooLargeException $e, Request $request) {
+            return back()->with(
+                'error',
+                'The file is larger than the server accepts ('.ini_get('post_max_size').'). Use a video link for large videos, or ask IT to raise the upload limit.'
+            );
+        });
+
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
             $status = $response->getStatusCode();
 

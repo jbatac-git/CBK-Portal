@@ -4,13 +4,15 @@ import Button, { buttonClass } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
-import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import IconButton from '@/Components/UI/IconButton';
+import Menu from '@/Components/UI/Menu';
+import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { FilterSelect, SearchInput } from '@/Components/UI/Toolbar';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
-import { ExternalLink, FileText, Plus } from 'lucide-react';
+import { ExternalLink, FileText, Pencil, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface PriceListRow {
@@ -149,17 +151,14 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                                     <span className="sr-only">for {row.title} (opens in a new tab)</span>
                                 </a>
                             </Td>
-                            <Td align="right" className="whitespace-nowrap">
-                                {row.can_update && (
-                                    <Link href={route('admin.price-lists.edit', row.id)} className={rowActionClass}>
-                                        Edit
-                                    </Link>
-                                )}
-                                {row.can_archive && (
-                                    <button type="button" onClick={() => setArchiving(row)} className={rowDangerActionClass}>
-                                        Archive
-                                    </button>
-                                )}
+                            <Td align="right">
+                                <RowActions>
+                                    {row.can_update && <IconButton icon={Pencil} label="Edit" href={route('admin.price-lists.edit', row.id)} />}
+                                    <Menu
+                                        label={`More actions for ${row.title}`}
+                                        items={row.can_archive ? [{ label: 'Archive', onSelect: () => setArchiving(row), danger: true }] : []}
+                                    />
+                                </RowActions>
                             </Td>
                         </Tr>
                     ))}

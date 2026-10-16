@@ -1,6 +1,7 @@
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import PageHeader from '@/Components/UI/PageHeader';
-import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Button from '@/Components/UI/Button';
+import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Textarea from '@/Components/UI/Textarea';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router } from '@inertiajs/react';
@@ -125,24 +126,16 @@ export default function Index({ requests }: { requests: RemovalRequestRow[] }) {
                                         </span>
                                     </time>
                                 </Td>
-                                <Td align="right" className="whitespace-nowrap">
+                                <Td align="right">
                                     {r.can_process && (
-                                        <div className="flex justify-end gap-0.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => setTarget({ request: r, mode: 'decline' })}
-                                                className={rowActionClass}
-                                            >
+                                        <RowActions>
+                                            <Button size="sm" variant="ghost" onClick={() => setTarget({ request: r, mode: 'decline' })}>
                                                 Decline
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setTarget({ request: r, mode: 'approve' })}
-                                                className={rowDangerActionClass}
-                                            >
-                                                Approve and deactivate
-                                            </button>
-                                        </div>
+                                            </Button>
+                                            <Button size="sm" variant="secondary" onClick={() => setTarget({ request: r, mode: 'approve' })}>
+                                                Approve
+                                            </Button>
+                                        </RowActions>
                                     )}
                                 </Td>
                             </Tr>

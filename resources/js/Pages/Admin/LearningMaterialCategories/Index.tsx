@@ -4,13 +4,15 @@ import Button, { buttonClass } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
-import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import IconButton from '@/Components/UI/IconButton';
+import Menu from '@/Components/UI/Menu';
+import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { SearchInput } from '@/Components/UI/Toolbar';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { AdminCategory } from '@/types/material';
 import { Paginated } from '@/types/pagination';
 import { Head, Link, router } from '@inertiajs/react';
-import { FolderTree, Plus } from 'lucide-react';
+import { FolderTree, Pencil, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface IndexProps {
@@ -92,16 +94,15 @@ export default function Index({ categories, filters }: IndexProps) {
                             <Td>
                                 <Badge tone={c.is_active ? 'success' : 'neutral'}>{c.is_active ? 'Active' : 'Inactive'}</Badge>
                             </Td>
-                            <Td align="right" className="whitespace-nowrap">
+                            <Td align="right">
                                 <Can permission="learning-materials.update">
-                                    <Link href={route('admin.learning-material-categories.edit', c.id)} className={rowActionClass}>
-                                        Edit
-                                    </Link>
-                                    {c.materials_count === 0 && (
-                                        <button type="button" onClick={() => setDeleting(c)} className={rowDangerActionClass}>
-                                            Delete
-                                        </button>
-                                    )}
+                                    <RowActions>
+                                        <IconButton icon={Pencil} label="Edit" href={route('admin.learning-material-categories.edit', c.id)} />
+                                        <Menu
+                                            label={`More actions for ${c.name}`}
+                                            items={c.materials_count === 0 ? [{ label: 'Delete', onSelect: () => setDeleting(c), danger: true }] : []}
+                                        />
+                                    </RowActions>
                                 </Can>
                             </Td>
                         </Tr>

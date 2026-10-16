@@ -76,6 +76,15 @@ export function EmptyRow({ colSpan, icon: Icon, title, hint }: EmptyRowProps) {
     );
 }
 
+/**
+ * Last-column action area. House rule for every table: an Edit icon button,
+ * an optional small decision Button (e.g. Approve), then a "⋯" Menu for
+ * everything else. Status is shown as a Badge, never as an inline switch.
+ */
+export function RowActions({ children }: PropsWithChildren) {
+    return <div className="flex items-center justify-end gap-1 whitespace-nowrap">{children}</div>;
+}
+
 /** Inline row action link/button styling, e.g. "Edit" / "Archive" in the last column. */
 export const rowActionClass =
     'inline-flex h-7 items-center rounded px-2 text-[13px] font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-ink';

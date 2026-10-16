@@ -1,13 +1,15 @@
 import Button, { buttonClass } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import Pagination from '@/Components/UI/Pagination';
-import Switch from '@/Components/UI/Switch';
-import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import Badge from '@/Components/UI/Badge';
+import IconButton from '@/Components/UI/IconButton';
+import Menu from '@/Components/UI/Menu';
+import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { SearchInput } from '@/Components/UI/Toolbar';
 import { LookupItem } from '@/types/lookup';
 import { Paginated } from '@/types/pagination';
 import { Link, router } from '@inertiajs/react';
-import { ListChecks, Plus } from 'lucide-react';
+import { ListChecks, Pencil, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface LookupIndexViewProps {
@@ -40,7 +42,6 @@ function usage(count: number, label: string): string {
 
 export default function LookupIndexView({ title, usageLabel, items, filters, routePrefix, tab }: LookupIndexViewProps) {
     const [search, setSearch] = useState(filters.search ?? '');
-    const [togglingId, setTogglingId] = useState<number | null>(null);
     const [deleting, setDeleting] = useState<LookupItem | null>(null);
     const [processing, setProcessing] = useState(false);
 
@@ -66,11 +67,10 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
     };
 
     const toggleActive = (item: LookupItem) => {
-        setTogglingId(item.id);
         router.put(
             route(`${routePrefix}.update`, item.id),
             { name: item.name, is_active: !item.is_active },
-            { preserveScroll: true, onFinish: () => setTogglingId(null) },
+            { preserveScroll: true },
         );
     };
 
@@ -95,7 +95,7 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
                 <THead>
                     <Th>Name</Th>
                     <Th>In use</Th>
-                    <Th>Active</Th>
+                    <Th>Status</Th>
                     <Th align="right">
                         <span className="sr-only">Actions</span>
                     </Th>
@@ -110,22 +110,21 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
                                 {item.usage_count === 0 ? <span className="text-stone-400">Not in use</span> : usage(item.usage_count, usageLabel)}
                             </Td>
                             <Td>
-                                <Switch
-                                    checked={item.is_active}
-                                    onChange={() => toggleActive(item)}
-                                    disabled={togglingId === item.id}
-                                    label={`${item.name} active`}
-                                />
+                                <Badge tone={item.is_active ? 'success' : 'neutral'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>
                             </Td>
-                            <Td align="right" className="whitespace-nowrap">
-                                <Link href={route(`${routePrefix}.edit`, item.id)} className={rowActionClass}>
-                                    Edit
-                                </Link>
-                                {item.usage_count === 0 && (
-                                    <button type="button" onClick={() => setDeleting(item)} className={rowDangerActionClass}>
-                                        Delete
-                                    </button>
-                                )}
+                            <Td align="right">
+                                <RowActions>
+                                    <IconButton icon={Pencil} label="Edit" href={route(`${routePrefix}.edit`, item.id)} />
+                                    <Menu
+                                        label={`More actions for ${item.name}`}
+                                        items={[
+                                            { label: item.is_active ? 'Deactivate' : 'Activate', onSelect: () => toggleActive(item) },
+                                            ...(item.usage_count === 0
+                                                ? [{ label: 'Delete', onSelect: () => setDeleting(item), danger: true, separated: true }]
+                                                : []),
+                                        ]}
+                                    />
+                                </RowActions>
                             </Td>
                         </Tr>
                     ))}

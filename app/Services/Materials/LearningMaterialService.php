@@ -36,8 +36,8 @@ class LearningMaterialService
     {
         return [
             'categories' => LearningMaterialCategory::active()->orderBy('name')->get(['id', 'name']),
-            'max_pdf_mb' => (int) (config('portal.learning_materials.max_pdf_kb') / 1024),
-            'max_video_mb' => (int) (config('portal.learning_materials.max_video_kb') / 1024),
+            'max_pdf_mb' => $this->toMegabytes(MaterialType::Pdf->maxKilobytes()),
+            'max_video_mb' => $this->toMegabytes(MaterialType::Video->maxKilobytes()),
         ];
     }
 
@@ -193,6 +193,11 @@ class LearningMaterialService
             'mime_type' => $stored['mime'],
             'file_size' => $stored['size'],
         ];
+    }
+
+    private function toMegabytes(?int $kilobytes): ?int
+    {
+        return $kilobytes === null ? null : intdiv($kilobytes, 1024);
     }
 
     private function storeFile(UploadedFile $file, MaterialType $type): array

@@ -187,6 +187,18 @@ class LearningMaterialTest extends TestCase
             ->assertStatus(416);
     }
 
+    public function test_video_uploads_have_no_app_size_limit_by_default(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+
+        $this->actingAs($admin)
+            ->get(route('admin.learning-materials.create'))
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/LearningMaterials/Create')
+                ->where('max_video_mb', null)
+                ->where('max_pdf_mb', 20));
+    }
+
     public function test_a_pdf_cannot_use_the_video_size_allowance(): void
     {
         $admin = $this->userWithRole(RoleName::Admin);

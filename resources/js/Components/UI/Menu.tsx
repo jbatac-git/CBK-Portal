@@ -82,7 +82,8 @@ export default function Menu({ items, label }: MenuProps) {
         }
     };
 
-    if (items.length === 0) return null;
+    // Keep the column aligned when a row has nothing extra to offer.
+    if (items.length === 0) return <span className="inline-block h-8 w-8" aria-hidden="true" />;
 
     const itemClass = (danger?: boolean) =>
         `flex w-full items-center rounded px-2.5 py-1.5 text-left text-[13px] outline-none transition-colors ${

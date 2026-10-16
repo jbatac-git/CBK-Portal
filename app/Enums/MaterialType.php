@@ -24,11 +24,14 @@ enum MaterialType: string
         };
     }
 
-    public function maxKilobytes(): int
+    /** Upload size cap in KB, or null when the app sets no limit for this type. */
+    public function maxKilobytes(): ?int
     {
-        return match ($this) {
+        $limit = match ($this) {
             self::Pdf => config('portal.learning_materials.max_pdf_kb'),
             self::Video => config('portal.learning_materials.max_video_kb'),
         };
+
+        return $limit === null || $limit === '' ? null : (int) $limit;
     }
 }

@@ -109,17 +109,15 @@ abstract class MaterialFormRequest extends FormRequest
         $type = $this->materialType();
 
         $extensions = $type ? self::EXTENSIONS[$type->value] : implode(',', self::EXTENSIONS);
-        $maxKb = $type?->maxKilobytes() ?? max(array_map(
-            fn (MaterialType $t) => $t->maxKilobytes(),
-            MaterialType::cases(),
-        ));
+        // Without a valid type there is nothing to size against; the type rule fails anyway.
+        $maxKb = $type?->maxKilobytes();
 
-        return [
+        return array_values(array_filter([
             $this->fileRequired() ? 'required' : 'nullable',
             'file',
             'mimes:'.$extensions,
-            'max:'.$maxKb,
-        ];
+            $maxKb !== null ? 'max:'.$maxKb : null,
+        ]));
     }
 
     /** Whether an uploaded file must accompany this request (upload mode only). */

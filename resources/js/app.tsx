@@ -5,7 +5,8 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
-const appName = import.meta.env.VITE_APP_NAME || 'CBK Academy';
+// The product name is part of the brand, not an environment setting.
+const appName = 'CBK Academy';
 
 createInertiaApp({
     title: (title) => (title ? `${title} · ${appName}` : appName),

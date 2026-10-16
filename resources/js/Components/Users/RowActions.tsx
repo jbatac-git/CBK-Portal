@@ -1,15 +1,14 @@
-import { ButtonVariant } from '@/Components/UI/Button';
+import Button, { ButtonVariant } from '@/Components/UI/Button';
+import IconButton from '@/Components/UI/IconButton';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import Select from '@/Components/UI/Select';
 import Menu from '@/Components/UI/Menu';
-import { rowActionClass } from '@/Components/UI/Table';
+import { RowActions as ActionGroup } from '@/Components/UI/Table';
 import Textarea from '@/Components/UI/Textarea';
 import { Employee, Option } from '@/types/user';
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
+import { Pencil } from 'lucide-react';
 import { useState } from 'react';
-
-// Same shape as rowActionClass, in the brand colour for the positive action.
-const approveActionClass = rowActionClass.replace('text-stone-600 ', 'text-maroon-700 ').replace('hover:bg-stone-100 hover:text-ink', 'hover:bg-maroon-50');
 
 type ActionKey = 'approve' | 'decline' | 'deactivate' | 'resend' | 'removal';
 
@@ -96,24 +95,18 @@ export default function RowActions({ user, removalReasons = [] }: RowActionsProp
 
     return (
         <>
-            <div className="flex items-center justify-end gap-1 whitespace-nowrap">
-                {/* One obvious next step stays visible; everything else lives in the menu. */}
-                {user.can_approve ? (
-                    <button type="button" onClick={() => open('approve')} className={approveActionClass}>
+            <ActionGroup>
+                {/* A pending decision gets a real button; Edit is an icon; everything else lives in the menu. */}
+                {user.can_approve && (
+                    <Button size="sm" variant="secondary" onClick={() => open('approve')} className="mr-1">
                         Approve
-                    </button>
-                ) : (
-                    user.can_update && (
-                        <Link href={route('admin.users.edit', user.id)} className={rowActionClass}>
-                            Edit
-                        </Link>
-                    )
+                    </Button>
                 )}
+                {user.can_update && <IconButton icon={Pencil} label="Edit" href={route('admin.users.edit', user.id)} />}
 
                 <Menu
                     label={`More actions for ${user.name}`}
                     items={[
-                        ...(user.can_approve && user.can_update ? [{ label: 'Edit', href: route('admin.users.edit', user.id) }] : []),
                         ...(user.can_resend_credentials ? [{ label: 'Re-send credentials', onSelect: () => open('resend') }] : []),
                         ...(user.can_decline ? [{ label: 'Not approve', onSelect: () => open('decline'), danger: true, separated: true }] : []),
                         ...(user.can_request_removal
@@ -124,7 +117,7 @@ export default function RowActions({ user, removalReasons = [] }: RowActionsProp
                             : []),
                     ]}
                 />
-            </div>
+            </ActionGroup>
 
             {config && (
                 <ConfirmDialog

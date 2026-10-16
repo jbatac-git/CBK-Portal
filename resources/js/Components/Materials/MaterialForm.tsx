@@ -6,36 +6,51 @@ import Select from '@/Components/UI/Select';
 import Textarea from '@/Components/UI/Textarea';
 import { AdminMaterial, MaterialFormOptions, VideoSource } from '@/types/material';
 import { Link, useForm } from '@inertiajs/react';
-import { Link2, UploadCloud } from 'lucide-react';
+import { FileText, Link2, LucideIcon, Video } from 'lucide-react';
 import { FormEventHandler, KeyboardEvent } from 'react';
 
-const SOURCES: { value: VideoSource; label: string; icon: typeof UploadCloud }[] = [
-    { value: 'upload', label: 'Upload file', icon: UploadCloud },
-    { value: 'link', label: 'Video link', icon: Link2 },
+/** What the admin is adding: maps to the `type` + `video_source` pair the backend expects. */
+type Format = 'pdf' | 'video-upload' | 'video-link';
+
+const FORMATS: { value: Format; label: string; hint: string; icon: LucideIcon }[] = [
+    { value: 'pdf', label: 'PDF document', hint: 'Handbooks, SOPs, guides', icon: FileText },
+    { value: 'video-upload', label: 'Video file', hint: 'Upload MP4, MOV or WebM', icon: Video },
+    { value: 'video-link', label: 'Video link', hint: 'YouTube, Vimeo, Drive or .mp4 URL', icon: Link2 },
 ];
 
-/** Two-option segmented control (radio group) for where a video plays from. */
-function SourceToggle({ value, onChange, error }: { value: VideoSource; onChange: (v: VideoSource) => void; error?: string }) {
+interface FormatPickerProps {
+    value: Format;
+    options: Format[];
+    onChange: (format: Format) => void;
+    error?: string;
+}
+
+/** Card-style radio group so the three ways to add content are visible up front. */
+function FormatPicker({ value, options, onChange, error }: FormatPickerProps) {
+    const items = FORMATS.filter((f) => options.includes(f.value));
+
     const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
         e.preventDefault();
-        const next = value === 'upload' ? 'link' : 'upload';
+        const index = items.findIndex((f) => f.value === value);
+        const next = items[(index + step + items.length) % items.length].value;
         onChange(next);
         e.currentTarget.querySelector<HTMLButtonElement>(`[data-value="${next}"]`)?.focus();
     };
 
     return (
         <div className="space-y-1.5">
-            <p id="video-source-label" className="text-[13px] font-medium text-stone-800">
-                Video source
+            <p id="format-label" className="text-[13px] font-medium text-stone-800">
+                What are you adding?
             </p>
             <div
                 role="radiogroup"
-                aria-labelledby="video-source-label"
+                aria-labelledby="format-label"
                 onKeyDown={onKeyDown}
-                className="inline-flex rounded-md border border-line bg-stone-100/70 p-0.5"
+                className={`grid gap-3 ${items.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}
             >
-                {SOURCES.map(({ value: v, label, icon: Icon }) => {
+                {items.map(({ value: v, label, hint, icon: Icon }) => {
                     const selected = v === value;
 
                     return (
@@ -47,12 +62,21 @@ function SourceToggle({ value, onChange, error }: { value: VideoSource; onChange
                             aria-checked={selected}
                             tabIndex={selected ? 0 : -1}
                             onClick={() => onChange(v)}
-                            className={`inline-flex h-8 items-center gap-1.5 rounded-[5px] px-3 text-[13px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-maroon-500/40 ${
-                                selected ? 'bg-white text-ink shadow-hairline' : 'text-stone-500 hover:text-ink'
+                            className={`flex items-start gap-3 rounded-lg border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-maroon-500/40 ${
+                                selected ? 'border-maroon-600 bg-maroon-50/50 ring-1 ring-maroon-600' : 'border-line bg-white hover:border-stone-300'
                             }`}
                         >
-                            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                            {label}
+                            <span
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                                    selected ? 'bg-maroon-700 text-white' : 'bg-stone-100 text-stone-500'
+                                }`}
+                            >
+                                <Icon className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0">
+                                <span className="block text-sm font-medium text-ink">{label}</span>
+                                <span className="mt-0.5 block text-xs text-stone-500">{hint}</span>
+                            </span>
                         </button>
                     );
                 })}
@@ -84,9 +108,22 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
 
     const isVideo = data.type === 'video';
     const isLink = isVideo && data.video_source === 'link';
-    const maxMb = isVideo ? options.max_video_mb : options.max_pdf_mb;
+    const format: Format = !isVideo ? 'pdf' : isLink ? 'video-link' : 'video-upload';
+    // The type is fixed after creation: a PDF stays a PDF, a video can switch between file and link.
+    const formatOptions: Format[] = !material ? ['pdf', 'video-upload', 'video-link'] : material.type === 'video' ? ['video-upload', 'video-link'] : ['pdf'];
+    const maxMb = (isVideo ? options.max_video_mb : options.max_pdf_mb) ?? undefined;
     // An existing upload can keep its file; a link switched to upload cannot.
     const hasStoredFile = Boolean(material) && material?.video_source !== 'link';
+
+    const chooseFormat = (next: Format) => {
+        setData((current) => ({
+            ...current,
+            type: next === 'pdf' ? 'pdf' : 'video',
+            video_source: next === 'video-link' ? 'link' : 'upload',
+            // A file picked for one format is never valid for another.
+            file: next === format ? current.file : null,
+        }));
+    };
 
     // Only send the fields that belong to the chosen source, so a file picked
     // before switching to "Video link" (or a stale URL) is never submitted.
@@ -107,6 +144,52 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
 
     return (
         <form onSubmit={submit} className="space-y-6">
+            <Card>
+                <CardHeader
+                    title="Content"
+                    description={
+                        material
+                            ? material.video_source === 'link'
+                                ? 'Currently plays from a video link.'
+                                : `Currently a ${material.type_label.toLowerCase()} (${material.file_size_label}).`
+                            : 'Choose the format, then add the file or paste the link.'
+                    }
+                />
+                <CardBody className="space-y-5">
+                    {formatOptions.length > 1 && (
+                        <FormatPicker value={format} options={formatOptions} onChange={chooseFormat} error={errors.type ?? errors.video_source} />
+                    )}
+
+                    {isLink ? (
+                        <Input
+                            label="Video link"
+                            name="external_url"
+                            type="url"
+                            inputMode="url"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={data.external_url}
+                            onChange={(e) => setData('external_url', e.target.value)}
+                            error={errors.external_url}
+                            hint="YouTube, Vimeo, Google Drive or a direct .mp4 link. For YouTube, set the video to Unlisted."
+                        />
+                    ) : (
+                        <FileDropzone
+                            key={format}
+                            id="file"
+                            label={hasStoredFile ? 'Replace file' : 'File'}
+                            optional={hasStoredFile}
+                            file={data.file}
+                            onChange={(file) => setData('file', file)}
+                            accept={isVideo ? '.mp4,.mov,.webm,video/mp4,video/quicktime,video/webm' : '.pdf,application/pdf'}
+                            typesLabel={isVideo ? 'MP4, MOV or WebM' : 'PDF'}
+                            maxMb={maxMb}
+                            error={errors.file}
+                            hint={hasStoredFile ? 'Leave empty to keep the current file.' : undefined}
+                        />
+                    )}
+                </CardBody>
+            </Card>
+
             <Card>
                 <CardHeader title="Details" description="What Disers see in the learning library." />
                 <CardBody className="space-y-5">
@@ -156,68 +239,6 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                             <option value="archived">Archived</option>
                         </Select>
                     </div>
-                </CardBody>
-            </Card>
-
-            <Card>
-                <CardHeader
-                    title={isVideo ? 'Video' : 'File'}
-                    description={
-                        material
-                            ? material.video_source === 'link'
-                                ? 'Currently a video link.'
-                                : `Currently a ${material.type_label.toLowerCase()} (${material.file_size_label}).`
-                            : 'Choose the material type, then add the file or video link.'
-                    }
-                />
-                <CardBody className="space-y-5">
-                    {!material && (
-                        <Select
-                            label="Material type"
-                            name="type"
-                            value={data.type}
-                            onChange={(e) => setData('type', e.target.value as 'pdf' | 'video')}
-                            error={errors.type}
-                        >
-                            <option value="pdf">PDF document</option>
-                            <option value="video">Training video</option>
-                        </Select>
-                    )}
-
-                    {isVideo && (
-                        <SourceToggle
-                            value={data.video_source}
-                            onChange={(source) => setData('video_source', source)}
-                            error={errors.video_source}
-                        />
-                    )}
-
-                    {isLink ? (
-                        <Input
-                            label="Video link"
-                            name="external_url"
-                            type="url"
-                            inputMode="url"
-                            placeholder="https://www.youtube.com/watch?v=..."
-                            value={data.external_url}
-                            onChange={(e) => setData('external_url', e.target.value)}
-                            error={errors.external_url}
-                            hint="YouTube, Vimeo, Google Drive or a direct .mp4 link"
-                        />
-                    ) : (
-                        <FileDropzone
-                            id="file"
-                            label={hasStoredFile ? 'Replace file' : 'File'}
-                            optional={hasStoredFile}
-                            file={data.file}
-                            onChange={(file) => setData('file', file)}
-                            accept={isVideo ? '.mp4,.mov,.webm' : '.pdf'}
-                            typesLabel={isVideo ? 'MP4, MOV or WebM' : 'PDF'}
-                            maxMb={maxMb}
-                            error={errors.file}
-                            hint={hasStoredFile ? 'Leave empty to keep the current file.' : undefined}
-                        />
-                    )}
                 </CardBody>
             </Card>
 

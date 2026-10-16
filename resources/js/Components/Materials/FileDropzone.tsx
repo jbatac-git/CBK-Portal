@@ -61,7 +61,7 @@ export default function FileDropzone({
         }
     };
 
-    const limits = [typesLabel, maxMb !== undefined ? `up to ${maxMb} MB` : null].filter(Boolean).join(', ');
+    const limits = [typesLabel, maxMb !== undefined ? `up to ${maxMb} MB` : 'any size'].join(', ');
     const tooLarge = file !== null && maxMb !== undefined && file.size > maxMb * 1024 * 1024;
 
     return (

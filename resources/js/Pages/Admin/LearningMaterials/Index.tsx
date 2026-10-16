@@ -4,14 +4,16 @@ import Button, { buttonClass } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
-import Table, { EmptyRow, rowActionClass, rowDangerActionClass, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
+import IconButton from '@/Components/UI/IconButton';
+import Menu from '@/Components/UI/Menu';
+import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { FilterSelect, SearchInput } from '@/Components/UI/Toolbar';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { AdminMaterial, Category } from '@/types/material';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, FileText, FolderTree, PlayCircle, Plus } from 'lucide-react';
+import { BookOpen, FileText, FolderTree, Pencil, PlayCircle, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface IndexProps {
@@ -152,17 +154,14 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                                 <Td>
                                     <Badge tone={statusTones[m.status]}>{m.status_label}</Badge>
                                 </Td>
-                                <Td align="right" className="whitespace-nowrap">
-                                    {m.can_update && (
-                                        <Link href={route('admin.learning-materials.edit', m.id)} className={rowActionClass}>
-                                            Edit
-                                        </Link>
-                                    )}
-                                    {m.can_archive && m.status !== 'archived' && (
-                                        <button type="button" onClick={() => setArchiving(m)} className={rowDangerActionClass}>
-                                            Archive
-                                        </button>
-                                    )}
+                                <Td align="right">
+                                    <RowActions>
+                                        {m.can_update && <IconButton icon={Pencil} label="Edit" href={route('admin.learning-materials.edit', m.id)} />}
+                                        <Menu
+                                            label={`More actions for ${m.title}`}
+                                            items={m.can_archive && m.status !== 'archived' ? [{ label: 'Archive', onSelect: () => setArchiving(m), danger: true }] : []}
+                                        />
+                                    </RowActions>
                                 </Td>
                             </Tr>
                         );

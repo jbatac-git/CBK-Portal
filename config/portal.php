@@ -8,7 +8,9 @@ return [
 
     'learning_materials' => [
         'max_pdf_kb' => 20480,
-        'max_video_kb' => 512000,
+        // null = no app-level limit; the web server and PHP (upload_max_filesize,
+        // post_max_size) still cap request size, so raise those for large videos.
+        'max_video_kb' => env('LEARNING_MAX_VIDEO_KB'),
         'allowed_pdf_mimes' => ['application/pdf'],
         'allowed_video_mimes' => ['video/mp4', 'video/quicktime', 'video/webm'],
     ],
