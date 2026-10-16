@@ -17,6 +17,9 @@ class LearningMaterialStreamController extends Controller
         // or guessed stream URL from bypassing the temporary-access lock.
         $this->authorize('view', $learningMaterial);
 
+        // Link videos have no stored bytes to serve.
+        abort_if($learningMaterial->isExternalLink() || ! $learningMaterial->file_path, 404);
+
         return $streamer->stream($request, $learningMaterial);
     }
 }

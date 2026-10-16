@@ -1,7 +1,7 @@
 import EmptyState from '@/Components/UI/EmptyState';
 import { PortalMaterial } from '@/types/material';
 import { Link } from '@inertiajs/react';
-import { ArrowUpRight, BookOpen, FileText, Lock, PlayCircle } from 'lucide-react';
+import { BookOpen, ChevronRight, FileText, Lock, Play } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface MaterialsGridProps {
@@ -11,10 +11,11 @@ interface MaterialsGridProps {
 }
 
 const typeMeta = {
-    pdf: { label: 'PDF', icon: FileText },
-    video: { label: 'Video', icon: PlayCircle },
+    pdf: { label: 'Document', icon: FileText },
+    video: { label: 'Video', icon: Play },
 } as const;
 
+/** Learning materials as a quiet, scannable list: one row per material. */
 export default function MaterialsGrid({ materials, empty }: MaterialsGridProps) {
     if (materials.length === 0) {
         return (
@@ -31,54 +32,46 @@ export default function MaterialsGrid({ materials, empty }: MaterialsGridProps) 
     }
 
     return (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-white">
             {materials.map((m) => (
                 <li key={m.id}>
-                    <MaterialCard material={m} />
+                    <MaterialRow material={m} />
                 </li>
             ))}
         </ul>
     );
 }
 
-function MaterialCard({ material: m }: { material: PortalMaterial }) {
+function MaterialRow({ material: m }: { material: PortalMaterial }) {
     const meta = typeMeta[m.type] ?? typeMeta.pdf;
-    const TypeIcon = meta.icon;
+    const TypeIcon = m.locked ? Lock : meta.icon;
 
     const body = (
         <>
-            <div className="flex items-center justify-between gap-3">
-                <span className="eyebrow inline-flex items-center gap-1.5">
-                    <TypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                    {meta.label}
+            <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
+                    m.locked ? 'bg-stone-100 text-stone-400' : 'bg-maroon-50 text-maroon-700'
+                }`}
+            >
+                <TypeIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className={`block truncate text-[15px] font-medium ${m.locked ? 'text-stone-500' : 'text-ink'}`}>{m.title}</span>
+                <span className="mt-0.5 block truncate text-[13px] text-stone-500">
+                    {m.locked ? 'Opens once your account is approved' : [meta.label, m.category].filter(Boolean).join(' · ')}
                 </span>
-                {m.locked ? (
-                    <Lock className="h-4 w-4 text-stone-400" aria-hidden="true" />
-                ) : (
-                    <ArrowUpRight
-                        className="h-4 w-4 text-stone-300 transition-colors group-hover:text-maroon-700"
-                        aria-hidden="true"
-                    />
-                )}
-            </div>
-            <p className={`mt-3 line-clamp-2 text-[15px] font-medium leading-snug ${m.locked ? 'text-stone-500' : 'text-ink'}`}>
-                {m.title}
-            </p>
-            <p className="mt-auto pt-3 text-[13px] text-stone-500">
-                {m.locked ? 'Opens once your account is approved' : (m.category ?? 'Uncategorized')}
-            </p>
+            </span>
+            {!m.locked && (
+                <ChevronRight className="h-4 w-4 shrink-0 text-stone-300 transition-colors group-hover:text-maroon-700" aria-hidden="true" />
+            )}
         </>
     );
 
-    const base = 'flex h-full min-h-[8.5rem] flex-col rounded-lg border p-4';
+    const base = 'flex items-center gap-4 px-4 py-3.5 sm:px-5';
 
     if (m.locked) {
         return (
-            <div
-                aria-disabled="true"
-                title="Available once your account is approved"
-                className={`${base} cursor-not-allowed border-dashed border-line bg-paper`}
-            >
+            <div aria-disabled="true" className={`${base} cursor-not-allowed`}>
                 <span className="sr-only">Locked: </span>
                 {body}
             </div>
@@ -88,7 +81,7 @@ function MaterialCard({ material: m }: { material: PortalMaterial }) {
     return (
         <Link
             href={route('portal.learning.show', m.id)}
-            className={`group ${base} border-line bg-white shadow-hairline transition-[box-shadow,border-color] duration-150 hover:border-stone-300 hover:shadow-raised focus-visible:ring-2 focus-visible:ring-maroon-500/40 focus-visible:ring-offset-2`}
+            className={`group ${base} transition-colors hover:bg-paper focus-visible:bg-paper focus-visible:outline-none`}
         >
             {body}
         </Link>

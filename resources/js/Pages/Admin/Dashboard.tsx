@@ -4,7 +4,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import { usePermission } from '@/Hooks/usePermission';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight, BookOpen, Clock, FileText, LucideIcon, UserCheck, UserMinus, Users } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface DashboardProps {
     stats: Record<string, number>;
@@ -12,22 +12,22 @@ interface DashboardProps {
 
 interface StatMeta {
     label: string;
-    icon: LucideIcon;
     /** Counts that mean someone has work to do. */
     actionable?: boolean;
     routeName?: string;
+    params?: Record<string, string>;
     permission?: string;
 }
 
 // Backend sends raw counts keyed by stat name; the frontend owns the
-// label/icon presentation — this keeps the Service free of UI concerns.
+// presentation — this keeps the Service free of UI concerns.
 const statMeta: Record<string, StatMeta> = {
-    pending_approval: { label: 'Pending approval', icon: UserCheck, actionable: true, routeName: 'admin.users.index', permission: 'users.view' },
-    expiring_soon: { label: 'Expiring in 2 days', icon: Clock, actionable: true, routeName: 'admin.users.index', permission: 'users.view' },
-    pending_removals: { label: 'Pending removals', icon: UserMinus, actionable: true, routeName: 'admin.removal-requests.index', permission: 'users.deactivate' },
-    active_users: { label: 'Active users', icon: Users, routeName: 'admin.users.index', permission: 'users.view' },
-    published_materials: { label: 'Published materials', icon: BookOpen, routeName: 'admin.learning-materials.index', permission: 'learning-materials.view' },
-    active_price_lists: { label: 'Active price lists', icon: FileText, routeName: 'admin.price-lists.index', permission: 'price-lists.view' },
+    pending_approval: { label: 'Pending approval', actionable: true, routeName: 'admin.users.index', params: { status: 'temporary' }, permission: 'users.view' },
+    expiring_soon: { label: 'Expiring in 2 days', actionable: true, routeName: 'admin.users.index', params: { status: 'temporary' }, permission: 'users.view' },
+    pending_removals: { label: 'Pending removals', actionable: true, routeName: 'admin.removal-requests.index', permission: 'users.deactivate' },
+    active_users: { label: 'Active employees', routeName: 'admin.users.index', params: { status: 'active' }, permission: 'users.view' },
+    published_materials: { label: 'Published materials', routeName: 'admin.learning-materials.index', permission: 'learning-materials.view' },
+    active_price_lists: { label: 'Active price lists', routeName: 'admin.price-lists.index', permission: 'price-lists.view' },
 };
 
 function greeting(): string {
@@ -41,8 +41,11 @@ export default function Dashboard({ stats }: DashboardProps) {
     const { user, can } = usePermission();
 
     const entries = Object.entries(stats).filter(([key]) => statMeta[key]);
-    const needsAction = entries.filter(([key, value]) => statMeta[key].actionable && value > 0);
+    const tasks = entries.filter(([key, value]) => statMeta[key].actionable && value > 0);
     const today = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
+
+    const hrefFor = (meta: StatMeta) =>
+        meta.routeName && (!meta.permission || can(meta.permission)) ? route(meta.routeName, meta.params ?? {}) : undefined;
 
     return (
         <AdminLayout title="Dashboard">
@@ -50,12 +53,7 @@ export default function Dashboard({ stats }: DashboardProps) {
 
             <PageHeader
                 eyebrow={today}
-                title={`${greeting()}, ${user.first_name}.`}
-                description={
-                    needsAction.length > 0
-                        ? `${needsAction.length} ${needsAction.length === 1 ? 'item needs' : 'items need'} your attention today.`
-                        : 'Everything is up to date. Nothing needs your attention right now.'
-                }
+                title={`${greeting()}, ${user.first_name}`}
                 actions={
                     can('users.create') && (
                         <Link href={route('admin.users.create')} className={buttonClass('primary')}>
@@ -65,51 +63,67 @@ export default function Dashboard({ stats }: DashboardProps) {
                 }
             />
 
-            <section aria-labelledby="overview-heading">
-                <h2 id="overview-heading" className="eyebrow mb-3">
-                    Overview
-                </h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {entries.map(([key, value], index) => {
-                        const meta = statMeta[key];
-                        const href = meta.routeName && (!meta.permission || can(meta.permission)) ? route(meta.routeName) : undefined;
+            <section aria-label="Overview" className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-3">
+                {entries.map(([key, value]) => {
+                    const meta = statMeta[key];
 
-                        return (
-                            <div key={key} className="animate-rise-in" style={{ animationDelay: `${index * 40}ms` }}>
-                                <StatCard
-                                    label={meta.label}
-                                    value={value}
-                                    Icon={meta.icon}
-                                    warning={meta.actionable && value > 0}
-                                    href={href}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
+                    return (
+                        <StatCard
+                            key={key}
+                            label={meta.label}
+                            value={value}
+                            warning={meta.actionable && value > 0}
+                            href={hrefFor(meta)}
+                        />
+                    );
+                })}
             </section>
 
-            {(stats.pending_approval ?? 0) > 0 && can('users.view') && (
-                <section className="mt-8 flex flex-col gap-4 rounded-lg border border-line bg-white p-5 shadow-hairline sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold-50 ring-1 ring-gold-200">
-                            <UserCheck className="h-[18px] w-[18px] text-gold-700" aria-hidden="true" />
-                        </span>
-                        <div>
-                            <p className="text-sm font-semibold text-ink">
-                                {stats.pending_approval} temporary {stats.pending_approval === 1 ? 'account is' : 'accounts are'} waiting for approval
-                            </p>
-                            <p className="mt-0.5 text-[13px] text-stone-500">
-                                Temporary access ends automatically after 7 days. Approve or decline before then.
-                            </p>
-                        </div>
-                    </div>
-                    <Link href={route('admin.users.index', { status: 'temporary' })} className={buttonClass('secondary')}>
-                        Review accounts
-                        <ArrowRight aria-hidden="true" />
-                    </Link>
-                </section>
-            )}
+            <section className="mt-10" aria-labelledby="tasks-heading">
+                <h2 id="tasks-heading" className="text-[15px] font-semibold text-ink">
+                    To do
+                </h2>
+
+                {tasks.length === 0 ? (
+                    <p className="mt-2 text-sm text-stone-500">You're all caught up.</p>
+                ) : (
+                    <ul className="mt-3 divide-y divide-line border-y border-line">
+                        {tasks.map(([key, value]) => {
+                            const meta = statMeta[key];
+                            const href = hrefFor(meta);
+
+                            return (
+                                <li key={key}>
+                                    {href ? (
+                                        <Link href={href} className="group flex items-center justify-between gap-4 py-3.5 text-sm">
+                                            <TaskText label={meta.label} value={value} />
+                                            <ArrowRight
+                                                className="h-4 w-4 text-stone-300 transition-colors group-hover:text-maroon-700"
+                                                aria-hidden="true"
+                                            />
+                                        </Link>
+                                    ) : (
+                                        <div className="py-3.5 text-sm">
+                                            <TaskText label={meta.label} value={value} />
+                                        </div>
+                                    )}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </section>
         </AdminLayout>
+    );
+}
+
+function TaskText({ label, value }: { label: string; value: number }) {
+    return (
+        <span className="flex items-center gap-3">
+            <span className="tabular inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-gold-50 px-2 text-xs font-semibold text-gold-700 ring-1 ring-inset ring-gold-200">
+                {value}
+            </span>
+            <span className="text-stone-700">{label}</span>
+        </span>
     );
 }

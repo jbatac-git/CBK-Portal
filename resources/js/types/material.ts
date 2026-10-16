@@ -15,6 +15,9 @@ export interface AdminMaterial {
     description: string | null;
     type: 'pdf' | 'video';
     type_label: string;
+    /** Only set for videos: where the video plays from. */
+    video_source: VideoSource | null;
+    external_url: string | null;
     status: 'draft' | 'published' | 'archived';
     status_label: string;
     available_during_temporary: boolean;
@@ -41,4 +44,11 @@ export interface PortalMaterial {
     type: 'pdf' | 'video';
     category: string | null;
     locked: boolean;
+}
+
+export type VideoSource = 'upload' | 'link';
+
+export interface VideoEmbed {
+    kind: 'youtube' | 'vimeo' | 'drive' | 'direct';
+    src: string;
 }

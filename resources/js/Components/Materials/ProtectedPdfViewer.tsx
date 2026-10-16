@@ -1,5 +1,7 @@
-import Watermark from '@/Components/Shared/Watermark';
+import { FullscreenButton, ShieldOverlay } from '@/Components/Materials/ViewerControls';
+import Watermark, { WatermarkViewer } from '@/Components/Shared/Watermark';
 import Button from '@/Components/UI/Button';
+import { useFullscreen } from '@/Hooks/useFullscreen';
 import { ChevronLeft, ChevronRight, FileWarning, ShieldCheck } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -8,11 +10,24 @@ import { useEffect, useRef, useState } from 'react';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const SCALE = 1.4;
+/** Upper bound for fit-to-width in fullscreen, so huge monitors stay sharp without runaway canvas sizes. */
+const MAX_FULLSCREEN_SCALE = 3;
 
 type Status = 'loading' | 'ready' | 'error';
 
-export default function ProtectedPdfViewer({ streamUrl, username }: { streamUrl: string; username: string }) {
+interface ProtectedPdfViewerProps {
+    streamUrl: string;
+    viewer: WatermarkViewer;
+    shielded?: boolean;
+}
+
+export default function ProtectedPdfViewer({ streamUrl, viewer, shielded = false }: ProtectedPdfViewerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    // Fullscreen goes on the whole reader (page + toolbar), so the watermark,
+    // the privacy shield and the page controls stay visible.
+    const readerRef = useRef<HTMLDivElement>(null);
+    const { isFullscreen, supported, toggle } = useFullscreen(readerRef);
     const [doc, setDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState<Status>('loading');
@@ -59,7 +74,19 @@ export default function ProtectedPdfViewer({ streamUrl, username }: { streamUrl:
             .then((pdfPage) => {
                 if (cancelled) return;
 
-                const viewport = pdfPage.getViewport({ scale: SCALE });
+                // In fullscreen, re-render to fit the available width (crisp
+                // instead of CSS-upscaled); otherwise use the default scale
+                // and let max-w-full shrink it on small screens.
+                let scale = SCALE;
+                const box = scrollRef.current;
+                if (isFullscreen && box) {
+                    const styles = window.getComputedStyle(box);
+                    const available = box.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
+                    const natural = pdfPage.getViewport({ scale: 1 }).width;
+                    if (available > 0 && natural > 0) scale = Math.min(available / natural, MAX_FULLSCREEN_SCALE);
+                }
+
+                const viewport = pdfPage.getViewport({ scale });
                 const ratio = window.devicePixelRatio || 1;
 
                 canvas.width = Math.floor(viewport.width * ratio);
@@ -86,68 +113,88 @@ export default function ProtectedPdfViewer({ streamUrl, username }: { streamUrl:
             cancelled = true;
             renderTask?.cancel();
         };
-    }, [doc, page]);
+    }, [doc, page, isFullscreen]);
 
     const pageCount = doc?.numPages ?? 0;
+    const navButton =
+        'inline-flex h-9 w-9 items-center justify-center rounded-md text-stone-600 transition-colors hover:bg-stone-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-maroon-500/40 disabled:pointer-events-none disabled:text-stone-300';
 
     return (
         <div>
-            <div className="overflow-hidden rounded-xl border border-line bg-white shadow-hairline">
-                <div
-                    onContextMenu={(e) => e.preventDefault()}
-                    className="relative max-h-[70vh] min-h-[16rem] select-none overflow-auto bg-stone-100/70 p-3 sm:p-6"
-                >
-                    {status === 'loading' && <PageSkeleton />}
+            <div
+                ref={readerRef}
+                className={`flex flex-col overflow-hidden bg-white ${
+                    isFullscreen ? 'h-full w-full' : 'rounded-xl border border-line shadow-hairline'
+                }`}
+            >
+                {/* Watermark + shield sit on this non-scrolling box, so they cover the visible area at any scroll position. */}
+                <div className={`relative ${isFullscreen ? 'min-h-0 flex-1' : ''}`}>
+                    <div
+                        ref={scrollRef}
+                        onContextMenu={(e) => e.preventDefault()}
+                        className={`select-none overflow-auto bg-stone-100/70 p-3 transition-[filter] duration-150 sm:p-6 ${
+                            isFullscreen ? 'h-full' : 'max-h-[70vh] min-h-[16rem]'
+                        } ${shielded ? 'blur-2xl' : ''}`}
+                    >
+                        {status === 'loading' && <PageSkeleton />}
 
-                    {status === 'error' && (
-                        <div role="alert" className="flex flex-col items-center px-6 py-14 text-center">
-                            <FileWarning className="h-5 w-5 text-stone-400" aria-hidden="true" />
-                            <p className="mt-3 text-sm font-medium text-ink">This document could not be opened</p>
-                            <p className="mt-1 max-w-xs text-[13px] leading-relaxed text-stone-500">
-                                Check your connection and try again. If it keeps happening, let your supervisor know.
-                            </p>
-                            <Button variant="secondary" size="sm" className="mt-4" onClick={() => setAttempt((n) => n + 1)}>
-                                Try again
-                            </Button>
-                        </div>
-                    )}
+                        {status === 'error' && (
+                            <div role="alert" className="flex flex-col items-center px-6 py-14 text-center">
+                                <FileWarning className="h-5 w-5 text-stone-400" aria-hidden="true" />
+                                <p className="mt-3 text-sm font-medium text-ink">This document could not be opened</p>
+                                <p className="mt-1 max-w-xs text-[13px] leading-relaxed text-stone-500">
+                                    Check your connection and try again. If it keeps happening, let your supervisor know.
+                                </p>
+                                <Button variant="secondary" size="sm" className="mt-4" onClick={() => setAttempt((n) => n + 1)}>
+                                    Try again
+                                </Button>
+                            </div>
+                        )}
 
-                    <canvas
-                        ref={canvasRef}
-                        aria-label={pageCount > 0 ? `Page ${page} of ${pageCount}` : undefined}
-                        className={`mx-auto h-auto max-w-full bg-white shadow-raised transition-opacity duration-150 ${
-                            status === 'ready' ? (rendering ? 'opacity-60' : 'opacity-100') : 'hidden'
-                        }`}
-                    />
-                    {status === 'ready' && <Watermark username={username} />}
+                        <canvas
+                            ref={canvasRef}
+                            aria-label={pageCount > 0 ? `Page ${page} of ${pageCount}` : undefined}
+                            className={`mx-auto h-auto max-w-full bg-white shadow-raised transition-opacity duration-150 ${
+                                status === 'ready' ? (rendering ? 'opacity-60' : 'opacity-100') : 'hidden'
+                            }`}
+                        />
+                    </div>
+                    {status === 'ready' && <Watermark viewer={viewer} />}
+                    <ShieldOverlay visible={shielded} />
                 </div>
 
                 {pageCount > 0 && status === 'ready' && (
-                    <div className="flex items-center justify-between gap-3 border-t border-line bg-paper px-3 py-2">
-                        <button
-                            type="button"
-                            aria-label="Previous page"
-                            disabled={page <= 1}
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-stone-600 transition-colors hover:bg-stone-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-maroon-500/40 disabled:pointer-events-none disabled:text-stone-300"
-                        >
-                            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                        <p className="font-mono text-[13px] text-stone-600" aria-live="polite">
-                            <span className="sr-only">Page </span>
-                            <span className="tabular font-medium text-ink">{page}</span>
-                            <span className="mx-1.5 text-stone-400">/</span>
-                            <span className="tabular">{pageCount}</span>
-                        </p>
-                        <button
-                            type="button"
-                            aria-label="Next page"
-                            disabled={page >= pageCount}
-                            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-stone-600 transition-colors hover:bg-stone-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-maroon-500/40 disabled:pointer-events-none disabled:text-stone-300"
-                        >
-                            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-line bg-paper px-3 py-2">
+                        <span aria-hidden="true" />
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                aria-label="Previous page"
+                                disabled={page <= 1}
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                className={navButton}
+                            >
+                                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                            <p className="font-mono text-[13px] text-stone-600" aria-live="polite">
+                                <span className="sr-only">Page </span>
+                                <span className="tabular font-medium text-ink">{page}</span>
+                                <span className="mx-1.5 text-stone-400">/</span>
+                                <span className="tabular">{pageCount}</span>
+                            </p>
+                            <button
+                                type="button"
+                                aria-label="Next page"
+                                disabled={page >= pageCount}
+                                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                                className={navButton}
+                            >
+                                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                        </div>
+                        <div className="flex justify-end">
+                            {supported && <FullscreenButton isFullscreen={isFullscreen} onToggle={() => void toggle()} />}
+                        </div>
                     </div>
                 )}
             </div>

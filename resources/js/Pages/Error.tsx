@@ -23,11 +23,11 @@ const messages: Record<number, ErrorCopy> = {
     },
     500: {
         title: 'Something went wrong',
-        description: 'The portal hit an unexpected problem. Please try again in a moment.',
+        description: 'Something went wrong on our side. Please try again in a moment.',
     },
     503: {
-        title: 'Portal under maintenance',
-        description: 'CBK Portal is temporarily unavailable. Please check back shortly.',
+        title: 'Under maintenance',
+        description: 'CBK Academy is temporarily unavailable. Please check back shortly.',
     },
 };
 
@@ -47,7 +47,7 @@ export default function Error({ status }: { status: number }) {
 
             <main className="flex flex-1 items-center justify-center px-5 py-16">
                 <div className="w-full max-w-md animate-rise-in text-center">
-                    <p className="eyebrow">CBK Portal</p>
+                    <p className="eyebrow">CBK Academy</p>
                     <p className="tabular mt-4 font-display text-[120px] font-light leading-none tracking-[-0.04em] text-maroon-800 sm:text-[148px]"
                     >
                         {status}

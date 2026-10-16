@@ -31,7 +31,7 @@ export default function Index({ tab, tabs, items, filters, routePrefix, usageLab
 
             <PageHeader
                 title="Maintenance"
-                description="Reference lists used across the portal: companies, departments and removal reasons."
+                description="Reference lists used across CBK Academy: companies, departments and removal reasons."
             />
 
             <Tabs

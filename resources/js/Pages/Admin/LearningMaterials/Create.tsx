@@ -12,7 +12,7 @@ export default function Create(options: MaterialFormOptions) {
                 <PageHeader
                     back={{ href: route('admin.learning-materials.index'), label: 'Learning materials' }}
                     title="Upload material"
-                    description="Add a PDF or training video to the Diser learning library."
+                    description="Add a PDF, a training video or a video link to the Diser learning library."
                 />
                 <MaterialForm options={options} />
             </div>

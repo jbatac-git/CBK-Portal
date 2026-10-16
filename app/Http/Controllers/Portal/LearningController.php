@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PortalMaterialResource;
 use App\Models\LearningMaterial;
 use App\Services\Materials\LearningMaterialService;
+use App\Services\Materials\VideoEmbed;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,7 +36,11 @@ class LearningController extends Controller
                 'title' => $material->title,
                 'description' => $material->description,
                 'type' => $material->type->value,
-                'stream_url' => route('portal.learning.stream', $material),
+                // Uploads stream through our authorized route; link videos
+                // only get a rebuilt embed source, never a stream URL.
+                ...($material->isExternalLink()
+                    ? ['embed' => VideoEmbed::fromUrl($material->external_url)]
+                    : ['stream_url' => route('portal.learning.stream', $material)]),
             ],
         ]);
     }

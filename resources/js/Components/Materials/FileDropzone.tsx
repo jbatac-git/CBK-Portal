@@ -145,7 +145,7 @@ export default function FileDropzone({
                     <p className="mt-2 text-sm text-stone-700">
                         <span className="font-medium text-maroon-700">Choose a file</span> or drag it here
                     </p>
-                    <p id={`${id}-limits`} className="mt-1 font-mono text-2xs uppercase tracking-[0.08em] text-stone-500">
+                    <p id={`${id}-limits`} className="mt-1 text-xs text-stone-500">
                         {limits}
                     </p>
                 </div>

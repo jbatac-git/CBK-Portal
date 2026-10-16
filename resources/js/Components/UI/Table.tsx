@@ -8,14 +8,14 @@ export default function Table({ children, footer }: PropsWithChildren<{ footer?:
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">{children}</table>
             </div>
-            {footer && <div className="border-t border-line bg-paper px-4 py-3">{footer}</div>}
+            {footer && <div className="border-t border-line px-5 py-3">{footer}</div>}
         </div>
     );
 }
 
 export function THead({ children }: PropsWithChildren) {
     return (
-        <thead className="border-b border-line bg-paper">
+        <thead className="border-b border-line">
             <tr>{children}</tr>
         </thead>
     );
@@ -26,7 +26,7 @@ export function Th({ className = '', align = 'left', children, ...props }: ThHTM
         <th
             scope="col"
             {...props}
-            className={`whitespace-nowrap px-4 py-2.5 text-2xs font-semibold uppercase tracking-[0.08em] text-stone-500 ${align === 'right' ? 'text-right' : 'text-left'} ${className}`}
+            className={`whitespace-nowrap px-5 py-3 text-xs font-medium text-stone-500 ${align === 'right' ? 'text-right' : 'text-left'} ${className}`}
         >
             {children}
         </th>
@@ -47,7 +47,7 @@ export function Tr({ className = '', children, ...props }: HTMLAttributes<HTMLTa
 
 export function Td({ className = '', align = 'left', children, ...props }: TdHTMLAttributes<HTMLTableCellElement> & { align?: 'left' | 'right' }) {
     return (
-        <td {...props} className={`px-4 py-3 align-middle text-stone-700 ${align === 'right' ? 'text-right' : ''} ${className}`}>
+        <td {...props} className={`px-5 py-3.5 align-middle text-stone-700 ${align === 'right' ? 'text-right' : ''} ${className}`}>
             {children}
         </td>
     );

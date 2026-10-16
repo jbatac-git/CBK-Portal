@@ -40,8 +40,9 @@
         @apply border-red-400 focus:border-red-500 focus:ring-red-500/15;
     }
 
+    /* Quiet label above a title or section. */
     .eyebrow {
-        @apply font-mono text-2xs font-medium uppercase tracking-[0.14em] text-stone-500;
+        @apply text-[13px] font-medium text-stone-500;
     }
 
     .link {

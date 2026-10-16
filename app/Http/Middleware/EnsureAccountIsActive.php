@@ -20,7 +20,7 @@ class EnsureAccountIsActive
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors([
-                'username' => 'Your account no longer has access to the CBK Portal. Please contact HR or your administrator.',
+                'username' => 'Your account no longer has access to the CBK Academy. Please contact HR or your administrator.',
             ]);
         }
 

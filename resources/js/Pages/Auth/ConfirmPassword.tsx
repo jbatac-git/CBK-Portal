@@ -24,7 +24,7 @@ export default function ConfirmPassword() {
 
             <AuthHeader
                 title="Confirm your password"
-                description="This is a secure area of the portal. Enter your password again to continue."
+                description="This is a secure area. Enter your password again to continue."
             />
 
             <form onSubmit={submit} className="space-y-5">

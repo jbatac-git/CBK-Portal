@@ -75,7 +75,6 @@ export default function Index({ requests }: { requests: RemovalRequestRow[] }) {
             <Head title="Removal requests" />
 
             <PageHeader
-                eyebrow="People"
                 title="Removal requests"
                 description="Requests from HR to remove resigned, AWOL or separated employees. Approving a request disables the account immediately."
             />

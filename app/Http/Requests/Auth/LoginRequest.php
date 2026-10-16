@@ -52,7 +52,7 @@ class LoginRequest extends FormRequest
             Auth::logout();
 
             throw ValidationException::withMessages([
-                'username' => 'Your account has no access to the CBK Portal. Please contact HR or your administrator.',
+                'username' => 'Your account has no access to the CBK Academy. Please contact HR or your administrator.',
             ]);
         }
 

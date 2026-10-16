@@ -23,10 +23,10 @@ export default function DiserLayout({ children }: PropsWithChildren) {
 
     return (
         <div className="flex min-h-screen flex-col bg-paper">
-            <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-maroon-950 text-white">
+            <header className="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-md">
                 <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-                    <Link href={route('portal.home')} aria-label="Home">
-                        <Logo />
+                    <Link href={route('portal.home')} aria-label="CBK Academy home">
+                        <Logo size={30} />
                     </Link>
 
                     <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
@@ -39,7 +39,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                                     <span
                                         key={item.label}
                                         title="Available after your account is approved"
-                                        className="flex h-8 cursor-not-allowed items-center gap-1.5 rounded-md px-3 text-[13px] text-white/30"
+                                        className="flex h-8 cursor-not-allowed items-center gap-1.5 rounded-md px-3 text-[13px] text-stone-300"
                                     >
                                         <Lock className="h-3.5 w-3.5" aria-hidden="true" />
                                         {item.label}
@@ -53,7 +53,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                                     href={route(item.routeName)}
                                     aria-current={active ? 'page' : undefined}
                                     className={`flex h-8 items-center rounded-md px-3 text-[13px] font-medium transition-colors ${
-                                        active ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white'
+                                        active ? 'bg-maroon-50 text-maroon-800' : 'text-stone-600 hover:bg-stone-100 hover:text-ink'
                                     }`}
                                 >
                                     {item.label}
@@ -65,7 +65,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                     <div className="flex items-center gap-1">
                         <Link
                             href={route('profile.edit')}
-                            className="flex items-center gap-2 rounded-full p-0.5 pr-0.5 transition-colors hover:bg-white/10 md:pr-3"
+                            className="flex items-center gap-2 rounded-full p-0.5 pr-0.5 transition-colors hover:bg-stone-100 md:pr-3"
                             aria-label="My profile"
                         >
                             <Avatar
@@ -75,13 +75,13 @@ export default function DiserLayout({ children }: PropsWithChildren) {
                                 lastName={user.last_name}
                                 size="sm"
                             />
-                            <span className="hidden text-[13px] font-medium text-white/85 md:inline">{user.first_name}</span>
+                            <span className="hidden text-[13px] font-medium text-stone-700 md:inline">{user.first_name}</span>
                         </Link>
                         <Link
                             href={route('logout')}
                             method="post"
                             as="button"
-                            className="rounded-md p-2 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                            className="rounded-md p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-ink"
                             aria-label="Log out"
                             title="Log out"
                         >

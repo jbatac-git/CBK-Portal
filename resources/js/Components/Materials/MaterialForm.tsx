@@ -4,9 +4,63 @@ import Card, { CardBody, CardFooter, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
 import Textarea from '@/Components/UI/Textarea';
-import { AdminMaterial, MaterialFormOptions } from '@/types/material';
+import { AdminMaterial, MaterialFormOptions, VideoSource } from '@/types/material';
 import { Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Link2, UploadCloud } from 'lucide-react';
+import { FormEventHandler, KeyboardEvent } from 'react';
+
+const SOURCES: { value: VideoSource; label: string; icon: typeof UploadCloud }[] = [
+    { value: 'upload', label: 'Upload file', icon: UploadCloud },
+    { value: 'link', label: 'Video link', icon: Link2 },
+];
+
+/** Two-option segmented control (radio group) for where a video plays from. */
+function SourceToggle({ value, onChange, error }: { value: VideoSource; onChange: (v: VideoSource) => void; error?: string }) {
+    const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+        e.preventDefault();
+        const next = value === 'upload' ? 'link' : 'upload';
+        onChange(next);
+        e.currentTarget.querySelector<HTMLButtonElement>(`[data-value="${next}"]`)?.focus();
+    };
+
+    return (
+        <div className="space-y-1.5">
+            <p id="video-source-label" className="text-[13px] font-medium text-stone-800">
+                Video source
+            </p>
+            <div
+                role="radiogroup"
+                aria-labelledby="video-source-label"
+                onKeyDown={onKeyDown}
+                className="inline-flex rounded-md border border-line bg-stone-100/70 p-0.5"
+            >
+                {SOURCES.map(({ value: v, label, icon: Icon }) => {
+                    const selected = v === value;
+
+                    return (
+                        <button
+                            key={v}
+                            type="button"
+                            role="radio"
+                            data-value={v}
+                            aria-checked={selected}
+                            tabIndex={selected ? 0 : -1}
+                            onClick={() => onChange(v)}
+                            className={`inline-flex h-8 items-center gap-1.5 rounded-[5px] px-3 text-[13px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-maroon-500/40 ${
+                                selected ? 'bg-white text-ink shadow-hairline' : 'text-stone-500 hover:text-ink'
+                            }`}
+                        >
+                            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {label}
+                        </button>
+                    );
+                })}
+            </div>
+            {error && <p className="text-[13px] text-red-700">{error}</p>}
+        </div>
+    );
+}
 
 interface MaterialFormProps {
     options: MaterialFormOptions;
@@ -14,7 +68,7 @@ interface MaterialFormProps {
 }
 
 export default function MaterialForm({ options, material }: MaterialFormProps) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         learning_material_category_id: material ? String(material.learning_material_category_id) : '',
         title: material?.title ?? '',
         description: material?.description ?? '',
@@ -22,12 +76,26 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
         status: material?.status ?? 'draft',
         available_during_temporary: material?.available_during_temporary ?? false,
         sort_order: material?.sort_order ?? 0,
+        video_source: (material?.video_source ?? 'upload') as VideoSource,
+        external_url: material?.external_url ?? '',
         file: null as File | null,
         _method: material ? 'put' : 'post',
     });
 
     const isVideo = data.type === 'video';
+    const isLink = isVideo && data.video_source === 'link';
     const maxMb = isVideo ? options.max_video_mb : options.max_pdf_mb;
+    // An existing upload can keep its file; a link switched to upload cannot.
+    const hasStoredFile = Boolean(material) && material?.video_source !== 'link';
+
+    // Only send the fields that belong to the chosen source, so a file picked
+    // before switching to "Video link" (or a stale URL) is never submitted.
+    transform((d) => ({
+        ...d,
+        video_source: isLink ? 'link' : 'upload',
+        external_url: isLink ? d.external_url.trim() : '',
+        file: isLink ? null : d.file,
+    }));
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -93,11 +161,13 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
 
             <Card>
                 <CardHeader
-                    title="File"
+                    title={isVideo ? 'Video' : 'File'}
                     description={
                         material
-                            ? `Currently a ${material.type_label.toLowerCase()} (${material.file_size_label}).`
-                            : 'Choose the material type, then upload the file.'
+                            ? material.video_source === 'link'
+                                ? 'Currently a video link.'
+                                : `Currently a ${material.type_label.toLowerCase()} (${material.file_size_label}).`
+                            : 'Choose the material type, then add the file or video link.'
                     }
                 />
                 <CardBody className="space-y-5">
@@ -114,18 +184,40 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                         </Select>
                     )}
 
-                    <FileDropzone
-                        id="file"
-                        label={material ? 'Replace file' : 'File'}
-                        optional={Boolean(material)}
-                        file={data.file}
-                        onChange={(file) => setData('file', file)}
-                        accept={isVideo ? '.mp4,.mov,.webm' : '.pdf'}
-                        typesLabel={isVideo ? 'MP4, MOV or WebM' : 'PDF'}
-                        maxMb={maxMb}
-                        error={errors.file}
-                        hint={material ? 'Leave empty to keep the current file.' : undefined}
-                    />
+                    {isVideo && (
+                        <SourceToggle
+                            value={data.video_source}
+                            onChange={(source) => setData('video_source', source)}
+                            error={errors.video_source}
+                        />
+                    )}
+
+                    {isLink ? (
+                        <Input
+                            label="Video link"
+                            name="external_url"
+                            type="url"
+                            inputMode="url"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={data.external_url}
+                            onChange={(e) => setData('external_url', e.target.value)}
+                            error={errors.external_url}
+                            hint="YouTube, Vimeo, Google Drive or a direct .mp4 link"
+                        />
+                    ) : (
+                        <FileDropzone
+                            id="file"
+                            label={hasStoredFile ? 'Replace file' : 'File'}
+                            optional={hasStoredFile}
+                            file={data.file}
+                            onChange={(file) => setData('file', file)}
+                            accept={isVideo ? '.mp4,.mov,.webm' : '.pdf'}
+                            typesLabel={isVideo ? 'MP4, MOV or WebM' : 'PDF'}
+                            maxMb={maxMb}
+                            error={errors.file}
+                            hint={hasStoredFile ? 'Leave empty to keep the current file.' : undefined}
+                        />
+                    )}
                 </CardBody>
             </Card>
 
@@ -167,7 +259,7 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                         Cancel
                     </Link>
                     <Button type="submit" loading={processing}>
-                        {material ? 'Save changes' : 'Upload material'}
+                        {material ? 'Save changes' : isLink ? 'Add material' : 'Upload material'}
                     </Button>
                 </CardFooter>
             </Card>

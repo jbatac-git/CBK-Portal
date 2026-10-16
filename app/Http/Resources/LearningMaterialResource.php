@@ -2,20 +2,26 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\MaterialType;
+use App\Models\LearningMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\LearningMaterial */
+/** @mixin LearningMaterial */
 class LearningMaterialResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $isLink = $this->isExternalLink();
+
         return [
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
             'type' => $this->type->value,
-            'type_label' => $this->type->label(),
+            'type_label' => $isLink && $this->type === MaterialType::Video ? 'Video link' : $this->type->label(),
+            'video_source' => $this->type === MaterialType::Video ? ($isLink ? 'link' : 'upload') : null,
+            'external_url' => $this->external_url,
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'available_during_temporary' => $this->available_during_temporary,
@@ -32,6 +38,10 @@ class LearningMaterialResource extends JsonResource
 
     private function humanFileSize(): string
     {
+        if ($this->file_size === null) {
+            return '—';
+        }
+
         $bytes = $this->file_size;
         $units = ['B', 'KB', 'MB', 'GB'];
 

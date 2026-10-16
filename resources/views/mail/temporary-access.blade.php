@@ -8,13 +8,13 @@
                    style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;">
                 <tr>
                     <td style="background:#7A1421;border-bottom:4px solid #C9973F;padding:16px 24px;color:#ffffff;font-size:18px;">
-                        CBK Portal
+                        CBK Academy
                     </td>
                 </tr>
                 <tr>
                     <td style="padding:24px;font-size:14px;line-height:1.6;">
                         <p>Hello {{ $user->first_name }},</p>
-                        <p>An account has been created for you on the CBK Portal. Use the temporary credentials below to log in.</p>
+                        <p>An account has been created for you on the CBK Academy. Use the temporary credentials below to log in.</p>
 
                         <table cellpadding="8" cellspacing="0" role="presentation"
                                style="background:#FBF6F0;border:1px solid #EADFD6;border-radius:6px;margin:16px 0;">
@@ -31,7 +31,7 @@
                         <p>
                             <a href="{{ route('login') }}"
                                style="display:inline-block;background:#7A1421;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;">
-                                Log in to CBK Portal
+                                Log in to CBK Academy
                             </a>
                         </p>
 

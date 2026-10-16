@@ -64,7 +64,7 @@ export default function Index({ materials, filters, categories, statuses }: Inde
 
             <PageHeader
                 title="Learning materials"
-                description="PDFs and training videos that Disers can open from the portal."
+                description="PDFs and training videos that Disers can open in CBK Academy."
                 actions={
                     <>
                         <Link href={route('admin.learning-material-categories.index')} className={buttonClass('secondary')}>

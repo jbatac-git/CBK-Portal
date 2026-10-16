@@ -79,7 +79,7 @@ export default function RolePermissions({ permissions, roles }: { permissions: s
                             <tr>
                                 <th
                                     scope="col"
-                                    className="rounded-tl-lg border-b border-line bg-paper px-5 py-3 text-left text-2xs font-semibold uppercase tracking-[0.08em] text-stone-500 lg:sticky lg:top-0 lg:z-10"
+                                    className="rounded-tl-lg border-b border-line bg-paper px-5 py-3 text-left text-xs font-medium text-stone-500 lg:sticky lg:top-0 lg:z-10"
                                 >
                                     Permission
                                 </th>
@@ -118,9 +118,8 @@ export default function RolePermissions({ permissions, roles }: { permissions: s
                                     </tr>
                                     {group.items.map((permission) => (
                                         <tr key={permission} className="border-b border-line/70 transition-colors hover:bg-paper/70">
-                                            <th scope="row" className="px-5 py-2.5 text-left font-normal">
-                                                <span className="block text-sm text-ink">{permissionLabel(permission)}</span>
-                                                <span className="block font-mono text-2xs text-stone-400">{permission}</span>
+                                            <th scope="row" className="px-5 py-3 text-left font-normal">
+                                                <span className="block text-sm text-ink" title={permission}>{permissionLabel(permission)}</span>
                                             </th>
                                             {roles.map((row) => (
                                                 <td key={row.role} className="px-4 py-2.5 text-center">

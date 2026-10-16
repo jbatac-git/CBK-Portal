@@ -5,9 +5,9 @@ namespace App\Models;
 use App\Enums\MaterialStatus;
 use App\Enums\MaterialType;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -21,6 +21,7 @@ class LearningMaterial extends Model
         'slug',
         'description',
         'type',
+        'external_url',
         'file_disk',
         'file_path',
         'mime_type',
@@ -64,6 +65,12 @@ class LearningMaterial extends Model
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', MaterialStatus::Published);
+    }
+
+    /** True when this video points to an external link instead of an uploaded file. */
+    public function isExternalLink(): bool
+    {
+        return filled($this->external_url);
     }
 
     /** True when a TEMPORARY Diser is not yet allowed to open this specific material. */

@@ -100,26 +100,24 @@ export default function Edit({
     };
 
     return (
-        <AdminLayout title="Portal settings">
-            <Head title="Portal settings" />
+        <AdminLayout title="Settings">
+            <Head title="Settings" />
 
-            <PageHeader title="Portal settings" description="Branding, footer details and optional modules for the whole portal." />
+            <PageHeader title="Settings" description="Branding, footer details and optional modules for CBK Academy." />
 
             <SettingsSections>
-                <SettingsSection title="Portal logo" description="Shown in the sidebar, sign-in screen and portal header.">
+                <SettingsSection title="Logo" description="Replaces the CBK Academy mark in the sidebar, sign-in screen and header.">
                     <Card>
                         <CardBody>
                             <div className="flex items-center gap-5">
                                 {logo_url ? (
                                     <img
                                         src={logo_url}
-                                        alt="Current portal logo"
+                                        alt="Current logo"
                                         className="h-16 w-16 shrink-0 rounded-lg border border-line bg-paper object-contain p-1.5"
                                     />
                                 ) : (
-                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-maroon-700 font-display text-base font-semibold text-white">
-                                        CBK
-                                    </div>
+                                    <img src="/images/cbk-academy-mark.svg" alt="CBK Academy mark" className="h-16 w-16 shrink-0 rounded-[22%]" />
                                 )}
                                 <div className="min-w-0">
                                     <input
@@ -150,7 +148,7 @@ export default function Edit({
                     </Card>
                 </SettingsSection>
 
-                <SettingsSection title="Footer" description="Company details printed at the bottom of every portal page.">
+                <SettingsSection title="Footer" description="company details printed at the bottom of every page.">
                     <form onSubmit={submitFooter}>
                         <Card>
                             <CardBody className="space-y-5">
@@ -206,7 +204,7 @@ export default function Edit({
                     </form>
                 </SettingsSection>
 
-                <SettingsSection title="Modules" description="Turn optional portal modules on or off. Changes apply right away.">
+                <SettingsSection title="Modules" description="Turn optional modules on or off. Changes apply right away.">
                     <Card>
                         <CardBody>
                             <div className="flex items-start justify-between gap-6">
@@ -215,8 +213,7 @@ export default function Edit({
                                         Careers
                                     </p>
                                     <p className="mt-0.5 text-[13px] leading-relaxed text-stone-500">
-                                        Job postings and recruitment information for Disers. Not built yet; this reserves the
-                                        toggle for a later phase.
+                                        Job postings and recruitment information for Disers.
                                     </p>
                                 </div>
                                 <Switch

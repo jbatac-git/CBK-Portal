@@ -55,9 +55,8 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
             <Head title="User management" />
 
             <PageHeader
-                eyebrow="People"
                 title="User management"
-                description="Employee accounts, their status and what they can access in the portal."
+                description="Employee accounts, their status and what they can access."
                 actions={
                     <Can permission="users.create">
                         <Link href={route('admin.users.create')} className={buttonClass('primary')}>
@@ -156,7 +155,7 @@ export default function Index({ users, filters, statuses, removalReasons }: Inde
                             hint={
                                 isFiltered
                                     ? 'Try a different name, ID or status.'
-                                    : 'Add an employee to create their portal account.'
+                                    : 'Add an employee to create their account.'
                             }
                         />
                     )}

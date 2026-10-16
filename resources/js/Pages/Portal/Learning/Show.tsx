@@ -1,10 +1,13 @@
 import ProtectedPdfViewer from '@/Components/Materials/ProtectedPdfViewer';
 import ProtectedVideoPlayer from '@/Components/Materials/ProtectedVideoPlayer';
 import PageHeader from '@/Components/UI/PageHeader';
+import { useContentProtection } from '@/Hooks/useContentProtection';
 import { usePermission } from '@/Hooks/usePermission';
 import DiserLayout from '@/Layouts/DiserLayout';
+import { VideoEmbed } from '@/types/material';
 import { Head } from '@inertiajs/react';
-import { FileText, PlayCircle } from 'lucide-react';
+import { FileText, PlayCircle, ShieldCheck } from 'lucide-react';
+import { useRef } from 'react';
 
 interface MaterialProps {
     material: {
@@ -12,7 +15,10 @@ interface MaterialProps {
         title: string;
         description: string | null;
         type: 'pdf' | 'video';
-        stream_url: string;
+        /** Set for uploaded files (PDFs and uploaded videos). */
+        stream_url?: string;
+        /** Set for videos that play from an external link. */
+        embed?: VideoEmbed;
     };
 }
 
@@ -20,6 +26,10 @@ export default function Show({ material }: MaterialProps) {
     const { user } = usePermission();
     const isPdf = material.type === 'pdf';
     const TypeIcon = isPdf ? FileText : PlayCircle;
+    const viewer = { name: user.name, username: user.username };
+
+    const protectedRef = useRef<HTMLDivElement>(null);
+    const { shielded } = useContentProtection(protectedRef);
 
     return (
         <DiserLayout>
@@ -38,11 +48,25 @@ export default function Show({ material }: MaterialProps) {
                     description={material.description ?? undefined}
                 />
 
-                {isPdf ? (
-                    <ProtectedPdfViewer streamUrl={material.stream_url} username={user.username} />
-                ) : (
-                    <ProtectedVideoPlayer streamUrl={material.stream_url} username={user.username} />
-                )}
+                {/* Never printed: the printout gets a short notice instead. */}
+                <div ref={protectedRef} className="select-none print:hidden">
+                    {isPdf && material.stream_url ? (
+                        <ProtectedPdfViewer streamUrl={material.stream_url} viewer={viewer} shielded={shielded} />
+                    ) : (
+                        <ProtectedVideoPlayer
+                            title={material.title}
+                            streamUrl={material.stream_url}
+                            embed={material.embed}
+                            viewer={viewer}
+                            shielded={shielded}
+                        />
+                    )}
+                </div>
+
+                <p className="hidden items-center gap-2 rounded-lg border border-line bg-paper p-4 text-sm text-ink print:flex">
+                    <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    This learning material is view-only and cannot be printed.
+                </p>
             </article>
         </DiserLayout>
     );

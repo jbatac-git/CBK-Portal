@@ -14,7 +14,7 @@ export default function GuestLayout({ children }: PropsWithChildren) {
                 {/* Fine architectural grid — a quiet texture instead of a gradient. */}
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 opacity-[0.07]"
+                    className="pointer-events-none absolute inset-0 opacity-[0.035]"
                     style={{
                         backgroundImage:
                             'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
@@ -23,10 +23,10 @@ export default function GuestLayout({ children }: PropsWithChildren) {
                     }}
                 />
 
-                <Logo className="relative" />
+                <Logo size={44} className="relative" />
 
                 <div className="relative max-w-md">
-                    <p className="eyebrow !text-gold-300/80">Co Ban Kiat Hardware</p>
+                    <p className="text-[13px] font-medium text-gold-300/80">CBK Academy</p>
                     <p className="mt-5 font-display text-[44px] font-normal leading-[1.08] tracking-[-0.015em]">
                         Knowledge.
                         <br />
@@ -43,8 +43,8 @@ export default function GuestLayout({ children }: PropsWithChildren) {
             </aside>
 
             <div className="flex min-h-screen flex-col">
-                <header className="flex h-14 items-center bg-maroon-950 px-5 lg:hidden">
-                    <Logo />
+                <header className="flex h-16 items-center px-5 lg:hidden">
+                    <Logo size={34} />
                 </header>
 
                 <main className="flex flex-1 items-center justify-center px-5 py-12 sm:px-10">

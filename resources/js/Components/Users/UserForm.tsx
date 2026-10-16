@@ -178,7 +178,7 @@ export default function UserForm({ options, employee }: UserFormProps) {
                                 value={data.role}
                                 onChange={(e) => setData('role', e.target.value)}
                                 error={errors.role}
-                                hint="Sets what the account can do in the portal."
+                                hint="Sets what the account can do in CBK Academy."
                             >
                                 {options.roles.map((r) => (
                                     <option key={r.value} value={r.value}>
@@ -197,8 +197,8 @@ export default function UserForm({ options, employee }: UserFormProps) {
                         title="Portal access"
                         description={
                             showModules
-                                ? 'Choose which sections of the Diser portal this employee can open.'
-                                : 'Sections of the Diser portal this employee can open.'
+                                ? 'Choose which sections of CBK Academy this employee can open.'
+                                : 'Sections of CBK Academy this employee can open.'
                         }
                     />
                     <CardBody>

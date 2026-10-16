@@ -13,7 +13,7 @@ export default function Create(options: UserFormOptions) {
                 <PageHeader
                     back={{ href: route('admin.users.index'), label: 'Users' }}
                     title="Add employee"
-                    description="Create a portal account. The employee receives their login details by email."
+                    description="Create an account. The employee receives their login details by email."
                 />
 
                 <UserForm options={options} />

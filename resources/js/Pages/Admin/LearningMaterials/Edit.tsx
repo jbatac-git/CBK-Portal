@@ -13,7 +13,7 @@ export default function Edit({ material, ...options }: MaterialFormOptions & { m
                     back={{ href: route('admin.learning-materials.index'), label: 'Learning materials' }}
                     eyebrow="Edit material"
                     title={material.title}
-                    description="Update the details, replace the file or change who can see it."
+                    description="Update the details, replace the file or video link, or change who can see it."
                 />
                 <MaterialForm options={options} material={material} />
             </div>

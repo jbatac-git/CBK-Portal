@@ -29,7 +29,7 @@ export default function ContactUs({ contact }: { contact: ContactData }) {
         <AdminLayout title="Contact us">
             <Head title="Contact us" />
 
-            <PageHeader title="Contact us" description="The contact details employees see on the Contact us page of the portal." />
+            <PageHeader title="Contact us" description="The contact details employees see on the Contact page." />
 
             <SettingsSections>
                 <SettingsSection

@@ -43,7 +43,7 @@ export default function ProfileForm({ profile }: { profile: ProfileData }) {
 
     return (
         <SettingsSections>
-            <SettingsSection title="Profile picture" description="Shown next to your name across the portal.">
+            <SettingsSection title="Profile picture" description="Shown next to your name across CBK Academy.">
                 <Card>
                     <CardBody>
                         <AvatarUploader

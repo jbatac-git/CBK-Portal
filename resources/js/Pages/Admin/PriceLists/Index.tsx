@@ -81,7 +81,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
 
             <PageHeader
                 title="Price lists"
-                description="PDF price lists that Disers can view and download from the portal."
+                description="PDF price lists that Disers can view and download in CBK Academy."
                 actions={
                     <Can permission="price-lists.create">
                         <Link href={route('admin.price-lists.create')} className={buttonClass('primary')}>

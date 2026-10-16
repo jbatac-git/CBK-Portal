@@ -58,7 +58,7 @@ export default function Home({ materials }: { materials: PortalMaterial[] }) {
         <DiserLayout>
             <Head title="Home" />
 
-            <section className="animate-rise-in border-b border-line pb-8 sm:pb-10">
+            <section className="animate-rise-in pb-2">
                 <p className="eyebrow">
                     {greeting()}, {user.first_name}
                 </p>
@@ -74,11 +74,11 @@ export default function Home({ materials }: { materials: PortalMaterial[] }) {
             </section>
 
             {links.length > 0 && (
-                <section aria-labelledby="modules-heading" className="mt-8">
-                    <h2 id="modules-heading" className="eyebrow mb-3">
+                <section aria-labelledby="modules-heading" className="mt-10">
+                    <h2 id="modules-heading" className="sr-only">
                         Go to
                     </h2>
-                    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <ul className="grid grid-cols-1 divide-y divide-line overflow-hidden rounded-lg border border-line bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                         {links.map((link) => {
                             const locked = user.is_temporary && !link.temporary;
                             const Icon = locked ? Lock : link.icon;
@@ -103,18 +103,18 @@ export default function Home({ materials }: { materials: PortalMaterial[] }) {
                                 </>
                             );
 
-                            const base = 'flex h-full items-center gap-3 rounded-lg border px-4 py-3.5';
+                            const base = 'flex h-full items-center gap-3 px-5 py-4';
 
                             return (
                                 <li key={link.routeName}>
                                     {locked ? (
-                                        <div aria-disabled="true" className={`${base} cursor-not-allowed border-dashed border-line bg-paper`}>
+                                        <div aria-disabled="true" className={`${base} cursor-not-allowed`}>
                                             {content}
                                         </div>
                                     ) : (
                                         <Link
                                             href={route(link.routeName)}
-                                            className={`group ${base} border-line bg-white shadow-hairline transition-[box-shadow,border-color] duration-150 hover:border-stone-300 hover:shadow-raised focus-visible:ring-2 focus-visible:ring-maroon-500/40 focus-visible:ring-offset-2`}
+                                            className={`group ${base} transition-colors hover:bg-paper focus-visible:bg-paper focus-visible:outline-none`}
                                         >
                                             {content}
                                         </Link>
@@ -127,7 +127,7 @@ export default function Home({ materials }: { materials: PortalMaterial[] }) {
             )}
 
             {can('portal.learning') && (
-                <section aria-labelledby="learning-heading" className="mt-10">
+                <section aria-labelledby="learning-heading" className="mt-12">
                     <div className="mb-4 flex items-end justify-between gap-4">
                         <div>
                             <h2 id="learning-heading" className="text-[15px] font-semibold text-ink">

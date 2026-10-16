@@ -15,7 +15,12 @@ class StoreMaterialRequest extends MaterialFormRequest
 
     protected function fileRequired(): bool
     {
-        return true;
+        return true; // only reached in upload mode
+    }
+
+    protected function defaultVideoSource(): string
+    {
+        return self::SOURCE_UPLOAD;
     }
 
     protected function materialType(): ?MaterialType

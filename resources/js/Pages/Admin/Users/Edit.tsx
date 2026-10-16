@@ -15,7 +15,7 @@ export default function Edit({ employee, ...options }: UserFormOptions & { emplo
                     back={{ href: route('admin.users.index'), label: 'Users' }}
                     eyebrow="Edit employee"
                     title={employee.name}
-                    description="Update this employee's details and portal access. Username and employee ID stay the same."
+                    description="Update this employee's details and access. Username and employee ID stay the same."
                     actions={<StatusBadge status={employee.status} label={employee.status_label} />}
                 />
 

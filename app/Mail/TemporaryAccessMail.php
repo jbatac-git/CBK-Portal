@@ -28,7 +28,7 @@ class TemporaryAccessMail extends Mailable implements ShouldBeEncrypted, ShouldQ
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Your Temporary CBK Portal Access');
+        return new Envelope(subject: 'Your Temporary CBK Academy Access');
     }
 
     public function content(): Content

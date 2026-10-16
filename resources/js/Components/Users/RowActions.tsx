@@ -1,7 +1,8 @@
 import { ButtonVariant } from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import Select from '@/Components/UI/Select';
-import { rowActionClass, rowDangerActionClass } from '@/Components/UI/Table';
+import Menu from '@/Components/UI/Menu';
+import { rowActionClass } from '@/Components/UI/Table';
 import Textarea from '@/Components/UI/Textarea';
 import { Employee, Option } from '@/types/user';
 import { Link, router } from '@inertiajs/react';
@@ -42,7 +43,7 @@ export default function RowActions({ user, removalReasons = [] }: RowActionsProp
         },
         decline: {
             title: `Not approve ${user.name}?`,
-            description: 'The account becomes restricted and can no longer access the portal.',
+            description: 'The account becomes restricted and can no longer access CBK Academy.',
             confirmLabel: 'Not approve',
             variant: 'danger',
             routeName: 'admin.users.decline',
@@ -95,42 +96,34 @@ export default function RowActions({ user, removalReasons = [] }: RowActionsProp
 
     return (
         <>
-            <div className="flex flex-wrap items-center justify-end gap-0.5 whitespace-nowrap">
-                {user.can_approve && (
+            <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                {/* One obvious next step stays visible; everything else lives in the menu. */}
+                {user.can_approve ? (
                     <button type="button" onClick={() => open('approve')} className={approveActionClass}>
                         Approve
                     </button>
+                ) : (
+                    user.can_update && (
+                        <Link href={route('admin.users.edit', user.id)} className={rowActionClass}>
+                            Edit
+                        </Link>
+                    )
                 )}
 
-                {user.can_decline && (
-                    <button type="button" onClick={() => open('decline')} className={rowDangerActionClass}>
-                        Not approve
-                    </button>
-                )}
-
-                {user.can_update && (
-                    <Link href={route('admin.users.edit', user.id)} className={rowActionClass}>
-                        Edit
-                    </Link>
-                )}
-
-                {user.can_resend_credentials && (
-                    <button type="button" onClick={() => open('resend')} className={rowActionClass}>
-                        Re-send credentials
-                    </button>
-                )}
-
-                {user.can_request_removal && (
-                    <button type="button" onClick={() => open('removal')} className={rowDangerActionClass}>
-                        Request removal
-                    </button>
-                )}
-
-                {user.can_deactivate && (
-                    <button type="button" onClick={() => open('deactivate')} className={rowDangerActionClass}>
-                        Deactivate
-                    </button>
-                )}
+                <Menu
+                    label={`More actions for ${user.name}`}
+                    items={[
+                        ...(user.can_approve && user.can_update ? [{ label: 'Edit', href: route('admin.users.edit', user.id) }] : []),
+                        ...(user.can_resend_credentials ? [{ label: 'Re-send credentials', onSelect: () => open('resend') }] : []),
+                        ...(user.can_decline ? [{ label: 'Not approve', onSelect: () => open('decline'), danger: true, separated: true }] : []),
+                        ...(user.can_request_removal
+                            ? [{ label: 'Request removal', onSelect: () => open('removal'), danger: true, separated: !user.can_decline }]
+                            : []),
+                        ...(user.can_deactivate
+                            ? [{ label: 'Deactivate', onSelect: () => open('deactivate'), danger: true, separated: !user.can_decline && !user.can_request_removal }]
+                            : []),
+                    ]}
+                />
             </div>
 
             {config && (

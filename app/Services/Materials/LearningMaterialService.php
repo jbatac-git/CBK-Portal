@@ -41,22 +41,27 @@ class LearningMaterialService
         ];
     }
 
-    public function create(array $data, UploadedFile $file, User $actor): LearningMaterial
+    public function create(array $data, ?UploadedFile $file, User $actor): LearningMaterial
     {
         $type = MaterialType::from($data['type']);
-        $this->assertRealMimeMatches($file, $type);
+        $link = $this->linkFrom($data, $type);
 
-        $stored = $this->storeFile($file, $type);
+        if ($link === null) {
+            if (! $file) {
+                throw new DomainException('Choose a file to upload.');
+            }
+
+            $this->assertRealMimeMatches($file, $type);
+        }
+
+        $source = $link === null ? $this->fileColumns($this->storeFile($file, $type)) : $this->linkColumns($link);
 
         return DB::transaction(fn () => LearningMaterial::create([
             'learning_material_category_id' => $data['learning_material_category_id'],
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'type' => $type,
-            'file_disk' => $stored['disk'],
-            'file_path' => $stored['path'],
-            'mime_type' => $stored['mime'],
-            'file_size' => $stored['size'],
+            ...$source,
             'status' => $data['status'],
             'available_during_temporary' => $data['available_during_temporary'] ?? false,
             'sort_order' => $data['sort_order'] ?? 0,
@@ -66,7 +71,13 @@ class LearningMaterialService
 
     public function update(LearningMaterial $material, array $data, ?UploadedFile $file): LearningMaterial
     {
-        DB::transaction(function () use ($material, $data, $file) {
+        $link = $this->linkFrom($data, $material->type);
+
+        if ($link === null && $file === null && $material->isExternalLink()) {
+            throw new DomainException('Upload a file to replace the video link.');
+        }
+
+        DB::transaction(function () use ($material, $data, $file, $link) {
             $updates = [
                 'learning_material_category_id' => $data['learning_material_category_id'],
                 'title' => $data['title'],
@@ -76,26 +87,27 @@ class LearningMaterialService
                 'sort_order' => $data['sort_order'] ?? 0,
             ];
 
-            // Replacing the file keeps the same TYPE (a PDF stays a PDF slot);
-            // changing type + file at once is rare enough to just ask the
-            // admin to archive this one and upload a fresh material instead.
-            if ($file) {
+            // Replacing the source keeps the same TYPE (a PDF stays a PDF slot);
+            // changing type at once is rare enough to just ask the admin to
+            // archive this one and add a fresh material instead. A video may
+            // switch between an uploaded file and an external link.
+            $old = $material->file_path ? ['disk' => $material->file_disk, 'path' => $material->file_path] : null;
+            $replacesFile = false;
+
+            if ($link !== null) {
+                $updates = [...$updates, ...$this->linkColumns($link)];
+                $replacesFile = true;
+            } elseif ($file) {
                 $this->assertRealMimeMatches($file, $material->type);
-                $old = ['disk' => $material->file_disk, 'path' => $material->file_path];
+                $updates = [...$updates, ...$this->fileColumns($this->storeFile($file, $material->type))];
+                $replacesFile = true;
+            }
 
-                $stored = $this->storeFile($file, $material->type);
-                $updates = [
-                    ...$updates,
-                    'file_disk' => $stored['disk'],
-                    'file_path' => $stored['path'],
-                    'mime_type' => $stored['mime'],
-                    'file_size' => $stored['size'],
-                ];
+            $material->update($updates);
 
-                $material->update($updates);
-                Storage::disk($old['disk'])->delete($old['path']); // clean up only after the new row is saved
-            } else {
-                $material->update($updates);
+            // Clean up only after the new row is saved.
+            if ($replacesFile && $old !== null) {
+                Storage::disk($old['disk'])->delete($old['path']);
             }
         });
 
@@ -135,6 +147,52 @@ class LearningMaterialService
         }
 
         return $material;
+    }
+
+    /**
+     * The external link to save, or null when this save uses an uploaded
+     * file. Re-checked here (not only in the Form Request) so no caller can
+     * attach a link to a PDF or store an unsupported URL.
+     */
+    private function linkFrom(array $data, MaterialType $type): ?string
+    {
+        if (($data['video_source'] ?? 'upload') !== 'link') {
+            return null;
+        }
+
+        $url = trim((string) ($data['external_url'] ?? ''));
+
+        if ($type !== MaterialType::Video) {
+            throw new DomainException('Only videos can use an external link.');
+        }
+
+        if (VideoEmbed::fromUrl($url) === null) {
+            throw new DomainException('This video link is not supported.');
+        }
+
+        return $url;
+    }
+
+    private function linkColumns(string $url): array
+    {
+        return [
+            'external_url' => $url,
+            'file_disk' => null,
+            'file_path' => null,
+            'mime_type' => null,
+            'file_size' => null,
+        ];
+    }
+
+    private function fileColumns(array $stored): array
+    {
+        return [
+            'external_url' => null,
+            'file_disk' => $stored['disk'],
+            'file_path' => $stored['path'],
+            'mime_type' => $stored['mime'],
+            'file_size' => $stored['size'],
+        ];
     }
 
     private function storeFile(UploadedFile $file, MaterialType $type): array
