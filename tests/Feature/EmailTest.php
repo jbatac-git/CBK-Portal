@@ -109,6 +109,21 @@ class EmailTest extends TestCase
         $this->artisan('mail:test', ['to' => 'it@example.com'])->assertFailed();
     }
 
+    public function test_mail_test_command_refuses_to_run_without_the_app_password(): void
+    {
+        Mail::fake();
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.username' => 'portal@example.com',
+            'mail.mailers.smtp.password' => null,
+            'mail.from.address' => 'portal@example.com',
+        ]);
+
+        $this->artisan('mail:test', ['to' => 'it@example.com'])->assertFailed();
+
+        Mail::assertNothingSent();
+    }
+
     public function test_mail_test_command_sends_the_test_email(): void
     {
         Mail::fake();
