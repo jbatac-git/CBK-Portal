@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\PriceListFileType;
 use App\Enums\PriceListStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PriceList extends Model
@@ -30,6 +32,16 @@ class PriceList extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function downloads(): HasMany
+    {
+        return $this->hasMany(PriceListDownload::class);
+    }
+
+    public function fileType(): PriceListFileType
+    {
+        return PriceListFileType::tryFrom($this->mime_type) ?? PriceListFileType::Pdf;
     }
 
     public function scopeActive(Builder $query): Builder

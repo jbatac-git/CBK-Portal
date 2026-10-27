@@ -17,7 +17,8 @@ return [
 
     'price_lists' => [
         'max_kb' => 20480,
-        'allowed_mimes' => ['application/pdf'],
+        // Downloaded Excel copies are stamped with the downloader and the time in this zone.
+        'stamp_timezone' => 'Asia/Manila',
     ],
 
     'logo' => [

@@ -10,7 +10,7 @@ class PriceListFactory extends Factory
     {
         return [
             'title' => fake()->sentence(2),
-            'file_disk' => 'public',
+            'file_disk' => 'local',
             'file_path' => 'price-lists/'.fake()->uuid().'.pdf',
             'mime_type' => 'application/pdf',
             'file_size' => 1024,

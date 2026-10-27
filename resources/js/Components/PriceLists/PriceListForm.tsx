@@ -74,8 +74,8 @@ export default function PriceListForm({ priceList, maxFileMb }: PriceListFormPro
                         optional={Boolean(priceList)}
                         file={data.file}
                         onChange={(file) => setData('file', file)}
-                        accept=".pdf"
-                        typesLabel="PDF"
+                        accept=".pdf,.xlsx"
+                        typesLabel="PDF or Excel (.xlsx)"
                         maxMb={maxFileMb}
                         error={errors.file}
                         hint={priceList ? 'Leave empty to keep the current file.' : undefined}

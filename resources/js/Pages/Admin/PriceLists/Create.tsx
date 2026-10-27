@@ -11,7 +11,7 @@ export default function Create({ maxFileMb }: { maxFileMb: number }) {
                 <PageHeader
                     back={{ href: route('admin.price-lists.index'), label: 'Price lists' }}
                     title="Add price list"
-                    description="Share a PDF price list with Disers."
+                    description="Share a PDF or Excel price list with Disers."
                 />
                 <PriceListForm maxFileMb={maxFileMb} />
             </div>

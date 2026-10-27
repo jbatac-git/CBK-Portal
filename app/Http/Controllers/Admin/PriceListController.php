@@ -11,7 +11,6 @@ use App\Models\PriceList;
 use App\Services\PriceLists\PriceListService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,7 +36,8 @@ class PriceListController extends Controller
                 'effective_date' => $p->effective_date?->toDateString(),
                 'status' => $p->status->value,
                 'status_label' => $p->status->label(),
-                'file_url' => Storage::disk($p->file_disk)->url($p->file_path),
+                'file_url' => route('admin.price-lists.file', $p),
+                'file_type' => $p->fileType()->extension(),
                 'uploaded_by' => $p->uploader?->name,
                 'can_update' => $request->user()->can('update', $p),
                 'can_archive' => $request->user()->can('archive', $p) && $p->status !== PriceListStatus::Archived,

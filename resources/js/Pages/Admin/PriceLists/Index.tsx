@@ -12,7 +12,7 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
-import { ExternalLink, FileText, Pencil, Plus } from 'lucide-react';
+import { Download, ExternalLink, FileSpreadsheet, FileText, Pencil, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface PriceListRow {
@@ -22,6 +22,7 @@ interface PriceListRow {
     status: string;
     status_label: string;
     file_url: string;
+    file_type: 'pdf' | 'xlsx';
     uploaded_by: string | null;
     can_update: boolean;
     can_archive: boolean;
@@ -83,7 +84,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
 
             <PageHeader
                 title="Price lists"
-                description="PDF price lists that Disers can view and download in CBK Academy."
+                description="PDF and Excel price lists that Disers can open in CBK Academy. Every Excel download is stamped with the downloader's name."
                 actions={
                     <Can permission="price-lists.create">
                         <Link href={route('admin.price-lists.create')} className={buttonClass('primary')}>
@@ -139,17 +140,30 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                                 <Badge tone={tones[row.status] ?? 'neutral'}>{row.status_label}</Badge>
                             </Td>
                             <Td>
-                                <a
-                                    href={row.file_url}
-                                    target="_blank"
-                                    rel="noopener"
-                                    className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-maroon-700 hover:text-maroon-900"
-                                >
-                                    <FileText className="h-4 w-4 text-stone-400" aria-hidden="true" />
-                                    Open PDF
-                                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="sr-only">for {row.title} (opens in a new tab)</span>
-                                </a>
+                                {row.file_type === 'xlsx' ? (
+                                    <a
+                                        href={row.file_url}
+                                        download
+                                        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-maroon-700 hover:text-maroon-900"
+                                    >
+                                        <FileSpreadsheet className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                                        Download Excel
+                                        <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="sr-only">for {row.title} (stamped with your name)</span>
+                                    </a>
+                                ) : (
+                                    <a
+                                        href={row.file_url}
+                                        target="_blank"
+                                        rel="noopener"
+                                        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-maroon-700 hover:text-maroon-900"
+                                    >
+                                        <FileText className="h-4 w-4 text-stone-400" aria-hidden="true" />
+                                        Open PDF
+                                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="sr-only">for {row.title} (opens in a new tab)</span>
+                                    </a>
+                                )}
                             </Td>
                             <Td align="right">
                                 <RowActions>
@@ -167,7 +181,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                             colSpan={5}
                             icon={FileText}
                             title={hasFilters ? 'No price lists match these filters' : 'No price lists yet'}
-                            hint={hasFilters ? 'Try a different search term or status.' : 'Upload a PDF to share it with Disers.'}
+                            hint={hasFilters ? 'Try a different search term or status.' : 'Upload a PDF or Excel file to share it with Disers.'}
                         />
                     )}
                 </TBody>

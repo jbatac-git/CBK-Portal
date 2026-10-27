@@ -22,6 +22,7 @@ use App\Http\Controllers\Portal\HomeController;
 use App\Http\Controllers\Portal\LearningController;
 use App\Http\Controllers\Portal\LearningMaterialStreamController;
 use App\Http\Controllers\Portal\PriceListController as PortalPriceListController;
+use App\Http\Controllers\PriceListFileController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::resource('price-lists', PriceListController::class)->except(['show', 'destroy']);
             Route::post('price-lists/{price_list}/archive', [PriceListController::class, 'archive'])->name('price-lists.archive');
+            Route::get('price-lists/{price_list}/file', PriceListFileController::class)->name('price-lists.file');
 
             Route::prefix('contact-us')->name('contact-us.')->middleware('permission:contact-us.manage')->group(function () {
                 Route::get('/', [ContactUsController::class, 'edit'])->name('edit');
@@ -122,9 +124,10 @@ Route::middleware(['auth', 'active'])->group(function () {
                 Route::get('{learningMaterial}/stream', LearningMaterialStreamController::class)->name('stream');
             });
 
-            Route::get('price-lists', PortalPriceListController::class)
-                ->middleware('permission:portal.price-lists')
-                ->name('price-lists.index');
+            Route::prefix('price-lists')->name('price-lists.')->middleware('permission:portal.price-lists')->group(function () {
+                Route::get('/', PortalPriceListController::class)->name('index');
+                Route::get('{priceList}/file', PriceListFileController::class)->name('file');
+            });
             Route::get('contact', ContactController::class)
                 ->middleware('permission:portal.contact-us')
                 ->name('contact.index');

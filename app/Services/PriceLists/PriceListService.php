@@ -2,16 +2,22 @@
 
 namespace App\Services\PriceLists;
 
+use App\Enums\PriceListFileType;
 use App\Enums\PriceListStatus;
 use App\Models\PriceList;
 use App\Models\User;
 use DomainException;
+use finfo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class PriceListService
 {
+    public function __construct(private ExcelDownloadStamper $stamper) {}
+
     // ---- Admin side ----
 
     public function list(?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
@@ -27,19 +33,12 @@ class PriceListService
 
     public function create(array $data, UploadedFile $file, User $actor): PriceList
     {
-        $this->assertIsRealPdf($file);
-
-        $path = $file->store('price-lists', 'public');
-
         return PriceList::create([
             'title' => $data['title'],
             'effective_date' => $data['effective_date'] ?? null,
             'status' => $data['status'],
-            'file_disk' => 'public',
-            'file_path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'file_size' => $file->getSize(),
             'uploaded_by' => $actor->id,
+            ...$this->storeFile($file),
         ]);
     }
 
@@ -52,18 +51,11 @@ class PriceListService
         ];
 
         if ($file) {
-            $this->assertIsRealPdf($file);
-            $old = $priceList->file_path;
+            $oldDisk = $priceList->file_disk;
+            $oldPath = $priceList->file_path;
 
-            $updates = [
-                ...$updates,
-                'file_path' => $file->store('price-lists', 'public'),
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-            ];
-
-            $priceList->update($updates);
-            Storage::disk('public')->delete($old);
+            $priceList->update([...$updates, ...$this->storeFile($file)]);
+            Storage::disk($oldDisk)->delete($oldPath);
         } else {
             $priceList->update($updates);
         }
@@ -87,14 +79,77 @@ class PriceListService
         return PriceList::active()->orderByDesc('effective_date')->get();
     }
 
-    private function assertIsRealPdf(UploadedFile $file): void
-    {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $realMime = finfo_file($finfo, $file->getRealPath());
-        finfo_close($finfo);
+    // ---- Opening a file (both sides) ----
 
-        if (! in_array($realMime, config('portal.price_lists.allowed_mimes'), true)) {
-            throw new DomainException("The uploaded file does not appear to be a valid PDF (detected: {$realMime}).");
+    /**
+     * Logs who opened the price list, then serves it: a PDF opens in the
+     * browser; an Excel workbook downloads as a copy stamped with the
+     * downloader's name, username, time and the log's reference number.
+     */
+    public function download(PriceList $priceList, User $user, ?string $ipAddress): Response
+    {
+        $disk = Storage::disk($priceList->file_disk);
+        abort_unless($disk->exists($priceList->file_path), 404);
+
+        $download = $priceList->downloads()->create([
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'username' => $user->username,
+            'ip_address' => $ipAddress,
+        ]);
+
+        $type = $priceList->fileType();
+        $filename = (Str::slug($priceList->title) ?: 'price-list').'.'.$type->extension();
+        $headers = [
+            'Content-Type' => $type->value,
+            // Never cached on disk or shared caches: each copy belongs to one person.
+            'Cache-Control' => 'private, no-store, max-age=0',
+            'X-Content-Type-Options' => 'nosniff',
+        ];
+
+        if ($type === PriceListFileType::Pdf) {
+            return $disk->response($priceList->file_path, $filename, $headers);
         }
+
+        $stampedPath = $this->stamper->stamp($disk->readStream($priceList->file_path), [
+            "Downloaded by {$user->name} (@{$user->username})",
+            $download->created_at->timezone(config('portal.price_lists.stamp_timezone'))->format('M j, Y g:i A')
+                ." · Ref {$download->id}",
+        ]);
+
+        return response()->download($stampedPath, $filename, $headers)->deleteFileAfterSend();
+    }
+
+    /**
+     * Stores the upload on the private disk under the extension of what it
+     * really is, never trusting the client's name or MIME type.
+     *
+     * @return array{file_disk: string, file_path: string, mime_type: string, file_size: int}
+     */
+    private function storeFile(UploadedFile $file): array
+    {
+        $type = $this->detectFileType($file);
+
+        return [
+            'file_disk' => 'local',
+            'file_path' => $file->storeAs('price-lists', Str::random(40).'.'.$type->extension(), 'local'),
+            'mime_type' => $type->value,
+            'file_size' => $file->getSize(),
+        ];
+    }
+
+    private function detectFileType(UploadedFile $file): PriceListFileType
+    {
+        $realMime = (new finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
+
+        if ($realMime === PriceListFileType::Pdf->value) {
+            return PriceListFileType::Pdf;
+        }
+
+        if ($this->stamper->isWorkbook($file->getRealPath())) {
+            return PriceListFileType::Excel;
+        }
+
+        throw new DomainException("The uploaded file must be a PDF or an Excel workbook saved as .xlsx (detected: {$realMime}).");
     }
 }

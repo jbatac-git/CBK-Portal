@@ -22,7 +22,7 @@ class PriceListTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         $this->seed(RolePermissionSeeder::class);
-        Storage::fake('public');
+        Storage::fake('local');
     }
 
     private function userWithRole(RoleName $role): User
@@ -45,7 +45,9 @@ class PriceListTest extends TestCase
 
         $priceList = PriceList::firstOrFail();
         $this->assertSame(PriceListStatus::Active, $priceList->status);
-        Storage::disk('public')->assertExists($priceList->file_path);
+        // Private disk: only the logged-in file route can serve it.
+        $this->assertSame('local', $priceList->file_disk);
+        Storage::disk('local')->assertExists($priceList->file_path);
     }
 
     public function test_diser_only_sees_active_price_lists(): void
@@ -64,7 +66,7 @@ class PriceListTest extends TestCase
                 ->where('priceLists.0.title', 'Active List'));
     }
 
-    public function test_rejects_a_non_pdf_file(): void
+    public function test_rejects_a_file_that_is_neither_a_pdf_nor_a_workbook(): void
     {
         $admin = $this->userWithRole(RoleName::Admin);
 

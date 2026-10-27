@@ -14,6 +14,7 @@
 - Username = first initial + last name + last 2 digits of Employee ID (lowercase, a-z0-9). On collision, widen to 3, 4... digits. Never regenerated.
 - Employee ID is entered in full as printed on company records (letters, digits, spaces, - / .; e.g. CBK-2024-0153), stored trimmed and uppercased so duplicates are caught; it must contain at least 2 digits for the username.
 - Temporary access = 7 days (config/portal.php). Password = 12 random chars, stored hashed, emailed via encrypted queued mail.
+- Outgoing email (2026-10-27): Gmail SMTP (smtp.gmail.com:587) with a Google App Password for now, sent from the same Gmail address; the Microsoft 365 settings stay commented in .env for switching back. Queued mail only sends while a queue worker runs (`composer run dev` starts one). `php artisan mail:test` refuses to run without the password and shows tips for the provider in MAIL_HOST.
 - Only users with users.manage-access (Admin, Super Admin) choose Diser modules. HR gets defaults on create and cannot change them.
 - Role changes after creation are NOT part of Phase 2.
 - Known gap (closed in Phase 3): a temporary Diser still sees all assigned modules; the "learning only" restriction is enforced in Phase 3.
@@ -25,7 +26,7 @@
 - Nobody may approve/restrict/deactivate their own account. Deactivate = Admin, Super Admin. HR sends removal requests; Admin/Super Admin process them. One pending request per employee (partial unique index).
 - Resend credentials: only while temporary, before the first password change, before expiry; never extends the 7 days.
 - Force password change on first login (must_change_password). Completing a Breeze password reset also clears the flag.
-- Price lists are NOT protected like learning materials (direct download via public disk) — business decision, confirm with CBK.
+- Price lists (2026-10-27, replaces "direct download via public disk"): PDF or Excel (.xlsx) uploads, stored on the private `local` disk and served only by the logged-in `admin.price-lists.file` / `portal.price-lists.file` route (Disers: active lists only). Every open is logged in `price_list_downloads` (user, name/username snapshot, IP, time). Excel downloads are a copy stamped by ExcelDownloadStamper with "Downloaded by {name} (@username) · {date, Asia/Manila} · Ref {log id}": a faint tiled sheet background (Normal view), the printed footer, and the file's Comments property; cell data is never changed. PDFs open in the browser unstamped (no PDF library). Existing public files were moved to the private disk by migration. Learning-material video watermark left unchanged by request.
 - Profile photos and the portal logo use the `public` disk (not sensitive); learning materials stay on `local`.
 - Image uploads are cropped client-side (react-easy-crop) AND resized server-side (Intervention Image) to a fixed size, so the final size is never trusted from the client alone.
 - Roles & Permissions UI only edits Admin and HR. Super Admin always keeps every permission (re-synced on every save as a safety net). Diser has no toggleable role permissions here — Diser module access is per-employee, managed in User Management.

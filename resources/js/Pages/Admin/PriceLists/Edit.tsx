@@ -12,7 +12,7 @@ export default function Edit({ priceList, maxFileMb }: { priceList: EditablePric
                     back={{ href: route('admin.price-lists.index'), label: 'Price lists' }}
                     eyebrow="Edit price list"
                     title={priceList.title}
-                    description="Update the details or replace the PDF."
+                    description="Update the details or replace the file."
                 />
                 <PriceListForm priceList={priceList} maxFileMb={maxFileMb} />
             </div>
