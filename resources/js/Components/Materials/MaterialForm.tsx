@@ -1,9 +1,9 @@
 import FileDropzone from '@/Components/Materials/FileDropzone';
-import FormActions from '@/Components/UI/FormActions';
-import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
+import { PanelForm, PanelHeader, PanelSection } from '@/Components/UI/SidePanel';
 import Textarea from '@/Components/UI/Textarea';
+import { whenSaved } from '@/Hooks/usePanel';
 import { AdminMaterial, MaterialFormOptions, Orientation, VideoSource } from '@/types/material';
 import { useForm } from '@inertiajs/react';
 import { FileText, Link2, LucideIcon, Video } from 'lucide-react';
@@ -148,10 +148,12 @@ function OrientationPicker({ value, onChange, error }: { value: Orientation; onC
 interface MaterialFormProps {
     options: MaterialFormOptions;
     material?: AdminMaterial;
+    onDone: () => void;
 }
 
-export default function MaterialForm({ options, material }: MaterialFormProps) {
-    const { data, setData, post, processing, errors, transform } = useForm({
+/** Add / edit a learning material in the side panel. */
+export default function MaterialForm({ options, material, onDone }: MaterialFormProps) {
+    const { data, setData, post, processing, progress, errors, transform } = useForm({
         learning_material_category_id: material ? String(material.learning_material_category_id) : '',
         title: material?.title ?? '',
         description: material?.description ?? '',
@@ -205,13 +207,27 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
 
         // A file input needs multipart/form-data: Inertia's useForm switches
         // to that automatically whenever any field in `data` is a File.
-        post(material ? route('admin.learning-materials.update', material.id) : route('admin.learning-materials.store'));
+        post(material ? route('admin.learning-materials.update', material.id) : route('admin.learning-materials.store'), {
+            preserveScroll: true,
+            onSuccess: whenSaved(onDone),
+        });
     };
 
     return (
-        <form onSubmit={submit} className="space-y-6">
-            <Card>
-                <CardHeader
+        <>
+            <PanelHeader
+                eyebrow={material ? 'Edit material' : 'Add material'}
+                title={data.title.trim() || (material ? material.title : 'New learning material')}
+                description={material ? undefined : 'Add a PDF, a training video or a video link to the Diser learning library.'}
+            />
+            <PanelForm
+                onSubmit={submit}
+                onCancel={onDone}
+                submitLabel={material ? 'Save changes' : 'Add material'}
+                processing={processing}
+                note={progress ? <span className="tabular">Uploading… {progress.percentage}%</span> : undefined}
+            >
+                <PanelSection
                     title="Content"
                     description={
                         material
@@ -220,8 +236,7 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                                 : `Currently a ${material.type_label.toLowerCase()} (${material.file_size_label}).`
                             : 'Choose the format, then add the file or paste the link.'
                     }
-                />
-                <CardBody className="space-y-5">
+                >
                     <FormatPicker label={material ? 'Format' : 'What are you adding?'} value={format} options={formatOptions} onChange={chooseFormat} error={errors.type ?? errors.video_source} />
 
                     {originalFormat !== null && format !== originalFormat && (
@@ -273,12 +288,9 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                             hint={hasStoredFile ? 'Leave empty to keep the current file.' : undefined}
                         />
                     )}
-                </CardBody>
-            </Card>
+                </PanelSection>
 
-            <Card>
-                <CardHeader title="Details" description="What Disers see in the learning library." />
-                <CardBody className="space-y-5">
+                <PanelSection title="Details" description="What Disers see in the learning library.">
                     <Input
                         label="Title"
                         name="title"
@@ -325,12 +337,9 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                             <option value="archived">Archived</option>
                         </Select>
                     </div>
-                </CardBody>
-            </Card>
+                </PanelSection>
 
-            <Card>
-                <CardHeader title="Access and ordering" />
-                <CardBody className="space-y-5">
+                <PanelSection title="Access and ordering">
                     <div className="flex items-start gap-3">
                         <input
                             type="checkbox"
@@ -360,9 +369,8 @@ export default function MaterialForm({ options, material }: MaterialFormProps) {
                             className="tabular"
                         />
                     </div>
-                </CardBody>
-            </Card>
-            <FormActions cancelHref={route('admin.learning-materials.index')} submitLabel={material ? 'Save changes' : 'Add material'} processing={processing} />
-        </form>
+                </PanelSection>
+            </PanelForm>
+        </>
     );
 }

@@ -1,7 +1,9 @@
-import FormActions from '@/Components/UI/FormActions';
-import Card, { CardBody, CardHeader } from '@/Components/UI/Card';
+import Avatar from '@/Components/Shared/Avatar';
+import StatusBadge from '@/Components/Shared/StatusBadge';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
+import { PanelForm, PanelHeader, PanelSection } from '@/Components/UI/SidePanel';
+import { whenSaved } from '@/Hooks/usePanel';
 import { Employee, UserFormOptions } from '@/types/user';
 import { useForm } from '@inertiajs/react';
 import { Info } from 'lucide-react';
@@ -33,9 +35,13 @@ interface UserFormProps {
     options: UserFormOptions;
     /** Present = edit mode. Absent = create mode. */
     employee?: Employee;
+    /** After saving: close the panel (add) or go back to the details (edit). */
+    onSaved: () => void;
+    onCancel: () => void;
 }
 
-export default function UserForm({ options, employee }: UserFormProps) {
+/** Add / edit an employee in the side panel; the header follows the name as it is typed. */
+export default function UserForm({ options, employee, onSaved, onCancel }: UserFormProps) {
     const { data, setData, post, put, processing, errors } = useForm({
         first_name: employee?.first_name ?? '',
         middle_name: employee?.middle_name ?? '',
@@ -59,53 +65,80 @@ export default function UserForm({ options, employee }: UserFormProps) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
+        const options = { preserveScroll: true, onSuccess: whenSaved(onSaved) };
+
         if (employee) {
-            put(route('admin.users.update', employee.id));
+            put(route('admin.users.update', employee.id), options);
         } else {
-            post(route('admin.users.store'));
+            post(route('admin.users.store'), options);
         }
     };
 
+    const typedName = [data.first_name, data.middle_name, data.last_name].map((part) => part.trim()).filter(Boolean).join(' ');
+
     return (
-        <form onSubmit={submit} className="space-y-6">
-            {!employee && (
-                <div className="flex gap-3 rounded-lg border border-gold-200 bg-gold-50 px-4 py-3 text-[13px] leading-relaxed text-stone-700">
-                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-gold-700" aria-hidden="true" />
-                    <p>
-                        The username and a temporary password are generated automatically and emailed to the employee.
-                        Temporary access is valid for{' '}
-                        <span className="tabular font-medium text-ink">{options.temporary_access_days} days</span>.
-                    </p>
-                </div>
-            )}
+        <>
+            <PanelHeader
+                leading={
+                    <Avatar
+                        name={typedName || employee?.name || '?'}
+                        photoUrl={employee?.photo_url}
+                        firstName={data.first_name.trim() || undefined}
+                        lastName={data.last_name.trim() || undefined}
+                        size="md"
+                    />
+                }
+                eyebrow={employee ? 'Edit employee' : 'Add employee'}
+                title={typedName || employee?.name || 'New employee'}
+                description={employee ? 'Username and employee ID stay the same.' : 'The employee receives their login details by email.'}
+                meta={employee ? <StatusBadge status={employee.status} label={employee.status_label} /> : undefined}
+            />
+            <PanelForm
+                onSubmit={submit}
+                onCancel={onCancel}
+                cancelLabel={employee ? 'Back' : 'Cancel'}
+                submitLabel={employee ? 'Save changes' : 'Add employee'}
+                processing={processing}
+            >
+                {!employee && (
+                    <PanelSection>
+                        <div className="flex gap-3 rounded-lg border border-gold-200 bg-gold-50 px-4 py-3 text-[13px] leading-relaxed text-stone-700">
+                            <Info className="mt-0.5 h-4 w-4 shrink-0 text-gold-700" aria-hidden="true" />
+                            <p>
+                                The username and a temporary password are generated automatically and emailed to the employee.
+                                Temporary access is valid for{' '}
+                                <span className="tabular font-medium text-ink">{options.temporary_access_days} days</span>.
+                            </p>
+                        </div>
+                    </PanelSection>
+                )}
 
-            {employee && (
-                <Card>
-                    <dl className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                        <div className="px-5 py-4">
-                            <dt className="eyebrow">Username</dt>
-                            <dd className="mt-1.5 truncate font-mono text-sm text-ink">{employee.username}</dd>
-                        </div>
-                        <div className="px-5 py-4">
-                            <dt className="eyebrow">Employee ID</dt>
-                            <dd className="tabular mt-1.5 font-mono text-sm text-ink">{employee.employee_id}</dd>
-                        </div>
-                        <div className="px-5 py-4">
-                            <dt className="eyebrow">Role</dt>
-                            <dd className="mt-1.5 text-sm font-medium text-ink">{employee.role ?? '—'}</dd>
-                        </div>
-                    </dl>
-                </Card>
-            )}
+                {employee && (
+                    <PanelSection>
+                        <dl className="grid divide-y divide-line rounded-md border border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                            <div className="px-5 py-4">
+                                <dt className="eyebrow">Username</dt>
+                                <dd className="mt-1.5 truncate font-mono text-sm text-ink">{employee.username}</dd>
+                            </div>
+                            <div className="px-5 py-4">
+                                <dt className="eyebrow">Employee ID</dt>
+                                <dd className="tabular mt-1.5 font-mono text-sm text-ink">{employee.employee_id}</dd>
+                            </div>
+                            <div className="px-5 py-4">
+                                <dt className="eyebrow">Role</dt>
+                                <dd className="mt-1.5 text-sm font-medium text-ink">{employee.role ?? '—'}</dd>
+                            </div>
+                        </dl>
+                    </PanelSection>
+                )}
 
-            <Card>
-                <CardHeader title="Identity" description="The employee's legal name and the email address their credentials are sent to." />
-                <CardBody className="space-y-5">
+                <PanelSection title="Identity" description="The employee's legal name and the email address their credentials are sent to.">
                     <div className="grid gap-5 sm:grid-cols-3">
                         <Input
                             label="First name"
                             name="first_name"
                             autoComplete="off"
+                            data-autofocus
                             value={data.first_name}
                             onChange={(e) => setData('first_name', e.target.value)}
                             error={errors.first_name}
@@ -165,12 +198,9 @@ export default function UserForm({ options, employee }: UserFormProps) {
                             hint={employee ? undefined : 'Login details are sent here.'}
                         />
                     </div>
-                </CardBody>
-            </Card>
+                </PanelSection>
 
-            <Card>
-                <CardHeader title="Employment" description="Where the employee works and what kind of account they need." />
-                <CardBody className="space-y-5">
+                <PanelSection title="Employment" description="Where the employee works and what kind of account they need.">
                     <div className="grid gap-5 sm:grid-cols-2">
                         <Select
                             label="Company"
@@ -222,20 +252,17 @@ export default function UserForm({ options, employee }: UserFormProps) {
                             </Select>
                         </div>
                     )}
-                </CardBody>
-            </Card>
+                </PanelSection>
 
-            {isDiser && (
-                <Card>
-                    <CardHeader
+                {isDiser && (
+                    <PanelSection
                         title="Portal access"
                         description={
                             showModules
                                 ? 'Choose which sections of CBK Academy this employee can open.'
                                 : 'Sections of CBK Academy this employee can open.'
                         }
-                    />
-                    <CardBody>
+                    >
                         {showModules ? (
                             <fieldset>
                                 <legend className="sr-only">Portal modules</legend>
@@ -268,11 +295,9 @@ export default function UserForm({ options, employee }: UserFormProps) {
                                 Default modules are assigned automatically. An administrator can change the access later.
                             </p>
                         )}
-                    </CardBody>
-                </Card>
-            )}
-
-            <FormActions cancelHref={route('admin.users.index')} submitLabel={employee ? 'Save changes' : 'Add employee'} processing={processing} />
-        </form>
+                    </PanelSection>
+                )}
+            </PanelForm>
+        </>
     );
 }

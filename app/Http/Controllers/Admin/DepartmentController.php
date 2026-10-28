@@ -12,22 +12,32 @@ class DepartmentController extends Controller
 {
     use ManagesLookupResource;
 
-    protected function lookupModel(): string { return Department::class; }
-    protected function usageRelation(): string { return 'users'; }
-    protected function pagePrefix(): string { return 'Admin/Departments'; }
-    protected function routePrefix(): string { return 'admin.departments'; }
+    protected function lookupModel(): string
+    {
+        return Department::class;
+    }
 
-public function store(DepartmentRequest $request): RedirectResponse
-{
-    $this->lookupService()->create($request->validated());
+    protected function usageRelation(): string
+    {
+        return 'users';
+    }
 
-    return redirect()->route('admin.maintenance.index', ['tab' => 'departments'])->with('success', 'Department added.');
-}
+    protected function maintenanceTab(): string
+    {
+        return 'departments';
+    }
 
-public function update(DepartmentRequest $request, int $department): RedirectResponse
-{
-    $this->lookupService()->update(Department::findOrFail($department), $request->validated());
+    public function store(DepartmentRequest $request): RedirectResponse
+    {
+        $this->lookupService()->create($request->validated());
 
-    return redirect()->route('admin.maintenance.index', ['tab' => 'departments'])->with('success', 'Department updated.');
-}
+        return $this->backToList('Department added.');
+    }
+
+    public function update(DepartmentRequest $request, int $department): RedirectResponse
+    {
+        $this->lookupService()->update(Department::findOrFail($department), $request->validated());
+
+        return $this->backToList('Department updated.');
+    }
 }

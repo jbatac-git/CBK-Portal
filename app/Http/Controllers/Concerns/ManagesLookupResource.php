@@ -3,61 +3,34 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Services\Lookups\LookupService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
- * Shared index/create/edit/destroy for Company, Department, and
- * RemovalReason — all three are the same shape (name + is_active, protect
- * from deletion while in use), so this trait avoids writing the same
- * controller three times.
+ * Shared behaviour for Company, Department and RemovalReason: all three are the
+ * same shape (name + is_active, protected from deletion while in use). They are
+ * listed on the Maintenance page and added or edited in its side panel, so every
+ * action returns to the Maintenance list it came from.
  */
 trait ManagesLookupResource
 {
     use RedirectsWithDomainErrors;
 
     abstract protected function lookupModel(): string;
+
     abstract protected function usageRelation(): string;
-    abstract protected function pagePrefix(): string;
-    abstract protected function routePrefix(): string;
+
+    /** The Maintenance tab this list lives on, e.g. "companies". */
+    abstract protected function maintenanceTab(): string;
 
     protected function lookupService(): LookupService
     {
         return new LookupService($this->lookupModel(), $this->usageRelation());
     }
 
-    public function index(Request $request): Response
+    /** Back to the Maintenance list the panel was opened from (keeping its search and page). */
+    protected function backToList(string $message): RedirectResponse
     {
-        $items = $this->lookupService()->list($request->string('search')->toString() ?: null);
-
-        return Inertia::render("{$this->pagePrefix()}/Index", [
-            'items' => $items->through(fn (Model $item) => [
-                'id' => $item->id,
-                'name' => $item->name,
-                'is_active' => $item->is_active,
-                'usage_count' => $item->{$this->usageRelation().'_count'} ?? 0,
-            ]),
-            'filters' => $request->only('search'),
-            'routePrefix' => $this->routePrefix(),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render("{$this->pagePrefix()}/Create", ['routePrefix' => $this->routePrefix()]);
-    }
-
-    public function edit(int $id): Response
-    {
-        $item = ($this->lookupModel())::findOrFail($id);
-
-        return Inertia::render("{$this->pagePrefix()}/Edit", [
-            'item' => ['id' => $item->id, 'name' => $item->name, 'is_active' => $item->is_active],
-            'routePrefix' => $this->routePrefix(),
-        ]);
+        return back(fallback: route('admin.maintenance.index', ['tab' => $this->maintenanceTab()]))->with('success', $message);
     }
 
     public function destroy(int $id): RedirectResponse

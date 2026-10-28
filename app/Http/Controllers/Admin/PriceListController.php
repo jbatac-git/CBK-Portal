@@ -45,14 +45,7 @@ class PriceListController extends Controller
             'filters' => $request->only('search', 'status'),
             'statuses' => collect(PriceListStatus::cases())
                 ->map(fn (PriceListStatus $s) => ['value' => $s->value, 'label' => $s->label()])->values(),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        $this->authorize('create', PriceList::class);
-
-        return Inertia::render('Admin/PriceLists/Create', [
+            // Add / edit happen in the side panel on this page.
             'maxFileMb' => (int) (config('portal.price_lists.max_kb') / 1024),
         ]);
     }
@@ -67,21 +60,6 @@ class PriceListController extends Controller
             fn () => $this->service->create($data, $file, $request->user()),
             'Price list uploaded.',
         );
-    }
-
-    public function edit(PriceList $priceList): Response
-    {
-        $this->authorize('update', $priceList);
-
-        return Inertia::render('Admin/PriceLists/Edit', [
-            'priceList' => [
-                'id' => $priceList->id,
-                'title' => $priceList->title,
-                'effective_date' => $priceList->effective_date?->toDateString(),
-                'status' => $priceList->status->value,
-            ],
-            'maxFileMb' => (int) (config('portal.price_lists.max_kb') / 1024),
-        ]);
     }
 
     public function update(UpdatePriceListRequest $request, PriceList $priceList): RedirectResponse

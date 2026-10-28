@@ -46,7 +46,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::prefix('admin')->name('admin.')->middleware('permission:admin.access')->group(function () {
             Route::get('/', DashboardController::class)->name('dashboard');
 
-            Route::resource('users', UserController::class)->except(['show', 'destroy']);
+            // Add / edit happen in a side panel on the list, so there are no create or edit pages.
+            Route::resource('users', UserController::class)->only(['index', 'store', 'update']);
 
             Route::controller(UserLifecycleController::class)
                 ->prefix('users/{user}')
@@ -73,12 +74,12 @@ Route::middleware(['auth', 'active'])->group(function () {
                 });
 
             // Ito ang dalawang linya para sa Phase 4 — i-verify na nandito talaga
-            Route::resource('learning-material-categories', LearningMaterialCategoryController::class)->except(['show']);
-            Route::resource('learning-materials', LearningMaterialController::class)->except(['show']);
+            Route::resource('learning-material-categories', LearningMaterialCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::resource('learning-materials', LearningMaterialController::class)->only(['index', 'store', 'update']);
             Route::post('learning-materials/{learning_material}/archive', [LearningMaterialController::class, 'archive'])
                 ->name('learning-materials.archive');
 
-            Route::resource('price-lists', PriceListController::class)->except(['show', 'destroy']);
+            Route::resource('price-lists', PriceListController::class)->only(['index', 'store', 'update']);
             Route::post('price-lists/{price_list}/archive', [PriceListController::class, 'archive'])->name('price-lists.archive');
             Route::get('price-lists/{price_list}/file', PriceListFileController::class)->name('price-lists.file');
 
@@ -99,9 +100,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::middleware('permission:settings.manage')->group(function () {
                 Route::get('maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
 
-                Route::resource('companies', CompanyController::class)->except(['show', 'index']);
-                Route::resource('departments', DepartmentController::class)->except(['show', 'index']);
-                Route::resource('removal-reasons', RemovalReasonController::class)->except(['show', 'index']);
+                Route::resource('companies', CompanyController::class)->only(['store', 'update', 'destroy']);
+                Route::resource('departments', DepartmentController::class)->only(['store', 'update', 'destroy']);
+                Route::resource('removal-reasons', RemovalReasonController::class)->only(['store', 'update', 'destroy']);
             });
         });
     });

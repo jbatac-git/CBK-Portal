@@ -32,19 +32,14 @@ class LearningMaterialController extends Controller
         );
 
         return Inertia::render('Admin/LearningMaterials/Index', [
-            'materials' => $materials->through(fn(LearningMaterial $m) => LearningMaterialResource::make($m)->resolve()),
+            'materials' => $materials->through(fn (LearningMaterial $m) => LearningMaterialResource::make($m)->resolve()),
             'filters' => $request->only('search', 'status', 'category'),
             'categories' => $this->service->formOptions()['categories'],
+            // Add / edit happen in the side panel on this page.
+            'formOptions' => $this->service->formOptions(),
             'statuses' => collect(MaterialStatus::cases())
-                ->map(fn(MaterialStatus $s) => ['value' => $s->value, 'label' => $s->label()])->values(),
+                ->map(fn (MaterialStatus $s) => ['value' => $s->value, 'label' => $s->label()])->values(),
         ]);
-    }
-
-    public function create(): Response
-    {
-        $this->authorize('create', LearningMaterial::class);
-
-        return Inertia::render('Admin/LearningMaterials/Create', $this->service->formOptions());
     }
 
     public function store(StoreMaterialRequest $request): RedirectResponse
@@ -59,41 +54,31 @@ class LearningMaterialController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.learning-materials.index')->with('success', 'Learning material uploaded.');
+        return back(fallback: route('admin.learning-materials.index'))->with('success', 'Learning material uploaded.');
     }
-    public function edit(LearningMaterial $learningMaterial): Response
+
+    public function update(UpdateMaterialRequest $request, LearningMaterial $learningMaterial): RedirectResponse
     {
-        $this->authorize('update', $learningMaterial);
+        $data = $request->validated();
+        $file = $request->file('file');
+        unset($data['file']);
 
-        return Inertia::render('Admin/LearningMaterials/Edit', [
-            'material' => LearningMaterialResource::make($learningMaterial)->resolve(),
-            ...$this->service->formOptions(),
-        ]);
+        try {
+            $this->service->update($learningMaterial, $data, $file);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back(fallback: route('admin.learning-materials.index'))
+            ->with('success', "'{$learningMaterial->title}' updated.");
     }
-
-  public function update(UpdateMaterialRequest $request, LearningMaterial $learningMaterial): RedirectResponse
-{
-    $data = $request->validated();
-    $file = $request->file('file');
-    unset($data['file']);
-
-    try {
-        $this->service->update($learningMaterial, $data, $file);
-    } catch (\DomainException $e) {
-        return back()->with('error', $e->getMessage());
-    }
-
-    return redirect()
-        ->route('admin.learning-materials.index')
-        ->with('success', "'{$learningMaterial->title}' updated.");
-}
 
     public function archive(LearningMaterial $learningMaterial): RedirectResponse
     {
         $this->authorize('archive', $learningMaterial);
 
         return $this->attempt(
-            fn() => $this->service->archive($learningMaterial),
+            fn () => $this->service->archive($learningMaterial),
             "'{$learningMaterial->title}' archived.",
         );
     }

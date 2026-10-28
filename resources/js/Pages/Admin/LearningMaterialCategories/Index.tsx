@@ -1,17 +1,21 @@
+import CategoryForm from '@/Components/Materials/CategoryForm';
 import Can from '@/Components/Shared/Can';
 import Badge from '@/Components/UI/Badge';
-import Button, { buttonClass } from '@/Components/UI/Button';
+import Button from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
 import IconButton from '@/Components/UI/IconButton';
 import Menu from '@/Components/UI/Menu';
+import SidePanel from '@/Components/UI/SidePanel';
 import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { SearchInput } from '@/Components/UI/Toolbar';
+import { usePanel } from '@/Hooks/usePanel';
+import { usePermission } from '@/Hooks/usePermission';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { AdminCategory } from '@/types/material';
 import { Paginated } from '@/types/pagination';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { FolderTree, Pencil, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
@@ -24,6 +28,8 @@ export default function Index({ categories, filters }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [deleting, setDeleting] = useState<AdminCategory | null>(null);
     const [processing, setProcessing] = useState(false);
+    const panel = usePanel<{ category: AdminCategory | null }>();
+    const canUpdate = usePermission().can('learning-materials.update');
 
     const applyFilters: FormEventHandler = (e) => {
         e.preventDefault();
@@ -53,10 +59,10 @@ export default function Index({ categories, filters }: IndexProps) {
                 description="Groups that organise learning materials in the Diser library."
                 actions={
                     <Can permission="learning-materials.create">
-                        <Link href={route('admin.learning-material-categories.create')} className={buttonClass('primary')}>
+                        <Button onClick={() => panel.show({ category: null })}>
                             <Plus aria-hidden="true" />
                             Add category
-                        </Link>
+                        </Button>
                     </Can>
                 }
             />
@@ -79,7 +85,7 @@ export default function Index({ categories, filters }: IndexProps) {
                 </THead>
                 <TBody>
                     {categories.data.map((c) => (
-                        <Tr key={c.id}>
+                        <Tr key={c.id} onOpen={canUpdate ? () => panel.show({ category: c }) : undefined}>
                             <Td className="max-w-md">
                                 <p className="font-medium text-ink">{c.name}</p>
                                 {c.description && (
@@ -97,7 +103,7 @@ export default function Index({ categories, filters }: IndexProps) {
                             <Td align="right">
                                 <Can permission="learning-materials.update">
                                     <RowActions>
-                                        <IconButton icon={Pencil} label="Edit" href={route('admin.learning-material-categories.edit', c.id)} />
+                                        <IconButton icon={Pencil} label="Edit" onClick={() => panel.show({ category: c })} />
                                         <Menu
                                             label={`More actions for ${c.name}`}
                                             items={c.materials_count === 0 ? [{ label: 'Delete', onSelect: () => setDeleting(c), danger: true }] : []}
@@ -117,6 +123,10 @@ export default function Index({ categories, filters }: IndexProps) {
                     )}
                 </TBody>
             </Table>
+
+            <SidePanel open={panel.open} onClose={panel.close} size="md">
+                {panel.data && <CategoryForm key={panel.key} category={panel.data.category ?? undefined} onDone={panel.close} />}
+            </SidePanel>
 
             <ConfirmDialog
                 open={deleting !== null}

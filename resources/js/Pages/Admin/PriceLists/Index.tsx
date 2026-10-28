@@ -1,17 +1,20 @@
+import PriceListForm from '@/Components/PriceLists/PriceListForm';
 import Can from '@/Components/Shared/Can';
 import Badge, { BadgeTone } from '@/Components/UI/Badge';
-import Button, { buttonClass } from '@/Components/UI/Button';
+import Button from '@/Components/UI/Button';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
 import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
 import IconButton from '@/Components/UI/IconButton';
 import Menu from '@/Components/UI/Menu';
+import SidePanel from '@/Components/UI/SidePanel';
 import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { FilterSelect, SearchInput } from '@/Components/UI/Toolbar';
+import { usePanel } from '@/Hooks/usePanel';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Download, ExternalLink, FileSpreadsheet, FileText, Pencil, Plus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
@@ -32,6 +35,7 @@ interface IndexProps {
     priceLists: Paginated<PriceListRow>;
     filters: { search?: string; status?: string };
     statuses: Option[];
+    maxFileMb: number;
 }
 
 const tones: Record<string, BadgeTone> = { active: 'success', archived: 'neutral' };
@@ -45,11 +49,12 @@ function formatDate(value: string): string {
     return dateFormat.format(new Date(y, m - 1, d));
 }
 
-export default function Index({ priceLists, filters, statuses }: IndexProps) {
+export default function Index({ priceLists, filters, statuses, maxFileMb }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [archiving, setArchiving] = useState<PriceListRow | null>(null);
     const [processing, setProcessing] = useState(false);
+    const panel = usePanel<{ priceList: PriceListRow | null }>();
 
     const hasFilters = Boolean(filters.search || filters.status);
 
@@ -87,10 +92,10 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                 description="PDF and Excel price lists that Disers can open in CBK Academy. Every Excel download is stamped with the downloader's name."
                 actions={
                     <Can permission="price-lists.create">
-                        <Link href={route('admin.price-lists.create')} className={buttonClass('primary')}>
+                        <Button onClick={() => panel.show({ priceList: null })}>
                             <Plus aria-hidden="true" />
                             Add price list
-                        </Link>
+                        </Button>
                     </Can>
                 }
             />
@@ -122,7 +127,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                 </THead>
                 <TBody>
                     {priceLists.data.map((row) => (
-                        <Tr key={row.id}>
+                        <Tr key={row.id} onOpen={row.can_update ? () => panel.show({ priceList: row }) : undefined}>
                             <Td>
                                 <p className="font-medium text-ink">{row.title}</p>
                                 <p className="mt-0.5 text-[13px] text-stone-500">
@@ -143,6 +148,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                                 {row.file_type === 'xlsx' ? (
                                     <a
                                         href={row.file_url}
+                                        onClick={(e) => e.stopPropagation()}
                                         download
                                         className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-maroon-700 hover:text-maroon-900"
                                     >
@@ -154,6 +160,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                                 ) : (
                                     <a
                                         href={row.file_url}
+                                        onClick={(e) => e.stopPropagation()}
                                         target="_blank"
                                         rel="noopener"
                                         className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-maroon-700 hover:text-maroon-900"
@@ -167,7 +174,7 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                             </Td>
                             <Td align="right">
                                 <RowActions>
-                                    {row.can_update && <IconButton icon={Pencil} label="Edit" href={route('admin.price-lists.edit', row.id)} />}
+                                    {row.can_update && <IconButton icon={Pencil} label="Edit" onClick={() => panel.show({ priceList: row })} />}
                                     <Menu
                                         label={`More actions for ${row.title}`}
                                         items={row.can_archive ? [{ label: 'Archive', onSelect: () => setArchiving(row), danger: true }] : []}
@@ -186,6 +193,12 @@ export default function Index({ priceLists, filters, statuses }: IndexProps) {
                     )}
                 </TBody>
             </Table>
+
+            <SidePanel open={panel.open} onClose={panel.close}>
+                {panel.data && (
+                    <PriceListForm key={panel.key} priceList={panel.data.priceList ?? undefined} maxFileMb={maxFileMb} onDone={panel.close} />
+                )}
+            </SidePanel>
 
             <ConfirmDialog
                 open={archiving !== null}

@@ -29,32 +29,18 @@ class LearningMaterialCategoryController extends Controller
         ]);
     }
 
-    public function create(): Response
-    {
-        $this->authorize('create', LearningMaterialCategory::class);
-
-        return Inertia::render('Admin/LearningMaterialCategories/Create');
-    }
-
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
         $this->service->create($request->validated());
 
-        return redirect()->route('admin.learning-material-categories.index')->with('success', 'Category created.');
-    }
-
-    public function edit(LearningMaterialCategory $learningMaterialCategory): Response
-    {
-        $this->authorize('update', $learningMaterialCategory);
-
-        return Inertia::render('Admin/LearningMaterialCategories/Edit', ['category' => $learningMaterialCategory]);
+        return back(fallback: route('admin.learning-material-categories.index'))->with('success', 'Category created.');
     }
 
     public function update(UpdateCategoryRequest $request, LearningMaterialCategory $learningMaterialCategory): RedirectResponse
     {
         $this->service->update($learningMaterialCategory, $request->validated());
 
-        return redirect()->route('admin.learning-material-categories.index')->with('success', 'Category updated.');
+        return back(fallback: route('admin.learning-material-categories.index'))->with('success', 'Category updated.');
     }
 
     public function destroy(LearningMaterialCategory $learningMaterialCategory): RedirectResponse

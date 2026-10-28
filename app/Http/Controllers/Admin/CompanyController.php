@@ -12,22 +12,32 @@ class CompanyController extends Controller
 {
     use ManagesLookupResource;
 
-    protected function lookupModel(): string { return Company::class; }
-    protected function usageRelation(): string { return 'users'; }
-    protected function pagePrefix(): string { return 'Admin/Companies'; }
-    protected function routePrefix(): string { return 'admin.companies'; }
+    protected function lookupModel(): string
+    {
+        return Company::class;
+    }
 
-  public function store(CompanyRequest $request): RedirectResponse
-{
-    $this->lookupService()->create($request->validated());
+    protected function usageRelation(): string
+    {
+        return 'users';
+    }
 
-    return redirect()->route('admin.maintenance.index', ['tab' => 'companies'])->with('success', 'Company added.');
-}
+    protected function maintenanceTab(): string
+    {
+        return 'companies';
+    }
 
-public function update(CompanyRequest $request, int $company): RedirectResponse
-{
-    $this->lookupService()->update(Company::findOrFail($company), $request->validated());
+    public function store(CompanyRequest $request): RedirectResponse
+    {
+        $this->lookupService()->create($request->validated());
 
-    return redirect()->route('admin.maintenance.index', ['tab' => 'companies'])->with('success', 'Company updated.');
-}
+        return $this->backToList('Company added.');
+    }
+
+    public function update(CompanyRequest $request, int $company): RedirectResponse
+    {
+        $this->lookupService()->update(Company::findOrFail($company), $request->validated());
+
+        return $this->backToList('Company updated.');
+    }
 }

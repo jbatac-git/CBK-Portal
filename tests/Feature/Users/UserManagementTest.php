@@ -169,12 +169,10 @@ class UserManagementTest extends TestCase
             ->assertSessionHasErrors('department_id');
     }
 
-    public function test_hr_cannot_open_or_update_an_admin_account(): void
+    public function test_hr_cannot_update_an_admin_account(): void
     {
         $hr = $this->userWithRole(RoleName::Hr);
         $admin = $this->userWithRole(RoleName::Admin);
-
-        $this->actingAs($hr)->get(route('admin.users.edit', $admin))->assertForbidden();
 
         $this->actingAs($hr)
             ->put(route('admin.users.update', $admin), [
@@ -209,6 +207,40 @@ class UserManagementTest extends TestCase
         $this->assertSame('updated@example.com', $diser->email);
         $this->assertTrue($diser->hasDirectPermission('portal.learning'));
         $this->assertFalse($diser->hasDirectPermission('portal.price-lists'));
+    }
+
+    public function test_the_user_list_carries_what_the_side_panel_needs(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
+        $diser->syncPermissions([PortalModule::Learning->value]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Index')
+                ->has('formOptions.companies', 1)
+                ->where('formOptions.can_manage_access', true)
+                ->where('users.data', fn ($rows) => collect($rows)->firstWhere('id', $diser->id)['modules'] === [PortalModule::Learning->value]));
+    }
+
+    public function test_saving_in_the_side_panel_returns_to_the_filtered_list(): void
+    {
+        $admin = $this->userWithRole(RoleName::Admin);
+        $diser = $this->userWithRole(RoleName::Diser);
+        $list = route('admin.users.index', ['status' => 'active', 'search' => 'ana']);
+
+        $this->actingAs($admin)
+            ->from($list)
+            ->put(route('admin.users.update', $diser), [
+                'first_name' => 'Ana',
+                'last_name' => 'Reyes',
+                'email' => 'ana@example.com',
+                'company_id' => $this->company->id,
+                'department_id' => null,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect($list);
     }
 
     public function test_a_diser_cannot_open_user_management(): void

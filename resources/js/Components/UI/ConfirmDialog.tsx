@@ -1,6 +1,7 @@
 import Button, { ButtonVariant } from '@/Components/UI/Button';
+import Modal, { ModalBody, ModalDescription, ModalFooter, ModalTitle } from '@/Components/UI/Modal';
 import { AlertTriangle } from 'lucide-react';
-import { PropsWithChildren, useEffect, useRef } from 'react';
+import { PropsWithChildren } from 'react';
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -13,6 +14,10 @@ interface ConfirmDialogProps {
     onCancel: () => void;
 }
 
+/**
+ * Asks before an action takes effect. Focus starts on Cancel, so pressing Enter
+ * never confirms by accident; it cannot be dismissed while the request runs.
+ */
 export default function ConfirmDialog({
     open,
     title,
@@ -24,31 +29,13 @@ export default function ConfirmDialog({
     onCancel,
     children,
 }: PropsWithChildren<ConfirmDialogProps>) {
-    const ref = useRef<HTMLDialogElement>(null);
-
-    useEffect(() => {
-        const dialog = ref.current;
-        if (!dialog) return;
-
-        if (open && !dialog.open) dialog.showModal();
-        if (!open && dialog.open) dialog.close();
-    }, [open]);
+    const cancel = () => {
+        if (!processing) onCancel();
+    };
 
     return (
-        <dialog
-            ref={ref}
-            aria-labelledby="confirm-dialog-title"
-            onCancel={(e) => {
-                e.preventDefault(); // let React state decide when to close
-                if (!processing) onCancel();
-            }}
-            onClick={(e) => {
-                // Clicking the backdrop (the dialog element itself, outside the panel) cancels.
-                if (e.target === e.currentTarget && !processing) onCancel();
-            }}
-            className="w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-white p-0 shadow-overlay backdrop:bg-ink/40 backdrop:backdrop-blur-[2px] open:animate-rise-in"
-        >
-            <div className="p-6">
+        <Modal open={open} onClose={cancel} showClose={false}>
+            <ModalBody>
                 <div className="flex gap-4">
                     {variant === 'danger' && (
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 ring-1 ring-red-100">
@@ -56,22 +43,20 @@ export default function ConfirmDialog({
                         </span>
                     )}
                     <div className="min-w-0 flex-1">
-                        <h2 id="confirm-dialog-title" className="text-base font-semibold text-ink">
-                            {title}
-                        </h2>
-                        {description && <p className="mt-1.5 text-sm leading-relaxed text-stone-600">{description}</p>}
+                        <ModalTitle>{title}</ModalTitle>
+                        {description && <ModalDescription>{description}</ModalDescription>}
                         {children && <div className="mt-4">{children}</div>}
                     </div>
                 </div>
-            </div>
-            <div className="flex justify-end gap-2 rounded-b-xl border-t border-line bg-paper px-6 py-3.5">
-                <Button variant="secondary" onClick={onCancel} disabled={processing}>
+            </ModalBody>
+            <ModalFooter>
+                <Button variant="secondary" onClick={cancel} disabled={processing} data-autofocus>
                     Cancel
                 </Button>
                 <Button variant={variant} onClick={onConfirm} loading={processing}>
                     {confirmLabel}
                 </Button>
-            </div>
-        </dialog>
+            </ModalFooter>
+        </Modal>
     );
 }

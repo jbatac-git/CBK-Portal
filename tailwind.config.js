@@ -58,6 +58,13 @@ export default {
                 hairline: '0 1px 0 0 rgba(28, 23, 20, 0.04)',
                 raised: '0 1px 2px rgba(28, 23, 20, 0.06), 0 8px 24px -12px rgba(28, 23, 20, 0.18)',
                 overlay: '0 24px 64px -24px rgba(28, 23, 20, 0.45)',
+                // The right-hand side panel casts its shadow to the left, over the page.
+                panel: '0 0 48px -12px rgba(28, 23, 20, 0.35)',
+            },
+            // One motion set for every layer (house style §7): appear smoothly, leave quicker and plain.
+            transitionTimingFunction: {
+                smooth: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                exit: 'cubic-bezier(0.4, 0, 1, 1)',
             },
             keyframes: {
                 'toast-in': {

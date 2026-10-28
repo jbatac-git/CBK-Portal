@@ -154,7 +154,7 @@ export default function DiserLayout({ children }: PropsWithChildren) {
             </nav>
             )}
 
-            <FlashMessage />
+            <FlashMessage aboveTabBar={!reading} />
         </div>
     );
 }

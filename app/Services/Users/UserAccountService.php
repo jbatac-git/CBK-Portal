@@ -30,7 +30,8 @@ class UserAccountService
     public function list(User $actor, ?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
     {
         return User::query()
-            ->with(['roles', 'company', 'department', 'pendingRemovalRequest'])
+            // permissions = a Diser's portal modules, shown and edited in the side panel.
+            ->with(['roles', 'permissions', 'company', 'department', 'pendingRemovalRequest'])
             ->visibleTo($actor)
             ->when($status, fn (Builder $q) => $q->where('status', $status))
             ->when($search, function (Builder $q) use ($search) {

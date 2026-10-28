@@ -12,22 +12,32 @@ class RemovalReasonController extends Controller
 {
     use ManagesLookupResource;
 
-    protected function lookupModel(): string { return RemovalReason::class; }
-    protected function usageRelation(): string { return 'removalRequests'; }
-    protected function pagePrefix(): string { return 'Admin/RemovalReasons'; }
-    protected function routePrefix(): string { return 'admin.removal-reasons'; }
+    protected function lookupModel(): string
+    {
+        return RemovalReason::class;
+    }
 
-   public function store(RemovalReasonRequest $request): RedirectResponse
-{
-    $this->lookupService()->create($request->validated());
+    protected function usageRelation(): string
+    {
+        return 'removalRequests';
+    }
 
-    return redirect()->route('admin.maintenance.index', ['tab' => 'removal-reasons'])->with('success', 'Reason added.');
-}
+    protected function maintenanceTab(): string
+    {
+        return 'removal-reasons';
+    }
 
-public function update(RemovalReasonRequest $request, int $removal_reason): RedirectResponse
-{
-    $this->lookupService()->update(RemovalReason::findOrFail($removal_reason), $request->validated());
+    public function store(RemovalReasonRequest $request): RedirectResponse
+    {
+        $this->lookupService()->create($request->validated());
 
-    return redirect()->route('admin.maintenance.index', ['tab' => 'removal-reasons'])->with('success', 'Reason updated.');
-}
+        return $this->backToList('Reason added.');
+    }
+
+    public function update(RemovalReasonRequest $request, int $removal_reason): RedirectResponse
+    {
+        $this->lookupService()->update(RemovalReason::findOrFail($removal_reason), $request->validated());
+
+        return $this->backToList('Reason updated.');
+    }
 }

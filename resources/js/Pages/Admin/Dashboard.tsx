@@ -56,7 +56,7 @@ export default function Dashboard({ stats }: DashboardProps) {
                 title={`${greeting()}, ${user.first_name}`}
                 actions={
                     can('users.create') && (
-                        <Link href={route('admin.users.create')} className={buttonClass('primary')}>
+                        <Link href={route('admin.users.index', { create: 1 })} className={buttonClass('primary')}>
                             <Plus aria-hidden="true" />
                             Add employee
                         </Link>

@@ -191,12 +191,13 @@ class LearningMaterialTest extends TestCase
     {
         $admin = $this->userWithRole(RoleName::Admin);
 
+        // The add / edit side panel takes its limits from the list page.
         $this->actingAs($admin)
-            ->get(route('admin.learning-materials.create'))
+            ->get(route('admin.learning-materials.index'))
             ->assertInertia(fn ($page) => $page
-                ->component('Admin/LearningMaterials/Create')
-                ->where('max_video_mb', null)
-                ->where('max_pdf_mb', 20));
+                ->component('Admin/LearningMaterials/Index')
+                ->where('formOptions.max_video_mb', null)
+                ->where('formOptions.max_pdf_mb', 20));
     }
 
     public function test_a_pdf_cannot_use_the_video_size_allowance(): void
@@ -227,24 +228,17 @@ class LearningMaterialTest extends TestCase
         $this->assertDatabaseHas('learning_material_categories', ['id' => $this->category->id, 'deleted_at' => null]);
     }
 
-    public function test_admin_can_open_the_category_pages(): void
+    public function test_admin_can_open_the_category_page(): void
     {
         $admin = $this->userWithRole(RoleName::Admin);
 
+        // Categories are added and edited in a side panel on this page.
         $this->actingAs($admin)
             ->get(route('admin.learning-material-categories.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Admin/LearningMaterialCategories/Index')
                 ->where('categories.data.0.name', 'Company Overview'));
-
-        $this->actingAs($admin)
-            ->get(route('admin.learning-material-categories.create'))
-            ->assertInertia(fn ($page) => $page->component('Admin/LearningMaterialCategories/Create'));
-
-        $this->actingAs($admin)
-            ->get(route('admin.learning-material-categories.edit', $this->category))
-            ->assertInertia(fn ($page) => $page->component('Admin/LearningMaterialCategories/Edit'));
     }
 
     public function test_category_can_be_renamed_without_sending_a_slug(): void

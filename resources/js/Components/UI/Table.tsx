@@ -37,9 +37,17 @@ export function TBody({ children }: PropsWithChildren) {
     return <tbody className="divide-y divide-line/80">{children}</tbody>;
 }
 
-export function Tr({ className = '', children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
+interface TrProps extends HTMLAttributes<HTMLTableRowElement> {
+    /**
+     * Makes the whole row open the record (its side panel). Keep a focusable control
+     * in the row (the name button or the Edit icon) so keyboards can reach it too.
+     */
+    onOpen?: () => void;
+}
+
+export function Tr({ className = '', onOpen, children, ...props }: TrProps) {
     return (
-        <tr {...props} className={`transition-colors hover:bg-paper/70 ${className}`}>
+        <tr {...props} onClick={onOpen} className={`transition-colors hover:bg-paper/70 ${onOpen ? 'cursor-pointer' : ''} ${className}`}>
             {children}
         </tr>
     );
@@ -82,7 +90,12 @@ export function EmptyRow({ colSpan, icon: Icon, title, hint }: EmptyRowProps) {
  * everything else. Status is shown as a Badge, never as an inline switch.
  */
 export function RowActions({ children }: PropsWithChildren) {
-    return <div className="flex items-center justify-end gap-1 whitespace-nowrap">{children}</div>;
+    // Clicks here act on the buttons only, never on a clickable row behind them.
+    return (
+        <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-1 whitespace-nowrap">
+            {children}
+        </div>
+    );
 }
 
 /** Inline row action link/button styling, e.g. "Edit" / "Archive" in the last column. */

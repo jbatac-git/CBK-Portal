@@ -1,7 +1,8 @@
 import Button from '@/Components/UI/Button';
+import Modal, { ModalBody, ModalDescription, ModalFooter, ModalTitle } from '@/Components/UI/Modal';
 import { getCroppedImageBlob } from '@/lib/cropImage';
 import { ZoomIn, ZoomOut } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import Cropper, { Area } from 'react-easy-crop';
 
 interface ImageCropperProps {
@@ -32,8 +33,6 @@ export default function ImageCropper({
     onCancel,
     onSave,
 }: ImageCropperProps) {
-    const dialogRef = useRef<HTMLDialogElement>(null);
-    const titleId = useId();
     const zoomId = useId();
     const [ready, setReady] = useState(false);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -41,20 +40,6 @@ export default function ImageCropper({
     const [area, setArea] = useState<Area | null>(null);
     const [cropping, setCropping] = useState(false);
     const [cropError, setCropError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const dialog = dialogRef.current;
-        const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-        if (dialog && !dialog.open) dialog.showModal();
-        // The cropper measures its container, so mount it only once the dialog is visible.
-        setReady(true);
-
-        return () => {
-            if (dialog?.open) dialog.close();
-            previouslyFocused?.focus();
-        };
-    }, []);
 
     const onCropComplete = useCallback((_: Area, areaPixels: Area) => setArea(areaPixels), []);
 
@@ -82,23 +67,11 @@ export default function ImageCropper({
     const message = cropError ?? error;
 
     return (
-        <dialog
-            ref={dialogRef}
-            aria-labelledby={titleId}
-            onCancel={(e) => {
-                e.preventDefault(); // the parent decides when to unmount
-                cancel();
-            }}
-            onClick={(e) => {
-                if (e.target === e.currentTarget) cancel();
-            }}
-            className="w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-white p-0 shadow-overlay backdrop:bg-ink/40 backdrop:backdrop-blur-[2px] open:animate-rise-in"
-        >
-            <div className="px-6 pb-5 pt-6">
-                <h2 id={titleId} className="text-base font-semibold text-ink">
-                    {title}
-                </h2>
-                <p className="mt-1 text-sm text-stone-600">{description}</p>
+        // The cropper measures its container, so it mounts once the dialog has finished appearing.
+        <Modal open onClose={cancel} afterEnter={() => setReady(true)}>
+            <ModalBody>
+                <ModalTitle>{title}</ModalTitle>
+                <ModalDescription>{description}</ModalDescription>
 
                 <div className="relative mt-4 h-72 w-full overflow-hidden rounded-lg bg-stone-900">
                     {ready && (
@@ -127,7 +100,7 @@ export default function ImageCropper({
                         max={3}
                         step={0.05}
                         value={zoom}
-                        autoFocus
+                        data-autofocus
                         onChange={(e) => setZoom(Number(e.target.value))}
                         className="h-1.5 w-full cursor-pointer appearance-auto rounded-full accent-maroon-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-maroon-500/40 focus-visible:ring-offset-2"
                     />
@@ -139,16 +112,16 @@ export default function ImageCropper({
                         {message}
                     </p>
                 )}
-            </div>
+            </ModalBody>
 
-            <div className="flex justify-end gap-2 rounded-b-xl border-t border-line bg-paper px-6 py-3.5">
+            <ModalFooter>
                 <Button variant="secondary" onClick={cancel} disabled={busy}>
                     Cancel
                 </Button>
                 <Button onClick={save} loading={busy} disabled={!area}>
                     Apply
                 </Button>
-            </div>
-        </dialog>
+            </ModalFooter>
+        </Modal>
     );
 }

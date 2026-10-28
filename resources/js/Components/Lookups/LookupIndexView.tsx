@@ -20,6 +20,8 @@ interface LookupIndexViewProps {
     routePrefix: string;
     /** Current Maintenance tab, needed so the search form targets the right list. */
     tab: string;
+    /** Opens the entry in the side panel. */
+    onEdit: (item: LookupItem) => void;
 }
 
 /** "Removal Reasons" becomes "Removal reasons". */
@@ -40,7 +42,7 @@ function usage(count: number, label: string): string {
     return `${count} ${label.replace('(s)', count === 1 ? '' : 's')}`;
 }
 
-export default function LookupIndexView({ title, usageLabel, items, filters, routePrefix, tab }: LookupIndexViewProps) {
+export default function LookupIndexView({ title, usageLabel, items, filters, routePrefix, tab, onEdit }: LookupIndexViewProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [deleting, setDeleting] = useState<LookupItem | null>(null);
     const [processing, setProcessing] = useState(false);
@@ -76,9 +78,7 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
 
     return (
         <div>
-            <Toolbar
-                onSubmit={applyFilters}
-            >
+            <Toolbar onSubmit={applyFilters}>
                 <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Search ${plural}`} />
                 <Button type="submit" variant="secondary">
                     Filter
@@ -96,7 +96,7 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
                 </THead>
                 <TBody>
                     {items.data.map((item) => (
-                        <Tr key={item.id}>
+                        <Tr key={item.id} onOpen={() => onEdit(item)}>
                             <Td>
                                 <span className={`font-medium ${item.is_active ? 'text-ink' : 'text-stone-500'}`}>{item.name}</span>
                             </Td>
@@ -108,7 +108,7 @@ export default function LookupIndexView({ title, usageLabel, items, filters, rou
                             </Td>
                             <Td align="right">
                                 <RowActions>
-                                    <IconButton icon={Pencil} label="Edit" href={route(`${routePrefix}.edit`, item.id)} />
+                                    <IconButton icon={Pencil} label="Edit" onClick={() => onEdit(item)} />
                                     <Menu
                                         label={`More actions for ${item.name}`}
                                         items={[

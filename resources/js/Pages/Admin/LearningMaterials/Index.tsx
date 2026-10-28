@@ -1,3 +1,4 @@
+import MaterialForm from '@/Components/Materials/MaterialForm';
 import Can from '@/Components/Shared/Can';
 import Badge, { BadgeTone } from '@/Components/UI/Badge';
 import Button, { buttonClass } from '@/Components/UI/Button';
@@ -6,10 +7,12 @@ import PageHeader from '@/Components/UI/PageHeader';
 import Pagination from '@/Components/UI/Pagination';
 import IconButton from '@/Components/UI/IconButton';
 import Menu from '@/Components/UI/Menu';
+import SidePanel from '@/Components/UI/SidePanel';
 import Table, { EmptyRow, RowActions, TBody, Td, Th, THead, Tr } from '@/Components/UI/Table';
 import Toolbar, { FilterSelect, SearchInput } from '@/Components/UI/Toolbar';
+import { usePanel } from '@/Hooks/usePanel';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { AdminMaterial, Category } from '@/types/material';
+import { AdminMaterial, Category, MaterialFormOptions } from '@/types/material';
 import { Paginated } from '@/types/pagination';
 import { Option } from '@/types/user';
 import { Head, Link, router } from '@inertiajs/react';
@@ -21,16 +24,18 @@ interface IndexProps {
     filters: { search?: string; status?: string; category?: string };
     categories: Category[];
     statuses: Option[];
+    formOptions: MaterialFormOptions;
 }
 
 const statusTones: Record<string, BadgeTone> = { draft: 'neutral', published: 'success', archived: 'warning' };
 
-export default function Index({ materials, filters, categories, statuses }: IndexProps) {
+export default function Index({ materials, filters, categories, statuses, formOptions }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [category, setCategory] = useState(filters.category ?? '');
     const [archiving, setArchiving] = useState<AdminMaterial | null>(null);
     const [processing, setProcessing] = useState(false);
+    const panel = usePanel<{ material: AdminMaterial | null }>();
 
     const hasFilters = Boolean(filters.search || filters.status || filters.category);
 
@@ -73,10 +78,10 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                             Categories
                         </Link>
                         <Can permission="learning-materials.create">
-                            <Link href={route('admin.learning-materials.create')} className={buttonClass('primary')}>
+                            <Button onClick={() => panel.show({ material: null })}>
                                 <Plus aria-hidden="true" />
                                 Add material
-                            </Link>
+                            </Button>
                         </Can>
                     </>
                 }
@@ -121,7 +126,7 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                         const TypeIcon = m.type === 'video' ? PlayCircle : FileText;
 
                         return (
-                            <Tr key={m.id}>
+                            <Tr key={m.id} onOpen={m.can_update ? () => panel.show({ material: m }) : undefined}>
                                 <Td className="max-w-md">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="font-medium text-ink">{m.title}</span>
@@ -155,7 +160,7 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                                 </Td>
                                 <Td align="right">
                                     <RowActions>
-                                        {m.can_update && <IconButton icon={Pencil} label="Edit" href={route('admin.learning-materials.edit', m.id)} />}
+                                        {m.can_update && <IconButton icon={Pencil} label="Edit" onClick={() => panel.show({ material: m })} />}
                                         <Menu
                                             label={`More actions for ${m.title}`}
                                             items={m.can_archive && m.status !== 'archived' ? [{ label: 'Archive', onSelect: () => setArchiving(m), danger: true }] : []}
@@ -179,6 +184,12 @@ export default function Index({ materials, filters, categories, statuses }: Inde
                     )}
                 </TBody>
             </Table>
+
+            <SidePanel open={panel.open} onClose={panel.close} size="xl">
+                {panel.data && (
+                    <MaterialForm key={panel.key} options={formOptions} material={panel.data.material ?? undefined} onDone={panel.close} />
+                )}
+            </SidePanel>
 
             <ConfirmDialog
                 open={archiving !== null}
